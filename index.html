@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveCast v4.2 - MP4 Player & Bookmarks (localStorage)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 14px;
+      width: 14px;
+      border-radius: 9999px;
+      background: #818cf8;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+      margin-top: -4px;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+      background: #a5b4fc;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    .drag-active {
+      border-color: #818cf8 !important;
+      background-color: rgba(99, 102, 241, 0.15) !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white flex flex-col antialiased">
+
+  <!-- Header with Prominent Version v4.2 Indicator -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-md shadow-indigo-600/30">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-extrabold text-base tracking-tight text-white leading-none">DriveCast</h1>
+          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[11px] px-2 py-0.5 rounded-full font-mono font-bold">v4.2</span>
+          <span class="hidden sm:inline-block text-[10px] text-slate-400 font-mono">localStorage</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Storage Status Indicator Pill -->
+        <div id="storageIndicator" class="bg-slate-800/80 border border-slate-700/80 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-[11px] font-mono text-emerald-400" title="Pure localStorage status">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="storageLabelText">localStorage OK</span>
+        </div>
+
+        <!-- Library Drawer Button -->
+        <button id="libraryToggleBtn" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-medium px-3 py-2 rounded-xl transition border border-slate-700 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <span class="hidden sm:inline">Saved Videos</span>
+          <span id="libraryBadge" class="bg-indigo-600 text-white text-[10px] font-mono px-1.5 py-0.2 rounded-full">0</span>
+        </button>
+
+        <!-- Choose MP4 Button -->
+        <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-3 py-2 rounded-xl transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span>Choose MP4</span>
+          <input id="localFileInput" type="file" accept="video/mp4,audio/mp4,video/*" class="hidden">
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <!-- Diagnostic Alert Bar (Only shown if browser blocks localStorage) -->
+  <div id="storageErrorBanner" class="hidden bg-amber-500/10 border-b border-amber-500/30 text-amber-200 text-xs px-4 py-2 text-center">
+    <strong>Notice:</strong> Your browser has blocked localStorage access in this iframe. If using Safari or Brave, enable third-party cookies/cross-site data for this site, or open the link directly in a new tab.
+  </div>
+
+  <!-- Library Drawer -->
+  <div id="libraryDrawer" class="hidden fixed inset-0 z-40 bg-black/75 backdrop-blur-xs flex justify-end">
+    <div class="w-full max-w-md bg-slate-900 h-full border-l border-slate-800 p-5 flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>Video History</span>
+            <span class="text-xs font-mono text-indigo-400 bg-slate-800 px-2 py-0.5 rounded">localStorage</span>
+          </h2>
+          <p class="text-xs text-slate-400">All videos with bookmarks saved to this browser</p>
+        </div>
+        <button id="closeLibraryBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="libraryItemsContainer" class="flex-1 py-4 space-y-2.5 overflow-y-auto">
+        <!-- Rendered items from localStorage -->
+      </div>
+      <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+        <button id="clearAllLocalStorageBtn" class="text-red-400 hover:text-red-300 font-medium">Clear All Saved Data</button>
+        <span id="storageSizeLabel" class="text-slate-500 font-mono text-[10px]">0 KB used</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+    
+    <!-- LEFT COLUMN: Video Player & Transport (7 Cols) -->
+    <div class="lg:col-span-7 flex flex-col gap-4">
+      
+      <!-- Video Viewport -->
+      <div id="playerViewport" class="relative bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl aspect-video flex items-center justify-center transition-colors">
+        <video id="mediaPlayer" class="w-full h-full object-contain cursor-pointer" playsinline preload="metadata">
+          Your browser does not support HTML5 video.
+        </video>
+
+        <!-- Google Drive Preview Fallback -->
+        <iframe id="driveEmbedIframe" class="hidden w-full h-full border-0 absolute inset-0 z-10" allow="autoplay; fullscreen"></iframe>
+
+        <!-- Local File Re-link Overlay (Shown on reload when bookmarks are loaded) -->
+        <div id="relinkOverlay" class="hidden absolute inset-0 bg-slate-950/92 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-15">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          </div>
+          <span class="text-[10px] font-mono uppercase tracking-wider text-indigo-400 mb-1">Restored from localStorage</span>
+          <h2 id="relinkTitleText" class="text-sm sm:text-base font-bold text-white mb-1">Video Bookmarks Restored!</h2>
+          <p id="relinkSubText" class="text-xs text-slate-300 max-w-sm mb-4">Your bookmarks and notes are ready. Select the MP4 file (or drop it here) to resume playback.</p>
+          <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span id="relinkBtnText">Re-link MP4 File</span>
+            <input id="relinkFileInput" type="file" accept="video/mp4,audio/mp4,video/*" class="hidden">
+          </label>
+        </div>
+
+        <!-- Initial Blank Placeholder -->
+        <div id="emptyPlayerPlaceholder" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center p-6 text-center z-10">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+            </svg>
+          </div>
+          <h2 class="text-sm sm:text-base font-bold text-white mb-1">No Video Loaded</h2>
+          <p class="text-xs text-slate-400 max-w-sm mb-4">Choose an MP4 file from your device or drag & drop it directly onto this player.</p>
+          <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3.5 py-1.5 rounded-lg border border-slate-700 transition">
+            Browse MP4 File
+            <input id="placeholderFileInput" type="file" accept="video/mp4,audio/mp4,video/*" class="hidden">
+          </label>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="mediaLoader" class="hidden absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-20">
+          <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+
+      <!-- Player Controls -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col gap-3.5 shadow-lg">
+        
+        <!-- Video Header Info & Primary Add Bookmark Action -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <span id="sourceLabel" class="text-[10px] font-mono uppercase tracking-wider text-indigo-400 block truncate">Ready</span>
+            <h2 id="videoTitleLabel" class="text-sm sm:text-base font-bold text-white truncate">Select an MP4 to start</h2>
+          </div>
+          <button id="addBookmarkBtn" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 flex-shrink-0 shadow-md shadow-indigo-600/30">
+            <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            <span>+ Bookmark</span>
+          </button>
+        </div>
+
+        <!-- Scrubber Range Bar -->
+        <div class="flex flex-col gap-1">
+          <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1" class="w-full">
+          <div class="flex justify-between text-[11px] font-mono text-slate-400">
+            <span id="currentTimeLabel">00:00</span>
+            <span id="durationLabel">00:00</span>
+          </div>
+        </div>
+
+        <!-- Transport Buttons -->
+        <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
+          <!-- Playback Speed -->
+          <button id="speedBtn" class="text-xs font-mono font-medium px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition border border-slate-700/60">
+            1.0x
+          </button>
+
+          <!-- Rewind / Play-Pause / Skip -->
+          <div class="flex items-center gap-2 sm:gap-3">
+            <button id="skipBackBtn" title="Rewind 15s" class="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/>
+              </svg>
+            </button>
+
+            <button id="playPauseBtn" class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 transition">
+              <svg id="playIcon" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg id="pauseIcon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+
+            <button id="skipForwardBtn" title="Forward 30s" class="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Volume Controls -->
+          <div class="flex items-center gap-1.5">
+            <button id="muteBtn" class="text-slate-400 hover:text-white p-1">
+              <svg id="volHighIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+              <svg id="volMuteIcon" class="hidden w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12-2l4 4m0-4l-4 4"/></svg>
+            </button>
+            <input id="volumeBar" type="range" min="0" max="1" step="0.05" value="0.9" class="w-16 sm:w-20">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Google Drive Link Input (Optional) -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 flex flex-col gap-2">
+        <label class="text-[11px] font-medium text-slate-300 flex items-center justify-between">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+            <span>Or Stream from Google Drive Link</span>
+          </span>
+          <span class="text-[10px] text-slate-400">Auto-saved to localStorage</span>
+        </label>
+        <div class="flex gap-2">
+          <input id="driveUrlInput" type="text" placeholder="https://drive.google.com/file/d/..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500">
+          <button id="loadDriveBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-1.5 rounded-xl text-xs font-medium transition border border-slate-700">
+            Stream
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Bookmarks List (5 Cols) -->
+    <div class="lg:col-span-5 flex flex-col gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col flex-1 shadow-lg min-h-[380px]">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-amber-400/10 text-amber-400 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-white">Bookmarks</h3>
+              <p id="subStorageStatus" class="text-[11px] text-emerald-400 font-mono">Saved in localStorage</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span id="bookmarkCount" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">0</span>
+            <button id="clearAllBookmarksBtn" title="Clear all bookmarks for this video" class="text-slate-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bookmarks Scroll Area -->
+        <div id="bookmarksContainer" class="flex-1 overflow-y-auto py-3 space-y-2 pr-1 max-h-[460px]">
+          <!-- Bookmarks rendered here -->
+        </div>
+
+        <!-- Bottom Status -->
+        <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+          <span class="flex items-center gap-1 text-slate-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>Auto-Save On</span>
+          </span>
+          <span id="storageStatsText" class="text-[10px] text-slate-500">v4.2 • Single Store</span>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white border border-slate-700 px-4 py-2.5 rounded-xl shadow-2xl text-xs z-50 transform translate-y-20 opacity-0 transition duration-300 flex items-center gap-2">
+    <span id="toastIcon"></span>
+    <span id="toastMsg">Notification message</span>
+  </div>
+
+  <script>
+    /*
+     * DRIVECAST v4.2 - PURE LOCALSTORAGE ARCHITECTURE
+     * Exclusively uses window.localStorage for all operations.
+     * Schema:
+     *   KEY: 'drivecast_v4_data'
+     *   VALUE: {
+     *     lastActiveId: string,
+     *     videos: {
+     *       [videoId]: {
+     *         id: string,
+     *         title: string,
+     *         type: 'local' | 'drive' | 'url',
+     *         sourceUrl: string,
+     *         bookmarks: [{ id, time, note }],
+     *         lastSeekTime: number,
+     *         updatedAt: number
+     *       }
+     *     }
+     *   }
+     */
+    const STORAGE_KEY = 'drivecast_v4_data';
+    const PREF_KEY = 'drivecast_v4_prefs';
+
+    // State
+    const state = {
+      currentVideoId: '',
+      currentVideoTitle: '',
+      currentVideoType: '',
+      currentSourceUrl: '',
+      isPlaying: false,
+      isMuted: false,
+      volume: 0.9,
+      playbackRates: [0.75, 1.0, 1.25, 1.5, 2.0],
+      currentRateIndex: 1,
+      bookmarks: []
+    };
+
+    // DOM References
+    const media = document.getElementById('mediaPlayer');
+    const playerViewport = document.getElementById('playerViewport');
+    const driveEmbedIframe = document.getElementById('driveEmbedIframe');
+    const emptyPlayerPlaceholder = document.getElementById('emptyPlayerPlaceholder');
+    const relinkOverlay = document.getElementById('relinkOverlay');
+    const relinkTitleText = document.getElementById('relinkTitleText');
+    const relinkSubText = document.getElementById('relinkSubText');
+    const relinkFileInput = document.getElementById('relinkFileInput');
+    const mediaLoader = document.getElementById('mediaLoader');
+    const sourceLabel = document.getElementById('sourceLabel');
+    const videoTitleLabel = document.getElementById('videoTitleLabel');
+
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const skipBackBtn = document.getElementById('skipBackBtn');
+    const skipForwardBtn = document.getElementById('skipForwardBtn');
+    const speedBtn = document.getElementById('speedBtn');
+    const seekBar = document.getElementById('seekBar');
+    const currentTimeLabel = document.getElementById('currentTimeLabel');
+    const durationLabel = document.getElementById('durationLabel');
+    const volumeBar = document.getElementById('volumeBar');
+    const muteBtn = document.getElementById('muteBtn');
+    const volHighIcon = document.getElementById('volHighIcon');
+    const volMuteIcon = document.getElementById('volMuteIcon');
+
+    const localFileInput = document.getElementById('localFileInput');
+    const placeholderFileInput = document.getElementById('placeholderFileInput');
+    const driveUrlInput = document.getElementById('driveUrlInput');
+    const loadDriveBtn = document.getElementById('loadDriveBtn');
+
+    const addBookmarkBtn = document.getElementById('addBookmarkBtn');
+    const bookmarkCount = document.getElementById('bookmarkCount');
+    const bookmarksContainer = document.getElementById('bookmarksContainer');
+    const clearAllBookmarksBtn = document.getElementById('clearAllBookmarksBtn');
+
+    const libraryToggleBtn = document.getElementById('libraryToggleBtn');
+    const libraryDrawer = document.getElementById('libraryDrawer');
+    const closeLibraryBtn = document.getElementById('closeLibraryBtn');
+    const libraryItemsContainer = document.getElementById('libraryItemsContainer');
+    const libraryBadge = document.getElementById('libraryBadge');
+    const clearAllLocalStorageBtn = document.getElementById('clearAllLocalStorageBtn');
+    const storageSizeLabel = document.getElementById('storageSizeLabel');
+
+    const storageIndicator = document.getElementById('storageIndicator');
+    const storageLabelText = document.getElementById('storageLabelText');
+    const storageErrorBanner = document.getElementById('storageErrorBanner');
+    const subStorageStatus = document.getElementById('subStorageStatus');
+    const storageStatsText = document.getElementById('storageStatsText');
+
+    function getStoredData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { lastActiveId: '', videos: {} };
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return { lastActiveId: '', videos: {} };
+        if (!parsed.videos) parsed.videos = {};
+        return parsed;
+      } catch (e) {
+        console.error('localStorage read error:', e);
+        handleStorageError();
+        return { lastActiveId: '', videos: {} };
+      }
+    }
+
+    function setStoredData(data) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        updateStorageStatusDisplay();
+        return true;
+      } catch (e) {
+        console.error('localStorage write error:', e);
+        handleStorageError();
+        return false;
+      }
+    }
+
+    function handleStorageError() {
+      storageErrorBanner.classList.remove('hidden');
+      storageIndicator.className = 'bg-red-500/20 border border-red-500/30 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-[11px] font-mono text-red-400';
+      storageLabelText.textContent = 'Storage Blocked';
+      subStorageStatus.textContent = 'Storage Error';
+      subStorageStatus.className = 'text-[11px] text-red-400 font-mono';
+    }
+
+    function updateStorageStatusDisplay() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || '';
+        const data = getStoredData();
+        const videoCount = Object.keys(data.videos || {}).length;
+        libraryBadge.textContent = videoCount;
+        
+        const bytes = new Blob([raw]).size;
+        const kb = (bytes / 1024).toFixed(1);
+        storageSizeLabel.textContent = `${kb} KB used`;
+        storageStatsText.textContent = `v4.2 • ${videoCount} video(s) saved`;
+      } catch (e) {}
+    }
+
+    // Save everything immediately
+    function saveCurrentVideoToLocalStorage() {
+      if (!state.currentVideoId) return;
+
+      const data = getStoredData();
+      data.lastActiveId = state.currentVideoId;
+
+      data.videos[state.currentVideoId] = {
+        id: state.currentVideoId,
+        title: state.currentVideoTitle,
+        type: state.currentVideoType,
+        sourceUrl: state.currentSourceUrl,
+        bookmarks: state.bookmarks || [],
+        lastSeekTime: media && !isNaN(media.currentTime) ? media.currentTime : 0,
+        updatedAt: Date.now()
+      };
+
+      setStoredData(data);
+    }
+
+    function formatTime(seconds) {
+      if (isNaN(seconds) || seconds < 0) return '00:00';
+      const sec = Math.floor(seconds);
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      const h = Math.floor(m / 60);
+      if (h > 0) {
+        const remM = m % 60;
+        return `${h}:${remM < 10 ? '0' : ''}${remM}:${s < 10 ? '0' : ''}${s}`;
+      }
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.textContent = msg;
+      toastIcon.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2300);
+    }
+
+    function sanitizeKey(str) {
+      return String(str || 'video').replace(/[^a-zA-Z0-9_-]/g, '_').slice(-64);
+    }
+
+    function extractGoogleDriveId(urlOrId) {
+      if (!urlOrId) return null;
+      const clean = urlOrId.trim();
+      const matchFileD = clean.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (matchFileD && matchFileD[1]) return matchFileD[1];
+      const matchQueryId = clean.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (matchQueryId && matchQueryId[1]) return matchQueryId[1];
+      if (/^[a-zA-Z0-9_-]{25,}$/.test(clean)) return clean;
+      return null;
+    }
+
+    function loadVideoSource(url, id, title, type = 'local', sourceLabelText = 'Local MP4 File', seekToTime = null) {
+      state.currentVideoId = id;
+      state.currentVideoTitle = title;
+      state.currentVideoType = type;
+      state.currentSourceUrl = (type === 'local') ? '' : url;
+
+      sourceLabel.textContent = sourceLabelText;
+      videoTitleLabel.textContent = title;
+
+      emptyPlayerPlaceholder.classList.add('hidden');
+      relinkOverlay.classList.add('hidden');
+      driveEmbedIframe.classList.add('hidden');
+      media.classList.remove('hidden');
+      mediaLoader.classList.remove('hidden');
+
+      media.src = url;
+      media.playbackRate = state.playbackRates[state.currentRateIndex];
+      media.volume = state.volume;
+      volumeBar.value = state.volume;
+
+      // Check localStorage for existing bookmarks for this video ID
+      const data = getStoredData();
+      if (data.videos[id] && Array.isArray(data.videos[id].bookmarks) && data.videos[id].bookmarks.length > 0) {
+        state.bookmarks = data.videos[id].bookmarks;
+      } else if (!state.bookmarks || state.currentVideoId !== id) {
+        state.bookmarks = [];
+      }
+
+      renderBookmarks();
+      saveCurrentVideoToLocalStorage();
+
+      media.load();
+      media.play().then(() => {
+        state.isPlaying = true;
+        updatePlayPauseUI();
+        if (seekToTime !== null && seekToTime > 0) {
+          media.currentTime = seekToTime;
+        }
+      }).catch(() => {
+        state.isPlaying = false;
+        updatePlayPauseUI();
+      });
+
+      showToast(`Loaded: ${title}`);
+    }
+
+    // Restore video session from localStorage entry
+    function restoreSessionFromData(videoEntry) {
+      if (!videoEntry) return;
+
+      state.currentVideoId = videoEntry.id;
+      state.currentVideoTitle = videoEntry.title;
+      state.currentVideoType = videoEntry.type;
+      state.currentSourceUrl = videoEntry.sourceUrl || '';
+      state.bookmarks = videoEntry.bookmarks || [];
+
+      videoTitleLabel.textContent = videoEntry.title;
+      renderBookmarks();
+
+      if (videoEntry.type === 'drive' && videoEntry.sourceUrl) {
+        loadVideoSource(videoEntry.sourceUrl, videoEntry.id, videoEntry.title, 'drive', 'Google Drive MP4', videoEntry.lastSeekTime);
+      } else if (videoEntry.type === 'url' && videoEntry.sourceUrl) {
+        loadVideoSource(videoEntry.sourceUrl, videoEntry.id, videoEntry.title, 'url', 'Web MP4 Stream', videoEntry.lastSeekTime);
+      } else {
+        // Local file: Show restored bookmarks on the screen immediately with re-link prompt
+        sourceLabel.textContent = 'Saved Local Video';
+        emptyPlayerPlaceholder.classList.add('hidden');
+        relinkTitleText.textContent = videoEntry.title;
+        relinkSubText.textContent = `Restored ${state.bookmarks.length} bookmark(s) from localStorage. Select the MP4 file to resume playing.`;
+        relinkOverlay.classList.remove('hidden');
+        showToast(`Bookmarks restored for: ${videoEntry.title}`);
+      }
+    }
+
+    media.addEventListener('error', () => {
+      mediaLoader.classList.add('hidden');
+      if (state.currentVideoId && state.currentVideoId.startsWith('drive_')) {
+        const driveId = state.currentVideoId.replace('drive_', '');
+        showToast('Using Drive embed viewer...');
+        media.classList.add('hidden');
+        driveEmbedIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
+        driveEmbedIframe.classList.remove('hidden');
+      }
+    });
+
+    media.addEventListener('waiting', () => mediaLoader.classList.remove('hidden'));
+    media.addEventListener('playing', () => {
+      mediaLoader.classList.add('hidden');
+      state.isPlaying = true;
+      updatePlayPauseUI();
+    });
+    media.addEventListener('pause', () => {
+      state.isPlaying = false;
+      updatePlayPauseUI();
+      saveCurrentVideoToLocalStorage();
+    });
+
+    let lastAutoSaveTime = 0;
+    media.addEventListener('timeupdate', () => {
+      if (!media.duration) return;
+      seekBar.value = (media.currentTime / media.duration) * 100;
+      currentTimeLabel.textContent = formatTime(media.currentTime);
+      durationLabel.textContent = formatTime(media.duration);
+
+      // Throttled auto-save every 4s
+      const now = Date.now();
+      if (now - lastAutoSaveTime > 4000) {
+        lastAutoSaveTime = now;
+        saveCurrentVideoToLocalStorage();
+      }
+    });
+
+    media.addEventListener('loadedmetadata', () => {
+      mediaLoader.classList.add('hidden');
+      durationLabel.textContent = formatTime(media.duration);
+    });
+
+    function togglePlay() {
+      if (!media.src && state.currentVideoType === 'local') {
+        relinkOverlay.classList.remove('hidden');
+        showToast('Please select your MP4 file to play');
+        return;
+      }
+      if (!media.src) {
+        showToast('Choose an MP4 file first');
+        return;
+      }
+      if (media.paused) {
+        media.play();
+      } else {
+        media.pause();
+      }
+    }
+
+    function updatePlayPauseUI() {
+      if (state.isPlaying) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+      }
+    }
+
+    playPauseBtn.addEventListener('click', togglePlay);
+    media.addEventListener('click', togglePlay);
+
+    seekBar.addEventListener('input', (e) => {
+      if (media.duration) {
+        const targetTime = (e.target.value / 100) * media.duration;
+        media.currentTime = targetTime;
+        currentTimeLabel.textContent = formatTime(targetTime);
+      }
+    });
+
+    skipBackBtn.addEventListener('click', () => {
+      if (media.currentTime !== undefined) {
+        media.currentTime = Math.max(0, media.currentTime - 15);
+        showToast('-15s');
+      }
+    });
+
+    skipForwardBtn.addEventListener('click', () => {
+      if (media.currentTime !== undefined && media.duration) {
+        media.currentTime = Math.min(media.duration, media.currentTime + 30);
+        showToast('+30s');
+      }
+    });
+
+    speedBtn.addEventListener('click', () => {
+      state.currentRateIndex = (state.currentRateIndex + 1) % state.playbackRates.length;
+      const rate = state.playbackRates[state.currentRateIndex];
+      media.playbackRate = rate;
+      speedBtn.textContent = `${rate}x`;
+      try {
+        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
+      } catch (e) {}
+      showToast(`Speed: ${rate}x`);
+    });
+
+    volumeBar.addEventListener('input', (e) => {
+      state.volume = parseFloat(e.target.value);
+      media.volume = state.volume;
+      state.isMuted = (state.volume === 0);
+      updateVolumeIcons();
+      try {
+        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
+      } catch (e) {}
+    });
+
+    muteBtn.addEventListener('click', () => {
+      state.isMuted = !state.isMuted;
+      media.muted = state.isMuted;
+      updateVolumeIcons();
+    });
+
+    function updateVolumeIcons() {
+      if (state.isMuted || state.volume === 0) {
+        volHighIcon.classList.add('hidden');
+        volMuteIcon.classList.remove('hidden');
+      } else {
+        volHighIcon.classList.remove('hidden');
+        volMuteIcon.classList.add('hidden');
+      }
+    }
+
+    function handleLocalFile(file) {
+      if (!file) return;
+      const fileUrl = URL.createObjectURL(file);
+      const cleanName = file.name.replace(/\.[^/.]+$/, '');
+      const videoId = 'file_' + sanitizeKey(file.name) + '_' + file.size;
+
+      // Check if we already have saved bookmarks in localStorage for this file
+      const data = getStoredData();
+      if (data.videos[videoId]) {
+        state.bookmarks = data.videos[videoId].bookmarks || [];
+      }
+
+      loadVideoSource(fileUrl, videoId, cleanName, 'local', 'Local MP4 File');
+    }
+
+    localFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) handleLocalFile(e.target.files[0]);
+    });
+
+    placeholderFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) handleLocalFile(e.target.files[0]);
+    });
+
+    relinkFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) handleLocalFile(e.target.files[0]);
+    });
+
+    // Drag & drop support on viewport
+    ['dragenter', 'dragover'].forEach(eventName => {
+      playerViewport.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        playerViewport.classList.add('drag-active');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      playerViewport.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        playerViewport.classList.remove('drag-active');
+      }, false);
+    });
+
+    playerViewport.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files[0]) {
+        handleLocalFile(files[0]);
+      }
+    });
+
+    loadDriveBtn.addEventListener('click', () => {
+      const url = driveUrlInput.value.trim();
+      if (!url) {
+        showToast('Please paste a Google Drive link');
+        return;
+      }
+      const driveId = extractGoogleDriveId(url);
+      if (driveId) {
+        const directStream = `https://drive.google.com/uc?export=download&id=${driveId}`;
+        loadVideoSource(directStream, 'drive_' + driveId, `Drive Video (${driveId.substring(0, 8)}...)`, 'drive', 'Google Drive MP4');
+        driveUrlInput.value = '';
+      } else {
+        const fileName = url.split('/').pop().split('?')[0] || 'Cloud MP4 Stream';
+        loadVideoSource(url, 'url_' + sanitizeKey(url), fileName, 'url', 'Web MP4 Stream');
+        driveUrlInput.value = '';
+      }
+    });
+
+    function renderBookmarks() {
+      bookmarksContainer.innerHTML = '';
+      bookmarkCount.textContent = state.bookmarks.length;
+
+      if (!state.currentVideoId) {
+        bookmarksContainer.innerHTML = `
+          <div class="text-center py-12 text-slate-500 text-xs flex flex-col items-center gap-2">
+            <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+            <span>Choose an MP4 to view or create bookmarks</span>
+          </div>
+        `;
+        return;
+      }
+
+      if (state.bookmarks.length === 0) {
+        bookmarksContainer.innerHTML = `
+          <div class="text-center py-10 text-slate-500 text-xs flex flex-col items-center gap-2">
+            <svg class="w-8 h-8 text-slate-600" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            <span>No bookmarks saved for this video yet</span>
+            <span class="text-[11px] text-indigo-400">Tap "+ Bookmark" during playback to save!</span>
+          </div>
+        `;
+        return;
+      }
+
+      state.bookmarks.sort((a, b) => a.time - b.time);
+
+      state.bookmarks.forEach((bm) => {
+        const item = document.createElement('div');
+        item.className = 'group p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between gap-2.5';
+        
+        item.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <button class="seek-btn font-mono text-[11px] text-indigo-300 bg-indigo-950/80 hover:bg-indigo-600 hover:text-white px-2 py-1 rounded-lg border border-indigo-500/30 transition flex-shrink-0" title="Jump to this time">
+              ${formatTime(bm.time)}
+            </button>
+            <input type="text" class="bm-note-input bg-transparent border-0 text-xs text-slate-200 focus:text-white focus:outline-none focus:border-b focus:border-indigo-500 w-full truncate" value="${escapeHtml(bm.note)}" placeholder="Add note...">
+          </div>
+          <button class="delete-btn text-slate-500 hover:text-red-400 p-1 rounded transition opacity-80 group-hover:opacity-100" title="Delete bookmark">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        `;
+
+        item.querySelector('.seek-btn').addEventListener('click', () => {
+          if (!media.src && state.currentVideoType === 'local') {
+            relinkOverlay.classList.remove('hidden');
+            showToast('Re-link the MP4 to jump to this moment');
+            return;
+          }
+          media.currentTime = bm.time;
+          if (media.paused) media.play();
+          showToast(`Jumped to ${formatTime(bm.time)}`);
+        });
+
+        const noteInput = item.querySelector('.bm-note-input');
+        noteInput.addEventListener('input', (e) => {
+          bm.note = e.target.value;
+          saveCurrentVideoToLocalStorage();
+        });
+
+        item.querySelector('.delete-btn').addEventListener('click', () => {
+          state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
+          saveCurrentVideoToLocalStorage();
+          renderBookmarks();
+          showToast('Bookmark removed');
+        });
+
+        bookmarksContainer.appendChild(item);
+      });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    addBookmarkBtn.addEventListener('click', () => {
+      if (!state.currentVideoId) {
+        showToast('Please load an MP4 file first');
+        return;
+      }
+
+      const cur = media && !isNaN(media.currentTime) ? media.currentTime : 0;
+      const newBm = {
+        id: 'bm_' + Date.now(),
+        time: Math.floor(cur),
+        note: `Bookmark at ${formatTime(cur)}`
+      };
+
+      state.bookmarks.push(newBm);
+      saveCurrentVideoToLocalStorage();
+      renderBookmarks();
+      showToast(`Bookmarked at ${formatTime(cur)} (saved to localStorage)`);
+    });
+
+    clearAllBookmarksBtn.addEventListener('click', () => {
+      if (!state.currentVideoId || state.bookmarks.length === 0) return;
+      state.bookmarks = [];
+      saveCurrentVideoToLocalStorage();
+      renderBookmarks();
+      showToast('All bookmarks cleared for this video');
+    });
+
+    function renderLibrary() {
+      libraryItemsContainer.innerHTML = '';
+      const data = getStoredData();
+      const keys = Object.keys(data.videos || {});
+
+      if (keys.length === 0) {
+        libraryItemsContainer.innerHTML = `
+          <div class="text-center py-12 text-slate-500 text-xs">
+            No saved videos found in localStorage.
+          </div>
+        `;
+        return;
+      }
+
+      keys.forEach(k => {
+        const item = data.videos[k];
+        const el = document.createElement('div');
+        el.className = 'p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between gap-3';
+        
+        const bmCount = Array.isArray(item.bookmarks) ? item.bookmarks.length : 0;
+        const typeBadge = item.type === 'drive' ? 'Google Drive' : (item.type === 'local' ? 'Local MP4' : 'Stream');
+
+        el.innerHTML = `
+          <div class="min-w-0 flex-1 cursor-pointer">
+            <span class="text-[9px] font-mono uppercase tracking-wider text-indigo-400 block">${typeBadge}</span>
+            <h4 class="text-xs font-bold text-white truncate">${escapeHtml(item.title)}</h4>
+            <span class="text-[11px] text-slate-400 font-mono">${bmCount} bookmarks</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button class="load-video-btn bg-indigo-600/90 hover:bg-indigo-600 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">
+              Open
+            </button>
+            <button class="remove-video-btn text-slate-500 hover:text-red-400 p-1.5 rounded-lg transition" title="Delete from localStorage">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        `;
+
+        el.querySelector('.load-video-btn').addEventListener('click', () => {
+          restoreSessionFromData(item);
+          libraryDrawer.classList.add('hidden');
+        });
+
+        el.querySelector('.remove-video-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const currentData = getStoredData();
+          delete currentData.videos[k];
+          if (currentData.lastActiveId === k) currentData.lastActiveId = '';
+          setStoredData(currentData);
+
+          if (state.currentVideoId === k) {
+            state.bookmarks = [];
+            renderBookmarks();
+          }
+          renderLibrary();
+          showToast('Deleted from localStorage');
+        });
+
+        libraryItemsContainer.appendChild(el);
+      });
+    }
+
+    libraryToggleBtn.addEventListener('click', () => {
+      renderLibrary();
+      libraryDrawer.classList.remove('hidden');
+    });
+
+    closeLibraryBtn.addEventListener('click', () => {
+      libraryDrawer.classList.add('hidden');
+    });
+
+    clearAllLocalStorageBtn.addEventListener('click', () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        state.bookmarks = [];
+        renderBookmarks();
+        renderLibrary();
+        updateStorageStatusDisplay();
+        showToast('All localStorage data cleared');
+      } catch (e) {}
+    });
+
+    function bootApplication() {
+      // 1. Load preferences (speed, volume)
+      try {
+        const rawPref = localStorage.getItem(PREF_KEY);
+        if (rawPref) {
+          const pref = JSON.parse(rawPref);
+          if (pref.volume !== undefined) state.volume = pref.volume;
+          if (pref.rateIndex !== undefined) state.currentRateIndex = pref.rateIndex;
+        }
+      } catch (e) {}
+
+      speedBtn.textContent = `${state.playbackRates[state.currentRateIndex]}x`;
+      volumeBar.value = state.volume;
+
+      // 2. Read pure localStorage and restore last active video
+      const data = getStoredData();
+      updateStorageStatusDisplay();
+
+      if (data.lastActiveId && data.videos[data.lastActiveId]) {
+        restoreSessionFromData(data.videos[data.lastActiveId]);
+      } else {
+        const videoKeys = Object.keys(data.videos);
+        if (videoKeys.length > 0) {
+          restoreSessionFromData(data.videos[videoKeys[0]]);
+        } else {
+          renderBookmarks();
+        }
+      }
+    }
+
+    window.addEventListener('beforeunload', () => {
+      saveCurrentVideoToLocalStorage();
+    });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootApplication);
+    } else {
+      bootApplication();
+    }
+  </script>
+</body>
+</html>
