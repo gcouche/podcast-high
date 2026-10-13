@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DriveCast v4.8 - Local Podcast Player & Bookmarks</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DriveCast v4.9 - Podcast Player & Bookmarks</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace']
           }
         }
@@ -22,6 +22,11 @@
     }
   </script>
   <style>
+    body {
+      background-color: #090d16;
+      color: #f1f5f9;
+      -webkit-tap-highlight-color: transparent;
+    }
     input[type=range] {
       -webkit-appearance: none;
       background: transparent;
@@ -45,11 +50,11 @@
       width: 100%;
       height: 6px;
       cursor: pointer;
-      background: #334155;
+      background: #1e293b;
       border-radius: 9999px;
     }
     ::-webkit-scrollbar {
-      width: 6px;
+      width: 5px;
     }
     ::-webkit-scrollbar-track {
       background: #090d16;
@@ -58,105 +63,148 @@
       background: #334155;
       border-radius: 9999px;
     }
-    .drag-active {
+    .drag-target-active {
       border-color: #818cf8 !important;
-      background-color: rgba(99, 102, 241, 0.15) !important;
+      background-color: rgba(99, 102, 241, 0.12) !important;
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white flex flex-col antialiased overflow-x-hidden">
+<body class="min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white antialiased overflow-x-hidden">
 
-  <!-- Simplified Header: Only Brand & Single "Choose Podcast" Action -->
-  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 w-full">
-    <div class="max-w-6xl mx-auto px-4 py-2.5 sm:py-3 flex items-center justify-between gap-3">
-      <!-- Logo & Version -->
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-md shadow-indigo-600/30 flex-shrink-0">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Header: Brand, Version & Unified Multi-Select Picker -->
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 w-full px-4 py-2.5 sm:py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+      
+      <!-- Brand & Version Indicator -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div class="flex items-center gap-1.5">
           <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-white leading-none">DriveCast</h1>
-          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold">v4.8</span>
+          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-full font-mono font-bold">v4.9</span>
         </div>
       </div>
 
-      <!-- Single Primary Action: Choose Podcast (MP4 / MP3 / M4A / SRT) -->
-      <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3.5 sm:px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center gap-2 flex-shrink-0">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-        </svg>
-        <span>Choose Podcast</span>
-        <input id="podcastFileInput" type="file" accept="video/mp4,audio/mp4,audio/mpeg,audio/mp3,audio/x-m4a,audio/m4a,audio/wav,video/*,audio/*,.srt,.vtt,.json" multiple class="hidden">
-      </label>
+      <!-- Single Primary Action: Choose Podcast (iOS Multi-Select: MP4, MP3, M4A, SRT together) -->
+      <div>
+        <input 
+          type="file" 
+          id="podcastPicker" 
+          class="hidden" 
+          multiple 
+          accept=".mp4,.m4a,.mp3,.wav,.webm,.srt,.vtt,text/plain,*/*" 
+        />
+        <button 
+          id="choosePodcastBtn" 
+          type="button"
+          class="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-600/30 transition cursor-pointer flex-shrink-0"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span>Choose Podcast</span>
+        </button>
+      </div>
+
     </div>
   </header>
-
-  <!-- Diagnostic Alert Bar for restricted iframes -->
-  <div id="storageErrorBanner" class="hidden bg-amber-500/10 border-b border-amber-500/30 text-amber-200 text-xs px-4 py-2 text-center">
-    <strong>Notice:</strong> LocalStorage is restricted in this frame. Bookmarks will be kept in memory for this session.
-  </div>
 
   <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-5 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
     
     <!-- LEFT COLUMN: Video/Audio Player & Transport (7 Cols) -->
     <div class="lg:col-span-7 flex flex-col gap-3 sm:gap-4">
       
-      <!-- Video / Audio Viewport -->
-      <div id="playerViewport" class="relative bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl aspect-video flex items-center justify-center transition-colors group">
-        <video id="mediaPlayer" class="w-full h-full object-contain cursor-pointer" playsinline webkit-playsinline preload="auto">
+      <!-- Video / Audio Viewport Area -->
+      <div 
+        id="playerContainer" 
+        class="relative bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl aspect-video flex items-center justify-center transition-colors group"
+      >
+        <video 
+          id="mediaPlayer" 
+          class="w-full h-full object-contain cursor-pointer hidden" 
+          playsinline 
+          webkit-playsinline 
+          preload="metadata"
+        >
           Your browser does not support HTML5 media.
         </video>
 
         <!-- Big Center Play Button Overlay -->
-        <button id="bigPlayBtn" class="hidden absolute w-16 h-16 rounded-full bg-indigo-600/90 hover:bg-indigo-500 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/50 backdrop-blur-sm transition-transform active:scale-90 z-10" title="Play">
+        <button 
+          id="bigPlayOverlayBtn" 
+          class="hidden absolute w-16 h-16 rounded-full bg-indigo-600/90 hover:bg-indigo-500 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/50 backdrop-blur-sm transition-transform active:scale-90 z-20" 
+          title="Play"
+        >
           <svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </button>
 
-        <!-- Subtitles Overlay Box -->
-        <div id="subtitleOverlay" class="hidden absolute bottom-4 inset-x-4 text-center pointer-events-none z-10 transition-opacity">
-          <span id="subtitleText" class="inline-block bg-black/85 text-white font-medium text-xs sm:text-sm px-3.5 py-1.5 rounded-lg shadow-lg border border-white/10 backdrop-blur-xs max-w-[90%] leading-snug"></span>
+        <!-- Dynamic Subtitle Overlay Box -->
+        <div 
+          id="subtitleOverlay" 
+          class="hidden absolute bottom-3 inset-x-3 text-center pointer-events-none z-20 transition-opacity"
+        >
+          <span 
+            id="subtitleText" 
+            class="inline-block bg-black/85 text-white font-medium text-xs sm:text-sm px-3.5 py-1.5 rounded-lg shadow-lg border border-white/10 backdrop-blur-xs max-w-[92%] leading-relaxed"
+          ></span>
         </div>
 
-        <!-- Initial Placeholder -->
-        <div id="emptyPlayerPlaceholder" class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10">
+        <!-- Idle State Placeholder (Shown until podcast is selected) -->
+        <div 
+          id="idlePlaceholder" 
+          class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10"
+        >
           <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
             </svg>
           </div>
           <h2 class="text-sm sm:text-base font-bold text-white mb-1">No Podcast Loaded</h2>
-          <p class="text-xs text-slate-400 max-w-xs mb-4">Choose an MP4, MP3, or M4A file. Matching SRT subtitles will load automatically.</p>
-          <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow-md transition flex items-center gap-1.5">
+          <p class="text-xs text-slate-400 max-w-xs mb-4">
+            Tap <strong>Choose Podcast</strong> to pick an MP4, MP3, or M4A file. You can select your matching SRT at the same time.
+          </p>
+          <button 
+            id="idleChooseBtn" 
+            type="button" 
+            class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
             </svg>
             <span>Choose Podcast</span>
-            <input id="placeholderFileInput" type="file" accept="video/mp4,audio/mp4,audio/mpeg,audio/mp3,audio/x-m4a,audio/m4a,audio/wav,video/*,audio/*,.srt,.vtt,.json" multiple class="hidden">
-          </label>
+          </button>
         </div>
 
         <!-- Loading Spinner -->
-        <div id="mediaLoader" class="hidden absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-20 pointer-events-none">
+        <div id="mediaLoader" class="hidden absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-30 pointer-events-none">
           <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
 
-      <!-- Player Controls -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-5 flex flex-col gap-3 shadow-lg">
+      <!-- Player Transport Controls Bar -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3 shadow-lg">
         
-        <!-- Video Header Info & Primary Add Bookmark Action -->
+        <!-- Track Header & Primary +Bookmark Button -->
         <div class="flex items-center justify-between gap-2.5">
           <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
               <span id="sourceLabel" class="text-[10px] font-mono uppercase tracking-wider text-indigo-400 block truncate">Ready</span>
-              <span id="srtBadge" class="hidden text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded">SRT ON</span>
+              <span id="badgeSaved" class="hidden text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">SAVED</span>
+              <span id="badgeSRT" class="hidden text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded">SRT ON</span>
             </div>
-            <h2 id="videoTitleLabel" class="text-xs sm:text-base font-bold text-white truncate">Choose a podcast to start</h2>
+            <h2 id="videoTitleLabel" class="text-xs sm:text-sm md:text-base font-bold text-white truncate mt-0.5">Choose a podcast to start</h2>
           </div>
-          <button id="addBookmarkBtn" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 flex-shrink-0 shadow-md shadow-indigo-600/30">
+
+          <button 
+            id="addBookmarkBtn" 
+            type="button" 
+            disabled 
+            class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 flex-shrink-0 shadow-md shadow-indigo-600/30 cursor-pointer"
+          >
             <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
             <span>+ Bookmark</span>
           </button>
@@ -165,39 +213,44 @@
         <!-- Scrubber Range Bar -->
         <div class="flex flex-col gap-1">
           <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1" class="w-full">
-          <div class="flex justify-between text-[11px] font-mono text-slate-400">
+          <div class="flex justify-between text-[10px] sm:text-[11px] font-mono text-slate-400">
             <span id="currentTimeLabel">00:00</span>
             <span id="durationLabel">00:00</span>
           </div>
         </div>
 
-        <!-- Transport Buttons -->
+        <!-- Transport Buttons Row -->
         <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-800/80">
+          
+          <!-- Speed & Subtitle Toggle -->
           <div class="flex items-center gap-1">
-            <!-- Playback Speed -->
-            <button id="speedBtn" class="text-[11px] font-mono font-medium px-2 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition border border-slate-700/60">
+            <button id="speedBtn" type="button" class="text-[11px] font-mono font-medium px-2 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition border border-slate-700/60">
               1.0x
             </button>
-            <!-- Toggle Subtitles Display Button -->
-            <button id="toggleSubtitlesBtn" title="Toggle Subtitles" class="text-[11px] font-mono font-semibold px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition border border-slate-700/60 flex items-center gap-1">
-              <span>CC</span>
+            <button id="toggleSubtitlesBtn" type="button" title="Toggle Subtitles" class="text-[11px] font-mono font-semibold px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition border border-slate-700/60">
+              CC
             </button>
           </div>
 
-          <!-- Rewind / Play-Pause / Skip -->
+          <!-- Rewind, Play/Pause, Fast-Forward -->
           <div class="flex items-center gap-1.5 sm:gap-3">
-            <button id="skipBackBtn" title="Rewind 15s" class="p-1.5 sm:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
+            <button id="skipBackBtn" type="button" title="Rewind 15s" class="p-1.5 sm:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/>
               </svg>
             </button>
 
-            <button id="playPauseBtn" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 transition">
+            <button 
+              id="playPauseBtn" 
+              type="button" 
+              disabled 
+              class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:opacity-40 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 transition"
+            >
               <svg id="playIcon" class="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               <svg id="pauseIcon" class="hidden w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </button>
 
-            <button id="skipForwardBtn" title="Forward 30s" class="p-1.5 sm:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
+            <button id="skipForwardBtn" type="button" title="Forward 30s" class="p-1.5 sm:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
               <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"/>
               </svg>
@@ -206,12 +259,13 @@
 
           <!-- Volume Controls -->
           <div class="flex items-center gap-1">
-            <button id="muteBtn" class="text-slate-400 hover:text-white p-1">
+            <button id="muteBtn" type="button" class="text-slate-400 hover:text-white p-1">
               <svg id="volHighIcon" class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-              <svg id="volMuteIcon" class="hidden w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12-2l4 4m0-4l-4 4"/></svg>
+              <svg id="volMuteIcon" class="hidden w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12-2l4 4m0-4l-4 4"/></svg>
             </button>
             <input id="volumeBar" type="range" min="0" max="1" step="0.05" value="0.9" class="w-12 sm:w-16">
           </div>
+
         </div>
 
       </div>
@@ -220,7 +274,7 @@
 
     <!-- RIGHT COLUMN: Bookmarks List (5 Cols) -->
     <div class="lg:col-span-5 flex flex-col gap-3">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col flex-1 shadow-lg min-h-[360px]">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col flex-1 shadow-lg min-h-[380px]">
         
         <div class="flex items-center justify-between pb-3 border-b border-slate-800 gap-2">
           <div class="flex items-center gap-2">
@@ -229,20 +283,31 @@
             </div>
             <div>
               <h3 class="font-bold text-xs sm:text-sm text-white">Bookmarks</h3>
-              <p id="subStorageStatus" class="text-[10px] text-emerald-400 font-mono">Auto-saved by filename</p>
+              <p class="text-[10px] text-slate-400 font-mono">Sentence &amp; Exact Time</p>
             </div>
           </div>
 
-          <!-- Actions: Export TXT, Clear -->
+          <!-- Actions: Export TXT, Count Pill & Clear -->
           <div class="flex items-center gap-1.5">
-            <!-- Export as TXT Button -->
-            <button id="exportTxtBtn" title="Export Bookmarks as .txt file" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1">
+            <button 
+              id="exportTxtBtn" 
+              type="button" 
+              disabled 
+              title="Export Bookmarks as .txt file" 
+              class="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1 cursor-pointer"
+            >
               <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               <span>Export TXT</span>
             </button>
 
             <span id="bookmarkCount" class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300">0</span>
-            <button id="clearAllBookmarksBtn" title="Clear bookmarks for this video" class="text-slate-500 hover:text-red-400 p-1 rounded-lg hover:bg-slate-800 transition">
+
+            <button 
+              id="clearAllBookmarksBtn" 
+              type="button" 
+              title="Clear bookmarks for this video" 
+              class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+            >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
           </div>
@@ -250,16 +315,18 @@
 
         <!-- Bookmarks Scroll Area -->
         <div id="bookmarksContainer" class="flex-1 overflow-y-auto py-3 space-y-2 pr-1 max-h-[460px]">
-          <!-- Bookmarks rendered here -->
+          <div class="text-center py-10 text-slate-500 text-xs">
+            Choose a podcast to view or add bookmarks.
+          </div>
         </div>
 
         <!-- Bottom Status -->
         <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-          <span class="flex items-center gap-1 text-slate-400">
+          <span class="flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             <span>AirPods Double-Tap Ready</span>
           </span>
-          <span class="text-[10px] text-slate-500">v4.8 • On-Demand Match</span>
+          <span class="text-[10px] text-slate-500">v4.9</span>
         </div>
 
       </div>
@@ -269,781 +336,843 @@
 
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white border border-slate-700 px-4 py-2.5 rounded-xl shadow-2xl text-xs z-50 transform translate-y-20 opacity-0 transition duration-300 flex items-center gap-2">
-    <span id="toastIcon"></span>
     <span id="toastMsg">Notification message</span>
   </div>
 
   <script>
-    /*
-     * DRIVECAST v4.8 - ON-DEMAND BOOKMARK LOADING
-     */
-    const STORAGE_KEY = 'drivecast_v4_data';
-    const PREF_KEY = 'drivecast_v4_prefs';
+    (function () {
+      'use strict';
 
-    // Application State
-    const state = {
-      currentVideoId: '',
-      currentVideoTitle: '',
-      currentVideoBaseName: '',
-      currentVideoFileName: '',
-      isPlaying: false,
-      isMuted: false,
-      volume: 0.9,
-      playbackRates: [0.75, 1.0, 1.25, 1.5, 2.0],
-      currentRateIndex: 1,
-      bookmarks: [],
-      subtitles: [],
-      subtitlesEnabled: true
-    };
+      const STORAGE_KEY = 'drivecast_v4_data';
+      const PREF_KEY = 'drivecast_v4_prefs';
 
-    // DOM Elements
-    const media = document.getElementById('mediaPlayer');
-    const bigPlayBtn = document.getElementById('bigPlayBtn');
-    const playerViewport = document.getElementById('playerViewport');
-    const emptyPlayerPlaceholder = document.getElementById('emptyPlayerPlaceholder');
-    const mediaLoader = document.getElementById('mediaLoader');
-    const sourceLabel = document.getElementById('sourceLabel');
-    const videoTitleLabel = document.getElementById('videoTitleLabel');
-    const srtBadge = document.getElementById('srtBadge');
-    const subtitleOverlay = document.getElementById('subtitleOverlay');
-    const subtitleText = document.getElementById('subtitleText');
+      // Application State
+      const state = {
+        currentVideoId: '',
+        currentVideoTitle: '',
+        currentVideoBaseName: '',
+        currentVideoFileName: '',
+        isPlaying: false,
+        isMuted: false,
+        volume: 0.9,
+        playbackRates: [0.75, 1.0, 1.25, 1.5, 2.0],
+        currentRateIndex: 1,
+        bookmarks: [],
+        subtitles: [],
+        subtitlesEnabled: true
+      };
 
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const playIcon = document.getElementById('playIcon');
-    const pauseIcon = document.getElementById('pauseIcon');
-    const skipBackBtn = document.getElementById('skipBackBtn');
-    const skipForwardBtn = document.getElementById('skipForwardBtn');
-    const speedBtn = document.getElementById('speedBtn');
-    const toggleSubtitlesBtn = document.getElementById('toggleSubtitlesBtn');
-    const seekBar = document.getElementById('seekBar');
-    const currentTimeLabel = document.getElementById('currentTimeLabel');
-    const durationLabel = document.getElementById('durationLabel');
-    const volumeBar = document.getElementById('volumeBar');
-    const muteBtn = document.getElementById('muteBtn');
-    const volHighIcon = document.getElementById('volHighIcon');
-    const volMuteIcon = document.getElementById('volMuteIcon');
+      // DOM Elements
+      const media = document.getElementById('mediaPlayer');
+      const playerContainer = document.getElementById('playerContainer');
+      const idlePlaceholder = document.getElementById('idlePlaceholder');
+      const mediaLoader = document.getElementById('mediaLoader');
+      const bigPlayOverlayBtn = document.getElementById('bigPlayOverlayBtn');
+      const sourceLabel = document.getElementById('sourceLabel');
+      const videoTitleLabel = document.getElementById('videoTitleLabel');
+      const badgeSaved = document.getElementById('badgeSaved');
+      const badgeSRT = document.getElementById('badgeSRT');
+      const subtitleOverlay = document.getElementById('subtitleOverlay');
+      const subtitleText = document.getElementById('subtitleText');
 
-    const podcastFileInput = document.getElementById('podcastFileInput');
-    const placeholderFileInput = document.getElementById('placeholderFileInput');
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      const playIcon = document.getElementById('playIcon');
+      const pauseIcon = document.getElementById('pauseIcon');
+      const skipBackBtn = document.getElementById('skipBackBtn');
+      const skipForwardBtn = document.getElementById('skipForwardBtn');
+      const speedBtn = document.getElementById('speedBtn');
+      const toggleSubtitlesBtn = document.getElementById('toggleSubtitlesBtn');
+      const seekBar = document.getElementById('seekBar');
+      const currentTimeLabel = document.getElementById('currentTimeLabel');
+      const durationLabel = document.getElementById('durationLabel');
+      const volumeBar = document.getElementById('volumeBar');
+      const muteBtn = document.getElementById('muteBtn');
+      const volHighIcon = document.getElementById('volHighIcon');
+      const volMuteIcon = document.getElementById('volMuteIcon');
 
-    const addBookmarkBtn = document.getElementById('addBookmarkBtn');
-    const bookmarkCount = document.getElementById('bookmarkCount');
-    const bookmarksContainer = document.getElementById('bookmarksContainer');
-    const clearAllBookmarksBtn = document.getElementById('clearAllBookmarksBtn');
-    const exportTxtBtn = document.getElementById('exportTxtBtn');
+      const podcastPicker = document.getElementById('podcastPicker');
+      const choosePodcastBtn = document.getElementById('choosePodcastBtn');
+      const idleChooseBtn = document.getElementById('idleChooseBtn');
 
-    const storageErrorBanner = document.getElementById('storageErrorBanner');
-    const toast = document.getElementById('toast');
-    const toastMsg = document.getElementById('toastMsg');
+      const addBookmarkBtn = document.getElementById('addBookmarkBtn');
+      const bookmarkCount = document.getElementById('bookmarkCount');
+      const bookmarksContainer = document.getElementById('bookmarksContainer');
+      const clearAllBookmarksBtn = document.getElementById('clearAllBookmarksBtn');
+      const exportTxtBtn = document.getElementById('exportTxtBtn');
 
-    function formatTime(seconds) {
-      if (isNaN(seconds) || seconds < 0) return '00:00';
-      const sec = Math.floor(seconds);
-      const h = Math.floor(sec / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = sec % 60;
-      if (h > 0) {
-        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+
+      // Helper: Format Seconds to MM:SS or HH:MM:SS
+      function formatTime(seconds) {
+        if (isNaN(seconds) || seconds < 0) return '00:00';
+        const sec = Math.floor(seconds);
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        if (h > 0) {
+          return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
       }
-      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    let toastTimer = null;
-    function showToast(message) {
-      if (!toast || !toastMsg) return;
-      toastMsg.textContent = message;
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      toast.classList.add('translate-y-0', 'opacity-100');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-        toast.classList.remove('translate-y-0', 'opacity-100');
-      }, 2600);
-    }
-
-    function normalizeName(filename) {
-      if (!filename) return '';
-      return filename
-        .replace(/\.(mp4|m4v|webm|mov|mkv|mp3|m4a|wav|ogg|aac|srt|vtt|json)$/i, '')
-        .replace(/\.(en|eng|fr|es|de|cc|forced|default)$/i, '')
-        .toLowerCase()
-        .replace(/[\s\-_.\(\)\[\]]+/g, ' ')
-        .trim();
-    }
-
-    function getDatabase() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return { lastActiveId: '', videos: {} };
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed !== 'object') return { lastActiveId: '', videos: {} };
-        if (!parsed.videos) parsed.videos = {};
-        return parsed;
-      } catch (e) {
-        console.error('localStorage read error:', e);
-        if (storageErrorBanner) storageErrorBanner.classList.remove('hidden');
-        return { lastActiveId: '', videos: {} };
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
       }
-    }
 
-    function saveDatabase(data) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (e) {
-        console.error('localStorage write error:', e);
-        if (storageErrorBanner) storageErrorBanner.classList.remove('hidden');
+      let toastTimer = null;
+      function showToast(message) {
+        if (!toast || !toastMsg) return;
+        toastMsg.textContent = message;
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.add('translate-y-20', 'opacity-0');
+          toast.classList.remove('translate-y-0', 'opacity-100');
+        }, 2600);
       }
-    }
 
-    function saveCurrentVideoToDatabase() {
-      if (!state.currentVideoId) return;
-      try {
-        const db = getDatabase();
-        db.lastActiveId = state.currentVideoId;
-        
-        // Find existing or create entry
-        const existingEntry = db.videos[state.currentVideoId] || {};
-
-        db.videos[state.currentVideoId] = {
-          ...existingEntry,
-          id: state.currentVideoId,
-          title: state.currentVideoTitle,
-          baseName: state.currentVideoBaseName,
-          fileName: state.currentVideoFileName,
-          bookmarks: state.bookmarks,
-          subtitles: state.subtitles,
-          lastSeekTime: media && !isNaN(media.currentTime) ? media.currentTime : 0,
-          updatedAt: Date.now()
-        };
-        saveDatabase(db);
-      } catch (e) {
-        console.error('Failed to save to database:', e);
+      function normalizeName(filename) {
+        if (!filename) return '';
+        return filename
+          .replace(/\.(mp4|m4v|webm|mov|mkv|mp3|m4a|wav|ogg|aac|srt|vtt|json)$/i, '')
+          .replace(/\.(en|eng|fr|es|de|cc|forced|default)$/i, '')
+          .toLowerCase()
+          .replace(/[\s\-_.\(\)\[\]]+/g, ' ')
+          .trim();
       }
-    }
 
-    function parseTimestamp(timeStr) {
-      if (!timeStr) return 0;
-      const cleaned = timeStr.trim().replace(',', '.');
-      const parts = cleaned.split(':');
-      if (parts.length === 3) {
-        return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+      function getDatabase() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return { videos: {} };
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return { videos: {} };
+          if (!parsed.videos) parsed.videos = {};
+          return parsed;
+        } catch (e) {
+          console.warn('localStorage read error:', e);
+          return { videos: {} };
+        }
       }
-      if (parts.length === 2) {
-        return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+
+      function saveDatabase(data) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) {
+          console.warn('localStorage write error:', e);
+        }
       }
-      return parseFloat(cleaned) || 0;
-    }
 
-    function parseSRTorVTT(rawText) {
-      if (!rawText) return [];
-      const sanitized = rawText
-        .replace(/^\uFEFF/, '')
-        .replace(/\r\n/g, '\n')
-        .replace(/\r/g, '\n');
+      function saveCurrentVideoToDatabase() {
+        if (!state.currentVideoId) return;
+        try {
+          const db = getDatabase();
+          const existingEntry = db.videos[state.currentVideoId] || {};
 
-      const cues = [];
-      const blocks = sanitized.split(/\n\s*\n/);
+          db.videos[state.currentVideoId] = {
+            ...existingEntry,
+            id: state.currentVideoId,
+            title: state.currentVideoTitle,
+            baseName: state.currentVideoBaseName,
+            fileName: state.currentVideoFileName,
+            bookmarks: state.bookmarks,
+            subtitles: state.subtitles,
+            lastSeekTime: media && !isNaN(media.currentTime) ? media.currentTime : 0,
+            updatedAt: Date.now()
+          };
+          saveDatabase(db);
+          badgeSaved.classList.remove('hidden');
+        } catch (e) {
+          console.error('Failed to save to database:', e);
+        }
+      }
 
-      for (const block of blocks) {
-        const lines = block.trim().split('\n');
-        if (lines.length === 0) continue;
+      function parseTimestamp(timeStr) {
+        if (!timeStr) return 0;
+        const cleaned = timeStr.trim().replace(',', '.');
+        const parts = cleaned.split(':');
+        if (parts.length === 3) {
+          return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+        }
+        if (parts.length === 2) {
+          return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+        }
+        return parseFloat(cleaned) || 0;
+      }
 
-        let arrowLineIdx = -1;
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].includes('-->')) {
-            arrowLineIdx = i;
-            break;
+      function parseSRTorVTT(rawText) {
+        if (!rawText) return [];
+        const sanitized = rawText
+          .replace(/^\uFEFF/, '')
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n');
+
+        const cues = [];
+        const blocks = sanitized.split(/\n\s*\n/);
+
+        for (const block of blocks) {
+          const lines = block.trim().split('\n');
+          if (lines.length === 0) continue;
+
+          let arrowLineIdx = -1;
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes('-->')) {
+              arrowLineIdx = i;
+              break;
+            }
+          }
+
+          if (arrowLineIdx === -1) continue;
+
+          const timeLine = lines[arrowLineIdx];
+          const sides = timeLine.split('-->');
+          if (sides.length !== 2) continue;
+
+          const startStr = sides[0].trim();
+          const endStr = sides[1].trim().split(/\s+/)[0];
+
+          const start = parseTimestamp(startStr);
+          const end = parseTimestamp(endStr);
+
+          const rawTextLines = lines.slice(arrowLineIdx + 1);
+          const text = rawTextLines
+            .join(' ')
+            .replace(/<[^>]+>/g, '')
+            .replace(/\{[^\}]+\}/g, '')
+            .trim();
+
+          if (text && !isNaN(start) && !isNaN(end) && end >= start) {
+            cues.push({ start, end, text });
           }
         }
 
-        if (arrowLineIdx === -1) continue;
+        return cues;
+      }
 
-        const timeLine = lines[arrowLineIdx];
-        const sides = timeLine.split('-->');
-        if (sides.length !== 2) continue;
+      // Deterministic Sentence Extraction Engine (Period to Period)
+      function extractSentenceAtTime(currentTime) {
+        if (!state.subtitles || state.subtitles.length === 0) return '';
 
-        const startStr = sides[0].trim();
-        const endStr = sides[1].trim().split(/\s+/)[0];
+        // 1. Locate the active or closest subtitle cue
+        let cueIdx = state.subtitles.findIndex(c => currentTime >= c.start && currentTime <= c.end);
+        if (cueIdx === -1) {
+          let closestDiff = Infinity;
+          state.subtitles.forEach((c, idx) => {
+            const diff = Math.min(Math.abs(currentTime - c.start), Math.abs(currentTime - c.end));
+            if (diff < closestDiff) {
+              closestDiff = diff;
+              cueIdx = idx;
+            }
+          });
+        }
+        if (cueIdx === -1) return '';
 
-        const start = parseTimestamp(startStr);
-        const end = parseTimestamp(endStr);
+        // 2. Assemble a localized context window (+- 15 cues)
+        const winStart = Math.max(0, cueIdx - 15);
+        const winEnd = Math.min(state.subtitles.length - 1, cueIdx + 15);
 
-        const rawTextLines = lines.slice(arrowLineIdx + 1);
-        const text = rawTextLines
-          .join(' ')
-          .replace(/<[^>]+>/g, '')
-          .replace(/\{[^\}]+\}/g, '')
-          .trim();
+        let contextText = '';
+        let targetOffset = 0;
 
-        if (text && !isNaN(start) && !isNaN(end) && end >= start) {
-          cues.push({ start, end, text });
+        for (let i = winStart; i <= winEnd; i++) {
+          const cue = state.subtitles[i];
+          const cleanText = cue.text.replace(/\r?\n+/g, ' ').trim();
+          if (!cleanText) continue;
+
+          if (i === cueIdx) {
+            const dur = Math.max(0.1, cue.end - cue.start);
+            const ratio = Math.max(0, Math.min(1, (currentTime - cue.start) / dur));
+            targetOffset = (contextText ? contextText.length + 1 : 0) + Math.floor(ratio * cleanText.length);
+          }
+
+          contextText += (contextText ? ' ' : '') + cleanText;
+        }
+
+        if (!contextText) return state.subtitles[cueIdx]?.text?.trim() || '';
+
+        // 3. Scan backwards for previous period (.) and forward for next period (.)
+        const prevPeriodIdx = contextText.lastIndexOf('.', Math.max(0, targetOffset - 1));
+        const startPos = prevPeriodIdx === -1 ? 0 : prevPeriodIdx + 1;
+
+        const nextPeriodIdx = contextText.indexOf('.', targetOffset);
+        const endPos = nextPeriodIdx === -1 ? contextText.length : nextPeriodIdx + 1;
+
+        let sentence = contextText.slice(startPos, endPos).trim();
+
+        if (!sentence || sentence === '.') {
+          sentence = state.subtitles[cueIdx]?.text?.trim() || '';
+        }
+
+        // 4. Reformat sentence: strip leading symbols, capitalize first letter, ensure terminal punctuation
+        sentence = sentence.replace(/\s+/g, ' ').trim();
+        sentence = sentence.replace(/^[\s,;:\-–—.]+/, '').trim();
+        if (sentence.length > 0) {
+          sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+        }
+        if (sentence.length > 0 && !/[.!?…]$/.test(sentence)) {
+          sentence += '.';
+        }
+
+        return sentence;
+      }
+
+      function applySubtitles(srtText, srtFileName) {
+        try {
+          state.subtitles = parseSRTorVTT(srtText);
+          if (state.subtitles.length > 0) {
+            state.subtitlesEnabled = true;
+            badgeSRT.classList.remove('hidden');
+            badgeSRT.textContent = `SRT ON (${state.subtitles.length})`;
+            toggleSubtitlesBtn.classList.add('text-indigo-400');
+            toggleSubtitlesBtn.classList.remove('text-slate-400');
+            saveCurrentVideoToDatabase();
+            showToast(`SRT linked: ${srtFileName || 'subtitles'} (${state.subtitles.length} lines)`);
+          } else {
+            resetSubtitlesUI();
+          }
+        } catch (err) {
+          console.warn('Failed to parse subtitles:', err);
+          resetSubtitlesUI();
         }
       }
 
-      return cues;
-    }
+      function resetSubtitlesUI() {
+        state.subtitles = [];
+        badgeSRT.classList.add('hidden');
+        subtitleOverlay.classList.add('hidden');
+        subtitleText.textContent = '';
+        toggleSubtitlesBtn.classList.remove('text-indigo-400');
+        toggleSubtitlesBtn.classList.add('text-slate-400');
+      }
 
-    function applySubtitles(srtText, srtFileName = 'subtitles.srt') {
-      try {
-        state.subtitles = parseSRTorVTT(srtText);
-        if (state.subtitles.length > 0) {
+      function setupAirPodsMediaSession() {
+        if (!('mediaSession' in navigator)) return;
+
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: state.currentVideoTitle || 'DriveCast Player',
+            artist: 'DriveCast Podcast',
+            album: 'Local Bookmarks'
+          });
+
+          // AirPods double-tap stem trigger -> Creates Bookmark
+          navigator.mediaSession.setActionHandler('nexttrack', () => {
+            triggerBookmarkCreation('AirPods double-tap');
+          });
+
+          // AirPods triple-tap stem trigger -> Creates Bookmark
+          navigator.mediaSession.setActionHandler('previoustrack', () => {
+            triggerBookmarkCreation('AirPods remote');
+          });
+
+          navigator.mediaSession.setActionHandler('play', () => {
+            if (media && media.paused) media.play().catch(() => {});
+          });
+          navigator.mediaSession.setActionHandler('pause', () => {
+            if (media && !media.paused) media.pause();
+          });
+          navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+            const skip = details.seekOffset || 15;
+            media.currentTime = Math.max(0, media.currentTime - skip);
+          });
+          navigator.mediaSession.setActionHandler('seekforward', (details) => {
+            const skip = details.seekOffset || 30;
+            if (media.duration) media.currentTime = Math.min(media.duration, media.currentTime + skip);
+          });
+        } catch (e) {
+          console.warn('MediaSession handler registration warning:', e);
+        }
+      }
+
+      function updatePlayPauseUI() {
+        if (media.paused) {
+          playIcon.classList.remove('hidden');
+          pauseIcon.classList.add('hidden');
+          if (state.currentVideoId) {
+            bigPlayOverlayBtn.classList.remove('hidden');
+          } else {
+            bigPlayOverlayBtn.classList.add('hidden');
+          }
+        } else {
+          playIcon.classList.add('hidden');
+          pauseIcon.classList.remove('hidden');
+          bigPlayOverlayBtn.classList.add('hidden');
+        }
+      }
+
+      async function handleSelectedFiles(filesList) {
+        if (!filesList || filesList.length === 0) return;
+        const files = Array.from(filesList);
+
+        // 1. Locate media file (MP4, MP3, M4A, etc.)
+        const mediaFile = files.find(f => 
+          f.type.startsWith('video/') || 
+          f.type.startsWith('audio/') || 
+          /\.(mp4|m4a|mp3|wav|webm|ogg|aac|m4v|mov)$/i.test(f.name)
+        );
+
+        if (!mediaFile) {
+          showToast('Please select an MP4, MP3, or M4A podcast file');
+          return;
+        }
+
+        const rawTitle = mediaFile.name.replace(/\.[^/.]+$/, '');
+        const normName = normalizeName(mediaFile.name);
+        const isAudio = mediaFile.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|aac)$/i.test(mediaFile.name);
+
+        // 2. Query database for existing entry matching by filename or normalized name
+        const db = getDatabase();
+        const existingKey = Object.keys(db.videos).find(k => {
+          const entry = db.videos[k];
+          return entry.fileName === mediaFile.name || 
+                 normalizeName(entry.title) === normName ||
+                 normalizeName(entry.fileName) === normName;
+        });
+
+        let loadedBookmarks = [];
+        let loadedSubtitles = [];
+
+        if (existingKey && db.videos[existingKey]) {
+          const entry = db.videos[existingKey];
+          state.currentVideoId = entry.id;
+          loadedBookmarks = Array.isArray(entry.bookmarks) ? [...entry.bookmarks] : [];
+          loadedSubtitles = Array.isArray(entry.subtitles) ? [...entry.subtitles] : [];
+          badgeSaved.classList.remove('hidden');
+          showToast(`Loaded "${rawTitle}" (${loadedBookmarks.length} bookmarks found)`);
+        } else {
+          const newId = 'podcast_' + normName.replace(/\s+/g, '_') + '_' + Date.now();
+          state.currentVideoId = newId;
+          loadedBookmarks = [];
+          loadedSubtitles = [];
+          badgeSaved.classList.add('hidden');
+          showToast(`New podcast entry created for "${rawTitle}"`);
+        }
+
+        state.currentVideoTitle = rawTitle;
+        state.currentVideoBaseName = normName;
+        state.currentVideoFileName = mediaFile.name;
+        state.bookmarks = loadedBookmarks;
+        state.subtitles = loadedSubtitles;
+
+        sourceLabel.textContent = isAudio ? 'Audio Podcast' : 'Video Podcast';
+        videoTitleLabel.textContent = rawTitle;
+
+        // Reveal media screen, enable controls
+        idlePlaceholder.classList.add('hidden');
+        media.classList.remove('hidden');
+        mediaLoader.classList.remove('hidden');
+        addBookmarkBtn.disabled = false;
+        playPauseBtn.disabled = false;
+        exportTxtBtn.disabled = state.bookmarks.length === 0;
+
+        const fileUrl = URL.createObjectURL(mediaFile);
+        media.src = fileUrl;
+        media.playbackRate = state.playbackRates[state.currentRateIndex] || 1.0;
+
+        try {
+          media.volume = state.volume;
+        } catch (e) {
+          console.warn('Volume setting restricted on this device:', e);
+        }
+        volumeBar.value = state.volume;
+
+        renderBookmarks();
+        setupAirPodsMediaSession();
+
+        // 3. Check if an SRT file is included in this selection
+        const srtFiles = files.filter(f => /\.(srt|vtt)$/i.test(f.name));
+        let matchingSrt = null;
+
+        if (srtFiles.length === 1) {
+          matchingSrt = srtFiles[0];
+        } else if (srtFiles.length > 1) {
+          matchingSrt = srtFiles.find(f => normalizeName(f.name) === normName) ||
+                        srtFiles.find(f => normalizeName(f.name).includes(normName) || normName.includes(normalizeName(f.name))) ||
+                        srtFiles[0];
+        }
+
+        if (matchingSrt) {
+          try {
+            const srtText = await matchingSrt.text();
+            applySubtitles(srtText, matchingSrt.name);
+          } catch (err) {
+            console.warn('SRT read error:', err);
+          }
+        } else if (state.subtitles.length > 0) {
+          // Restore previously saved subtitles from database
           state.subtitlesEnabled = true;
-          srtBadge.classList.remove('hidden');
-          srtBadge.textContent = `SRT ON (${state.subtitles.length})`;
+          badgeSRT.classList.remove('hidden');
+          badgeSRT.textContent = `SRT ON (${state.subtitles.length})`;
           toggleSubtitlesBtn.classList.add('text-indigo-400');
           toggleSubtitlesBtn.classList.remove('text-slate-400');
-          saveCurrentVideoToDatabase();
-          showToast(`SRT linked: ${srtFileName} (${state.subtitles.length} cues)`);
         } else {
           resetSubtitlesUI();
         }
-      } catch (err) {
-        console.error('Failed to parse subtitles:', err);
-        resetSubtitlesUI();
-      }
-    }
 
-    function resetSubtitlesUI() {
-      state.subtitles = [];
-      srtBadge.classList.add('hidden');
-      subtitleOverlay.classList.add('hidden');
-      subtitleText.textContent = '';
-      toggleSubtitlesBtn.classList.remove('text-indigo-400');
-      toggleSubtitlesBtn.classList.add('text-slate-400');
-    }
+        saveCurrentVideoToDatabase();
+        media.load();
 
-    function getCurrentSubtitleSentence(currentTime) {
-      if (!state.subtitles || state.subtitles.length === 0) return '';
-      const exactCue = state.subtitles.find(c => currentTime >= c.start && currentTime <= c.end);
-      if (exactCue && exactCue.text) return exactCue.text;
-
-      const nearCue = state.subtitles.find(c => Math.abs(currentTime - c.start) <= 1.5 || Math.abs(currentTime - c.end) <= 1.5);
-      return nearCue ? nearCue.text : '';
-    }
-
-    function setupAirPodsMediaSession() {
-      if (!('mediaSession' in navigator)) return;
-
-      try {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: state.currentVideoTitle || 'DriveCast Player',
-          artist: 'DriveCast Podcast',
-          album: 'Local Bookmarks'
-        });
-
-        // AirPods double-tap stem trigger -> Adds Bookmark
-        navigator.mediaSession.setActionHandler('nexttrack', () => {
-          triggerBookmarkCreation('AirPods double-tap');
-        });
-
-        // AirPods triple-tap stem trigger -> Adds Bookmark
-        navigator.mediaSession.setActionHandler('previoustrack', () => {
-          triggerBookmarkCreation('AirPods remote');
-        });
-
-        navigator.mediaSession.setActionHandler('play', () => {
-          if (media && media.paused) media.play().catch(() => {});
-        });
-        navigator.mediaSession.setActionHandler('pause', () => {
-          if (media && !media.paused) media.pause();
-        });
-        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-          const skip = details.seekOffset || 15;
-          media.currentTime = Math.max(0, media.currentTime - skip);
-        });
-        navigator.mediaSession.setActionHandler('seekforward', (details) => {
-          const skip = details.seekOffset || 30;
-          if (media.duration) media.currentTime = Math.min(media.duration, media.currentTime + skip);
-        });
-      } catch (e) {
-        console.warn('MediaSession handler registration not supported:', e);
-      }
-    }
-
-    function updatePlayPauseUI() {
-      if (media.paused) {
-        playIcon.classList.remove('hidden');
-        pauseIcon.classList.add('hidden');
-        if (state.currentVideoId) {
-          bigPlayBtn.classList.remove('hidden');
-        } else {
-          bigPlayBtn.classList.add('hidden');
+        const playPromise = media.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            state.isPlaying = true;
+            updatePlayPauseUI();
+          }).catch(() => {
+            state.isPlaying = false;
+            updatePlayPauseUI();
+          }).finally(() => {
+            mediaLoader.classList.add('hidden');
+          });
         }
-      } else {
-        playIcon.classList.add('hidden');
-        pauseIcon.classList.remove('hidden');
-        bigPlayBtn.classList.add('hidden');
-      }
-    }
-
-    function handleSelectedFiles(filesList) {
-      if (!filesList || filesList.length === 0) return;
-      const files = Array.from(filesList);
-
-      // Locate audio or video podcast file
-      const mediaFile = files.find(f => 
-        f.name.match(/\.(mp4|m4v|webm|mov|mkv|mp3|m4a|wav|ogg|aac)$/i) || 
-        f.type.startsWith('video/') || 
-        f.type.startsWith('audio/')
-      );
-
-      if (!mediaFile) {
-        showToast('Please select a valid video or audio podcast file');
-        return;
       }
 
-      const rawTitle = mediaFile.name.replace(/\.[^/.]+$/, '');
-      const normName = normalizeName(mediaFile.name);
-      const isAudio = mediaFile.type.startsWith('audio/') || mediaFile.name.match(/\.(mp3|m4a|wav|ogg|aac)$/i);
+      function triggerBookmarkCreation(sourceTag) {
+        if (!state.currentVideoId) {
+          showToast('Please choose a podcast first');
+          return;
+        }
 
-      // 1. Check if video/podcast is already in the database (by normalized filename)
-      const db = getDatabase();
-      const existingKey = Object.keys(db.videos).find(k => {
-        const entry = db.videos[k];
-        return entry.fileName === mediaFile.name || 
-               normalizeName(entry.title) === normName ||
-               normalizeName(entry.fileName) === normName;
-      });
+        const curTime = media && !isNaN(media.currentTime) ? media.currentTime : 0;
+        const sentencePreview = extractSentenceAtTime(curTime);
+        const noteText = sentencePreview || `Bookmark at ${formatTime(curTime)}`;
 
-      let loadedBookmarks = [];
-      let loadedSubtitles = [];
+        const newBookmark = {
+          id: 'bm_' + Date.now(),
+          time: Math.floor(curTime),
+          note: noteText
+        };
 
-      if (existingKey && db.videos[existingKey]) {
-        // Matched existing database entry
-        const entry = db.videos[existingKey];
-        state.currentVideoId = entry.id;
-        loadedBookmarks = Array.isArray(entry.bookmarks) ? [...entry.bookmarks] : [];
-        loadedSubtitles = Array.isArray(entry.subtitles) ? [...entry.subtitles] : [];
-        showToast(`Loaded "${rawTitle}" (${loadedBookmarks.length} bookmarks found)`);
-      } else {
-        // Create brand new database entry
-        const newId = 'podcast_' + normName.replace(/\s+/g, '_') + '_' + Date.now();
-        state.currentVideoId = newId;
-        loadedBookmarks = [];
-        loadedSubtitles = [];
-        showToast(`New podcast entry created for "${rawTitle}"`);
+        state.bookmarks.push(newBookmark);
+        state.bookmarks.sort((a, b) => a.time - b.time);
+        saveCurrentVideoToDatabase();
+        renderBookmarks();
+
+        const tagPrefix = sourceTag ? `[${sourceTag}] ` : '';
+        if (sentencePreview) {
+          showToast(`${tagPrefix}Bookmarked: "${sentencePreview.slice(0, 36)}..."`);
+        } else {
+          showToast(`${tagPrefix}Bookmarked at ${formatTime(curTime)}`);
+        }
       }
 
-      state.currentVideoTitle = rawTitle;
-      state.currentVideoBaseName = normName;
-      state.currentVideoFileName = mediaFile.name;
-      state.bookmarks = loadedBookmarks;
-      state.subtitles = loadedSubtitles;
+      function renderBookmarks() {
+        bookmarkCount.textContent = state.bookmarks.length;
+        exportTxtBtn.disabled = state.bookmarks.length === 0;
+        bookmarksContainer.innerHTML = '';
 
-      sourceLabel.textContent = isAudio ? 'Audio Podcast' : 'Video Podcast';
-      videoTitleLabel.textContent = rawTitle;
-
-      emptyPlayerPlaceholder.classList.add('hidden');
-      media.classList.remove('hidden');
-      mediaLoader.classList.remove('hidden');
-
-      const fileUrl = URL.createObjectURL(mediaFile);
-      media.src = fileUrl;
-      media.playbackRate = state.playbackRates[state.currentRateIndex] || 1.0;
-
-      try {
-        media.volume = state.volume;
-      } catch (e) {
-        console.warn('Volume control restricted:', e);
-      }
-      volumeBar.value = state.volume;
-
-      renderBookmarks();
-      setupAirPodsMediaSession();
-
-      // 2. Check if an SRT file is included in the selection or matches the database
-      const srtFiles = files.filter(f => f.name.match(/\.(srt|vtt)$/i));
-      let matchingSrt = null;
-
-      if (srtFiles.length === 1) {
-        matchingSrt = srtFiles[0];
-      } else if (srtFiles.length > 1) {
-        matchingSrt = srtFiles.find(f => normalizeName(f.name) === normName) ||
-                      srtFiles.find(f => normalizeName(f.name).includes(normName) || normName.includes(normalizeName(f.name))) ||
-                      srtFiles[0];
-      }
-
-      if (matchingSrt) {
-        matchingSrt.text().then(text => {
-          applySubtitles(text, matchingSrt.name);
-        }).catch(err => console.error('SRT read error:', err));
-      } else if (state.subtitles.length > 0) {
-        // Subtitles were already restored from the database!
-        state.subtitlesEnabled = true;
-        srtBadge.classList.remove('hidden');
-        srtBadge.textContent = `SRT ON (${state.subtitles.length})`;
-        toggleSubtitlesBtn.classList.add('text-indigo-400');
-        toggleSubtitlesBtn.classList.remove('text-slate-400');
-      } else {
-        resetSubtitlesUI();
-      }
-
-      // Check for bookmarks JSON in selection as well
-      const matchingJson = files.find(f => f.name.toLowerCase().endsWith('.json') && normalizeName(f.name).includes(normName));
-      if (matchingJson) {
-        matchingJson.text().then(jsonText => {
-          try {
-            const parsed = JSON.parse(jsonText);
-            const importedList = Array.isArray(parsed.bookmarks) ? parsed.bookmarks : (Array.isArray(parsed) ? parsed : null);
-            if (importedList && importedList.length > 0) {
-              state.bookmarks = importedList;
-              renderBookmarks();
-              saveCurrentVideoToDatabase();
-            }
-          } catch (e) {}
-        });
-      }
-
-      saveCurrentVideoToDatabase();
-      media.load();
-
-      const playPromise = media.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          state.isPlaying = true;
-          updatePlayPauseUI();
-        }).catch(() => {
-          state.isPlaying = false;
-          updatePlayPauseUI();
-        }).finally(() => {
-          mediaLoader.classList.add('hidden');
-        });
-      }
-    }
-
-    function triggerBookmarkCreation(sourceTag = '') {
-      if (!state.currentVideoId) {
-        showToast('Please choose a podcast first');
-        return;
-      }
-
-      const cur = media && !isNaN(media.currentTime) ? media.currentTime : 0;
-      const subtitlePreview = getCurrentSubtitleSentence(cur);
-      const defaultNote = subtitlePreview ? subtitlePreview : `Bookmark at ${formatTime(cur)}`;
-
-      const newBm = {
-        id: 'bm_' + Date.now(),
-        time: Math.floor(cur),
-        note: defaultNote
-      };
-
-      state.bookmarks.push(newBm);
-      state.bookmarks.sort((a, b) => a.time - b.time);
-      saveCurrentVideoToDatabase();
-      renderBookmarks();
-
-      const label = sourceTag ? `[${sourceTag}] ` : '';
-      if (subtitlePreview) {
-        showToast(`${label}Bookmarked: "${subtitlePreview.slice(0, 32)}..."`);
-      } else {
-        showToast(`${label}Bookmarked at ${formatTime(cur)}`);
-      }
-    }
-
-    function renderBookmarks() {
-      bookmarkCount.textContent = state.bookmarks.length;
-      bookmarksContainer.innerHTML = '';
-
-      if (!state.currentVideoId) {
-        bookmarksContainer.innerHTML = `
-          <div class="text-center py-10 text-slate-500 text-xs">
-            Choose a podcast to view or add bookmarks.
-          </div>
-        `;
-        return;
-      }
-
-      if (state.bookmarks.length === 0) {
-        bookmarksContainer.innerHTML = `
-          <div class="text-center py-10 text-slate-500 text-xs">
-            No bookmarks yet. Tap <span class="text-indigo-400 font-semibold">+ Bookmark</span> or double-click your AirPods to mark moments!
-          </div>
-        `;
-        return;
-      }
-
-      state.bookmarks.forEach((bm) => {
-        const item = document.createElement('div');
-        item.className = 'bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5 flex items-start justify-between gap-2 hover:border-slate-700 transition group';
-        
-        item.innerHTML = `
-          <div class="flex items-start gap-2.5 min-w-0 flex-1">
-            <button class="seek-btn font-mono text-[11px] font-bold px-2 py-1 rounded bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition flex-shrink-0 mt-0.5">
-              ${formatTime(bm.time)}
-            </button>
-            <div class="min-w-0 flex-1">
-              <input type="text" class="note-input w-full bg-transparent text-xs text-slate-200 border-b border-transparent focus:border-indigo-500 focus:outline-none transition py-0.5" value="${escapeHtml(bm.note)}">
+        if (!state.currentVideoId) {
+          bookmarksContainer.innerHTML = `
+            <div class="text-center py-10 text-slate-500 text-xs">
+              Choose a podcast to view or add bookmarks.
             </div>
-          </div>
-          <button class="delete-btn text-slate-500 hover:text-red-400 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0" title="Delete Bookmark">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
-        `;
+          `;
+          return;
+        }
 
-        item.querySelector('.seek-btn').addEventListener('click', () => {
-          if (media) {
-            media.currentTime = bm.time;
-            if (media.paused) media.play().catch(() => {});
+        if (state.bookmarks.length === 0) {
+          bookmarksContainer.innerHTML = `
+            <div class="text-center py-10 text-slate-500 text-xs leading-relaxed">
+              No bookmarks yet.<br>Tap <span class="text-indigo-400 font-semibold">+ Bookmark</span> or double-press your AirPods to capture sentences!
+            </div>
+          `;
+          return;
+        }
+
+        state.bookmarks.forEach((bm) => {
+          const item = document.createElement('div');
+          item.className = 'bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5 flex flex-col gap-1.5 hover:border-slate-700 transition group';
+
+          item.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <button type="button" class="seek-btn font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition flex-shrink-0 cursor-pointer">
+                ${formatTime(bm.time)}
+              </button>
+              <button type="button" class="delete-btn text-slate-500 hover:text-rose-400 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0 cursor-pointer" title="Delete Bookmark">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+            <textarea 
+              rows="2" 
+              class="note-input w-full bg-slate-900/60 rounded-lg p-1.5 text-xs text-slate-200 border border-slate-700/40 focus:border-indigo-500 focus:outline-none resize-none leading-relaxed"
+              placeholder="Sentence or note..."
+            >${escapeHtml(bm.note)}</textarea>
+          `;
+
+          // Seek to exact timestamp
+          item.querySelector('.seek-btn').addEventListener('click', () => {
+            if (media) {
+              media.currentTime = bm.time;
+              if (media.paused) media.play().catch(() => {});
+            }
+          });
+
+          // Inline note edits
+          const noteInput = item.querySelector('.note-input');
+          noteInput.addEventListener('input', (e) => {
+            bm.note = e.target.value;
+            saveCurrentVideoToDatabase();
+          });
+
+          // Delete bookmark
+          item.querySelector('.delete-btn').addEventListener('click', () => {
+            state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
+            saveCurrentVideoToDatabase();
+            renderBookmarks();
+          });
+
+          bookmarksContainer.appendChild(item);
+        });
+      }
+
+      addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
+
+      clearAllBookmarksBtn.addEventListener('click', () => {
+        if (!state.currentVideoId || state.bookmarks.length === 0) return;
+        state.bookmarks = [];
+        saveCurrentVideoToDatabase();
+        renderBookmarks();
+        showToast('Bookmarks cleared for this podcast');
+      });
+
+      exportTxtBtn.addEventListener('click', () => {
+        if (!state.currentVideoId || state.bookmarks.length === 0) {
+          showToast('No bookmarks to export yet');
+          return;
+        }
+
+        state.bookmarks.sort((a, b) => a.time - b.time);
+        const title = state.currentVideoTitle || 'DriveCast_Podcast';
+        let content = `DriveCast Bookmarks: ${title}\r\n`;
+        content += `Exported: ${new Date().toLocaleString()}\r\n`;
+        content += `==========================================\r\n\r\n`;
+
+        state.bookmarks.forEach(bm => {
+          content += `[${formatTime(bm.time)}] ${bm.note || '(No note)'}\r\n\r\n`;
+        });
+
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `${state.currentVideoBaseName || 'podcast'}_bookmarks.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+
+        showToast('Exported bookmarks as .txt');
+      });
+
+      // Video Event Listeners
+      media.addEventListener('play', () => {
+        state.isPlaying = true;
+        updatePlayPauseUI();
+      });
+
+      media.addEventListener('pause', () => {
+        state.isPlaying = false;
+        updatePlayPauseUI();
+        saveCurrentVideoToDatabase();
+      });
+
+      media.addEventListener('timeupdate', () => {
+        if (!isNaN(media.duration) && media.duration > 0) {
+          seekBar.value = (media.currentTime / media.duration) * 100;
+        }
+        currentTimeLabel.textContent = formatTime(media.currentTime);
+
+        // Subtitles live display
+        if (state.subtitlesEnabled && state.subtitles.length > 0) {
+          const curCue = state.subtitles.find(c => media.currentTime >= c.start && media.currentTime <= c.end);
+          if (curCue && curCue.text) {
+            subtitleText.textContent = curCue.text;
+            subtitleOverlay.classList.remove('hidden');
+          } else {
+            subtitleOverlay.classList.add('hidden');
           }
-        });
-
-        const noteInput = item.querySelector('.note-input');
-        noteInput.addEventListener('change', (e) => {
-          bm.note = e.target.value.trim();
-          saveCurrentVideoToDatabase();
-        });
-
-        item.querySelector('.delete-btn').addEventListener('click', () => {
-          state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
-          saveCurrentVideoToDatabase();
-          renderBookmarks();
-        });
-
-        bookmarksContainer.appendChild(item);
-      });
-    }
-
-    addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
-
-    clearAllBookmarksBtn.addEventListener('click', () => {
-      if (!state.currentVideoId || state.bookmarks.length === 0) return;
-      state.bookmarks = [];
-      saveCurrentVideoToDatabase();
-      renderBookmarks();
-      showToast('Bookmarks cleared for this podcast');
-    });
-
-    exportTxtBtn.addEventListener('click', () => {
-      if (!state.currentVideoId || state.bookmarks.length === 0) {
-        showToast('No bookmarks to export yet');
-        return;
-      }
-
-      state.bookmarks.sort((a, b) => a.time - b.time);
-      const title = state.currentVideoTitle || 'DriveCast_Podcast';
-      let content = `Bookmarks for: ${title}\r\n`;
-      content += `Generated by DriveCast v4.7 (${new Date().toLocaleDateString()})\r\n`;
-      content += `----------------------------------------\r\n\r\n`;
-
-      state.bookmarks.forEach(bm => {
-        content += `[${formatTime(bm.time)}] ${bm.note || 'Bookmark'}\r\n`;
-      });
-
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = `${title}_bookmarks.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(downloadUrl);
-
-      showToast('Exported bookmarks as .txt');
-    });
-
-    media.addEventListener('play', () => {
-      state.isPlaying = true;
-      updatePlayPauseUI();
-    });
-
-    media.addEventListener('pause', () => {
-      state.isPlaying = false;
-      updatePlayPauseUI();
-    });
-
-    media.addEventListener('timeupdate', () => {
-      if (!isNaN(media.duration) && media.duration > 0) {
-        seekBar.value = (media.currentTime / media.duration) * 100;
-      }
-      currentTimeLabel.textContent = formatTime(media.currentTime);
-
-      // Subtitles update
-      if (state.subtitlesEnabled && state.subtitles.length > 0) {
-        const curCue = state.subtitles.find(c => media.currentTime >= c.start && media.currentTime <= c.end);
-        if (curCue && curCue.text) {
-          subtitleText.textContent = curCue.text;
-          subtitleOverlay.classList.remove('hidden');
         } else {
           subtitleOverlay.classList.add('hidden');
         }
-      } else {
-        subtitleOverlay.classList.add('hidden');
-      }
-    });
-
-    media.addEventListener('loadedmetadata', () => {
-      durationLabel.textContent = formatTime(media.duration);
-      mediaLoader.classList.add('hidden');
-    });
-
-    media.addEventListener('waiting', () => {
-      mediaLoader.classList.remove('hidden');
-    });
-
-    media.addEventListener('canplay', () => {
-      mediaLoader.classList.add('hidden');
-    });
-
-    media.addEventListener('click', () => {
-      if (media.paused) {
-        media.play().catch(() => {});
-      } else {
-        media.pause();
-      }
-    });
-
-    bigPlayBtn.addEventListener('click', () => {
-      if (media.paused) media.play().catch(() => {});
-    });
-
-    playPauseBtn.addEventListener('click', () => {
-      if (media.paused) {
-        media.play().catch(() => {});
-      } else {
-        media.pause();
-      }
-    });
-
-    skipBackBtn.addEventListener('click', () => {
-      media.currentTime = Math.max(0, media.currentTime - 15);
-    });
-
-    skipForwardBtn.addEventListener('click', () => {
-      if (media.duration) {
-        media.currentTime = Math.min(media.duration, media.currentTime + 30);
-      }
-    });
-
-    seekBar.addEventListener('input', () => {
-      if (!isNaN(media.duration) && media.duration > 0) {
-        media.currentTime = (seekBar.value / 100) * media.duration;
-      }
-    });
-
-    speedBtn.addEventListener('click', () => {
-      state.currentRateIndex = (state.currentRateIndex + 1) % state.playbackRates.length;
-      const newRate = state.playbackRates[state.currentRateIndex];
-      media.playbackRate = newRate;
-      speedBtn.textContent = `${newRate}x`;
-      try {
-        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
-      } catch (e) {}
-    });
-
-    toggleSubtitlesBtn.addEventListener('click', () => {
-      state.subtitlesEnabled = !state.subtitlesEnabled;
-      if (state.subtitlesEnabled) {
-        toggleSubtitlesBtn.classList.add('text-indigo-400');
-        toggleSubtitlesBtn.classList.remove('text-slate-400');
-      } else {
-        toggleSubtitlesBtn.classList.remove('text-indigo-400');
-        toggleSubtitlesBtn.classList.add('text-slate-400');
-        subtitleOverlay.classList.add('hidden');
-      }
-    });
-
-    volumeBar.addEventListener('input', (e) => {
-      state.volume = parseFloat(e.target.value);
-      try {
-        media.volume = state.volume;
-      } catch (err) {}
-      if (state.volume === 0) {
-        volHighIcon.classList.add('hidden');
-        volMuteIcon.classList.remove('hidden');
-      } else {
-        volHighIcon.classList.remove('hidden');
-        volMuteIcon.classList.add('hidden');
-      }
-      try {
-        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
-      } catch (e) {}
-    });
-
-    muteBtn.addEventListener('click', () => {
-      if (media.muted) {
-        media.muted = false;
-        volHighIcon.classList.remove('hidden');
-        volMuteIcon.classList.add('hidden');
-      } else {
-        media.muted = true;
-        volHighIcon.classList.add('hidden');
-        volMuteIcon.classList.remove('hidden');
-      }
-    });
-
-    // File Inputs Listeners
-    podcastFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
-    placeholderFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
-
-    // Drag and Drop
-    ['dragenter', 'dragover'].forEach(name => {
-      playerViewport.addEventListener(name, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        playerViewport.classList.add('drag-active');
       });
-    });
 
-    ['dragleave', 'drop'].forEach(name => {
-      playerViewport.addEventListener(name, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        playerViewport.classList.remove('drag-active');
+      media.addEventListener('loadedmetadata', () => {
+        durationLabel.textContent = formatTime(media.duration);
+        mediaLoader.classList.add('hidden');
       });
-    });
 
-    playerViewport.addEventListener('drop', (e) => {
-      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleSelectedFiles(e.dataTransfer.files);
-      }
-    });
+      media.addEventListener('waiting', () => {
+        mediaLoader.classList.remove('hidden');
+      });
 
-    function bootApplication() {
-      try {
-        const rawPref = localStorage.getItem(PREF_KEY);
-        if (rawPref) {
-          const pref = JSON.parse(rawPref);
-          if (pref.volume !== undefined) state.volume = pref.volume;
-          if (pref.rateIndex !== undefined) state.currentRateIndex = pref.rateIndex;
+      media.addEventListener('canplay', () => {
+        mediaLoader.classList.add('hidden');
+      });
+
+      media.addEventListener('click', () => {
+        if (media.paused) {
+          media.play().catch(() => {});
+        } else {
+          media.pause();
         }
-      } catch (e) {}
+      });
 
-      speedBtn.textContent = `${state.playbackRates[state.currentRateIndex]}x`;
-      volumeBar.value = state.volume;
+      bigPlayOverlayBtn.addEventListener('click', () => {
+        if (media.paused) media.play().catch(() => {});
+      });
 
-      // Clean start: wait until the user selects a file before loading bookmarks
-      state.currentVideoId = '';
-      state.currentVideoTitle = '';
-      state.bookmarks = [];
-      state.subtitles = [];
-      videoTitleLabel.textContent = 'Choose a podcast to start';
-      sourceLabel.textContent = 'Ready';
-      emptyPlayerPlaceholder.classList.remove('hidden');
-      renderBookmarks();
+      playPauseBtn.addEventListener('click', () => {
+        if (media.paused) {
+          media.play().catch(() => {});
+        } else {
+          media.pause();
+        }
+      });
 
-      setupAirPodsMediaSession();
-    }
+      skipBackBtn.addEventListener('click', () => {
+        media.currentTime = Math.max(0, media.currentTime - 15);
+      });
 
-    window.addEventListener('beforeunload', () => {
-      saveCurrentVideoToDatabase();
-    });
+      skipForwardBtn.addEventListener('click', () => {
+        if (media.duration) {
+          media.currentTime = Math.min(media.duration, media.currentTime + 30);
+        }
+      });
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', bootApplication);
-    } else {
-      bootApplication();
-    }
+      seekBar.addEventListener('input', () => {
+        if (!isNaN(media.duration) && media.duration > 0) {
+          media.currentTime = (seekBar.value / 100) * media.duration;
+        }
+      });
+
+      speedBtn.addEventListener('click', () => {
+        state.currentRateIndex = (state.currentRateIndex + 1) % state.playbackRates.length;
+        const newRate = state.playbackRates[state.currentRateIndex];
+        media.playbackRate = newRate;
+        speedBtn.textContent = `${newRate}x`;
+        try {
+          localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
+        } catch (e) {}
+      });
+
+      toggleSubtitlesBtn.addEventListener('click', () => {
+        state.subtitlesEnabled = !state.subtitlesEnabled;
+        if (state.subtitlesEnabled) {
+          toggleSubtitlesBtn.classList.add('text-indigo-400');
+          toggleSubtitlesBtn.classList.remove('text-slate-400');
+        } else {
+          toggleSubtitlesBtn.classList.remove('text-indigo-400');
+          toggleSubtitlesBtn.classList.add('text-slate-400');
+          subtitleOverlay.classList.add('hidden');
+        }
+      });
+
+      volumeBar.addEventListener('input', (e) => {
+        state.volume = parseFloat(e.target.value);
+        try {
+          media.volume = state.volume;
+        } catch (err) {}
+        if (state.volume === 0) {
+          volHighIcon.classList.add('hidden');
+          volMuteIcon.classList.remove('hidden');
+        } else {
+          volHighIcon.classList.remove('hidden');
+          volMuteIcon.classList.add('hidden');
+        }
+        try {
+          localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
+        } catch (e) {}
+      });
+
+      muteBtn.addEventListener('click', () => {
+        if (media.muted) {
+          media.muted = false;
+          volHighIcon.classList.remove('hidden');
+          volMuteIcon.classList.add('hidden');
+        } else {
+          media.muted = true;
+          volHighIcon.classList.add('hidden');
+          volMuteIcon.classList.remove('hidden');
+        }
+      });
+
+      // File Picker Events
+      choosePodcastBtn.addEventListener('click', () => podcastPicker.click());
+      idleChooseBtn.addEventListener('click', () => podcastPicker.click());
+      podcastPicker.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
+
+      // Drag and Drop
+      ['dragenter', 'dragover'].forEach(name => {
+        playerContainer.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          playerContainer.classList.add('drag-target-active');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        playerContainer.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          playerContainer.classList.remove('drag-target-active');
+        });
+      });
+
+      playerContainer.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleSelectedFiles(e.dataTransfer.files);
+        }
+      });
+
+      // Boot Routine
+      function bootApplication() {
+        try {
+          const rawPref = localStorage.getItem(PREF_KEY);
+          if (rawPref) {
+            const pref = JSON.parse(rawPref);
+            if (pref.volume !== undefined) state.volume = pref.volume;
+            if (pref.rateIndex !== undefined) state.currentRateIndex = pref.rateIndex;
+          }
+        } catch (e) {}
+
+        speedBtn.textContent = `${state.playbackRates[state.currentRateIndex]}x`;
+        volumeBar.value = state.volume;
+
+        // Clean start: Start idle until user selects a podcast
+        state.currentVideoId = '';
+        state.currentVideoTitle = '';
+        state.bookmarks = [];
+        state.subtitles = [];
+        videoTitleLabel.textContent = 'Choose a podcast to start';
+        sourceLabel.textContent = 'Ready';
+        idlePlaceholder.classList.remove('hidden');
+        media.classList.add('hidden');
+        addBookmarkBtn.disabled = true;
+        playPauseBtn.disabled = true;
+        exportTxtBtn.disabled = true;
+        renderBookmarks();
+
+        setupAirPodsMediaSession();
+      }
+
+      window.addEventListener('beforeunload', () => {
+        saveCurrentVideoToDatabase();
+      });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootApplication);
+      } else {
+        bootApplication();
+      }
+
+    })();
   </script>
 </body>
 </html>
