@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DriveCast v4.5 - Local MP4 Player & Bookmarks</title>
+  <title>DriveCast v4.8 - Local Podcast Player & Bookmarks</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,9 +66,9 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white flex flex-col antialiased overflow-x-hidden">
 
-  <!-- Header: Mobile-Friendly with No Horizontal Scroll -->
+  <!-- Simplified Header: Only Brand & Single "Choose Podcast" Action -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 w-full">
-    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2">
+    <div class="max-w-6xl mx-auto px-4 py-2.5 sm:py-3 flex items-center justify-between gap-3">
       <!-- Logo & Version -->
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-md shadow-indigo-600/30 flex-shrink-0">
@@ -79,88 +79,35 @@
         </div>
         <div class="flex items-center gap-1.5">
           <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-white leading-none">DriveCast</h1>
-          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold">v4.5</span>
+          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold">v4.8</span>
         </div>
       </div>
 
-      <!-- Action Buttons Row -->
-      <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-        <!-- Open Folder / Directory (Reads MP4 + SRT + Bookmarks) -->
-        <button id="openFolderBtn" title="Open Folder to load MP4 and auto-detect matching .srt & bookmarks" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-medium px-2.5 py-1.5 rounded-xl transition border border-slate-700 flex items-center gap-1">
-          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-          </svg>
-          <span class="inline">Folder</span>
-        </button>
-
-        <!-- Choose MP4 Button -->
-        <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5 flex-shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-          </svg>
-          <span>Choose MP4</span>
-          <input id="localFileInput" type="file" accept="video/mp4,audio/mp4,video/*,.srt,.vtt,.json" multiple class="hidden">
-        </label>
-
-        <!-- Subtitles Button -->
-        <label title="Manually select an SRT subtitle file" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs px-2 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1">
-          <span class="font-mono text-[11px] font-bold">CC</span>
-          <input id="srtFileInput" type="file" accept=".srt,.vtt" class="hidden">
-        </label>
-
-        <!-- Library Drawer Toggle -->
-        <button id="libraryToggleBtn" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs px-2.5 py-1.5 rounded-xl transition border border-slate-700 flex items-center gap-1" title="Saved Videos History">
-          <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-          </svg>
-          <span id="libraryBadge" class="bg-indigo-600 text-white text-[10px] font-mono px-1.5 py-0.2 rounded-full">0</span>
-        </button>
-      </div>
+      <!-- Single Primary Action: Choose Podcast (MP4 / MP3 / M4A / SRT) -->
+      <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3.5 sm:px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center gap-2 flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        <span>Choose Podcast</span>
+        <input id="podcastFileInput" type="file" accept="video/mp4,audio/mp4,audio/mpeg,audio/mp3,audio/x-m4a,audio/m4a,audio/wav,video/*,audio/*,.srt,.vtt,.json" multiple class="hidden">
+      </label>
     </div>
   </header>
 
-  <!-- Folder Directory Picker Fallback Input -->
-  <input id="folderFallbackInput" type="file" webkitdirectory directory multiple class="hidden">
-
-  <!-- Diagnostic Alert Bar -->
+  <!-- Diagnostic Alert Bar for restricted iframes -->
   <div id="storageErrorBanner" class="hidden bg-amber-500/10 border-b border-amber-500/30 text-amber-200 text-xs px-4 py-2 text-center">
-    <strong>Notice:</strong> Your browser has blocked localStorage access in this iframe.
-  </div>
-
-  <!-- Library Drawer -->
-  <div id="libraryDrawer" class="hidden fixed inset-0 z-40 bg-black/75 backdrop-blur-xs flex justify-end">
-    <div class="w-full max-w-md bg-slate-900 h-full border-l border-slate-800 p-4 sm:p-5 flex flex-col shadow-2xl">
-      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-        <div>
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <span>Video History</span>
-            <span class="text-xs font-mono text-indigo-400 bg-slate-800 px-2 py-0.5 rounded">v4.5</span>
-          </h2>
-          <p class="text-xs text-slate-400">All saved videos and bookmarks</p>
-        </div>
-        <button id="closeLibraryBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div id="libraryItemsContainer" class="flex-1 py-4 space-y-2.5 overflow-y-auto">
-        <!-- Rendered items from localStorage -->
-      </div>
-      <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
-        <button id="clearAllLocalStorageBtn" class="text-red-400 hover:text-red-300 font-medium">Clear All Saved Data</button>
-        <span id="storageSizeLabel" class="text-slate-500 font-mono text-[10px]">0 KB used</span>
-      </div>
-    </div>
+    <strong>Notice:</strong> LocalStorage is restricted in this frame. Bookmarks will be kept in memory for this session.
   </div>
 
   <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-5 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
     
-    <!-- LEFT COLUMN: Video Player & Transport (7 Cols) -->
+    <!-- LEFT COLUMN: Video/Audio Player & Transport (7 Cols) -->
     <div class="lg:col-span-7 flex flex-col gap-3 sm:gap-4">
       
-      <!-- Video Viewport -->
+      <!-- Video / Audio Viewport -->
       <div id="playerViewport" class="relative bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl aspect-video flex items-center justify-center transition-colors group">
         <video id="mediaPlayer" class="w-full h-full object-contain cursor-pointer" playsinline webkit-playsinline preload="auto">
-          Your browser does not support HTML5 video.
+          Your browser does not support HTML5 media.
         </video>
 
         <!-- Big Center Play Button Overlay -->
@@ -170,42 +117,25 @@
 
         <!-- Subtitles Overlay Box -->
         <div id="subtitleOverlay" class="hidden absolute bottom-4 inset-x-4 text-center pointer-events-none z-10 transition-opacity">
-          <span id="subtitleText" class="inline-block bg-black/80 text-white font-medium text-xs sm:text-sm px-3 py-1.5 rounded-lg shadow-lg border border-white/10 backdrop-blur-xs max-w-[90%] leading-snug"></span>
+          <span id="subtitleText" class="inline-block bg-black/85 text-white font-medium text-xs sm:text-sm px-3.5 py-1.5 rounded-lg shadow-lg border border-white/10 backdrop-blur-xs max-w-[90%] leading-snug"></span>
         </div>
 
-        <!-- Local File Re-link Overlay -->
-        <div id="relinkOverlay" class="hidden absolute inset-0 bg-slate-950/92 backdrop-blur-xs flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10">
-          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mb-2.5">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-          </div>
-          <span class="text-[10px] font-mono uppercase tracking-wider text-indigo-400 mb-1">Restored from localStorage</span>
-          <h2 id="relinkTitleText" class="text-xs sm:text-base font-bold text-white mb-1">Video Bookmarks Restored!</h2>
-          <p id="relinkSubText" class="text-[11px] sm:text-xs text-slate-300 max-w-sm mb-3 sm:mb-4">Select the MP4 file to resume playing.</p>
-          <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            <span id="relinkBtnText">Re-link MP4 File</span>
-            <input id="relinkFileInput" type="file" accept="video/mp4,audio/mp4,video/*,.srt,.vtt,.json" multiple class="hidden">
-          </label>
-        </div>
-
-        <!-- Initial Blank Placeholder -->
-        <div id="emptyPlayerPlaceholder" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10">
-          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-2.5">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+        <!-- Initial Placeholder -->
+        <div id="emptyPlayerPlaceholder" class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
             </svg>
           </div>
-          <h2 class="text-xs sm:text-base font-bold text-white mb-1">No Video Loaded</h2>
-          <p class="text-[11px] sm:text-xs text-slate-400 max-w-xs mb-3">Choose an MP4 or select a folder. SRT subtitles in the folder will load automatically.</p>
-          <div class="flex items-center gap-2">
-            <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-md transition">
-              Choose MP4
-              <input id="placeholderFileInput" type="file" accept="video/mp4,audio/mp4,video/*,.srt,.vtt,.json" multiple class="hidden">
-            </label>
-            <button id="placeholderFolderBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 rounded-xl border border-slate-700 transition">
-              Open Folder
-            </button>
-          </div>
+          <h2 class="text-sm sm:text-base font-bold text-white mb-1">No Podcast Loaded</h2>
+          <p class="text-xs text-slate-400 max-w-xs mb-4">Choose an MP4, MP3, or M4A file. Matching SRT subtitles will load automatically.</p>
+          <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow-md transition flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span>Choose Podcast</span>
+            <input id="placeholderFileInput" type="file" accept="video/mp4,audio/mp4,audio/mpeg,audio/mp3,audio/x-m4a,audio/m4a,audio/wav,video/*,audio/*,.srt,.vtt,.json" multiple class="hidden">
+          </label>
         </div>
 
         <!-- Loading Spinner -->
@@ -224,9 +154,9 @@
               <span id="sourceLabel" class="text-[10px] font-mono uppercase tracking-wider text-indigo-400 block truncate">Ready</span>
               <span id="srtBadge" class="hidden text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded">SRT ON</span>
             </div>
-            <h2 id="videoTitleLabel" class="text-xs sm:text-base font-bold text-white truncate">Select an MP4 to start</h2>
+            <h2 id="videoTitleLabel" class="text-xs sm:text-base font-bold text-white truncate">Choose a podcast to start</h2>
           </div>
-          <button id="addBookmarkBtn" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 flex-shrink-0 shadow-md shadow-indigo-600/30">
+          <button id="addBookmarkBtn" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 flex-shrink-0 shadow-md shadow-indigo-600/30">
             <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
             <span>+ Bookmark</span>
           </button>
@@ -299,22 +229,16 @@
             </div>
             <div>
               <h3 class="font-bold text-xs sm:text-sm text-white">Bookmarks</h3>
-              <p id="subStorageStatus" class="text-[10px] sm:text-[11px] text-emerald-400 font-mono">Saved in localStorage</p>
+              <p id="subStorageStatus" class="text-[10px] text-emerald-400 font-mono">Auto-saved by filename</p>
             </div>
           </div>
 
-          <!-- Actions: Export TXT, Save to Folder, Clear -->
-          <div class="flex items-center gap-1">
+          <!-- Actions: Export TXT, Clear -->
+          <div class="flex items-center gap-1.5">
             <!-- Export as TXT Button -->
-            <button id="exportTxtBtn" title="Export Bookmarks as .txt file" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1">
+            <button id="exportTxtBtn" title="Export Bookmarks as .txt file" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1">
               <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               <span>Export TXT</span>
-            </button>
-
-            <!-- Save Bookmarks JSON in Folder -->
-            <button id="saveFolderFileBtn" title="Save bookmarks file into the folder" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1">
-              <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-              <span>Save File</span>
             </button>
 
             <span id="bookmarkCount" class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300">0</span>
@@ -333,9 +257,9 @@
         <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
           <span class="flex items-center gap-1 text-slate-400">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>AirPods Double-Tap Bookmarking Ready</span>
+            <span>AirPods Double-Tap Ready</span>
           </span>
-          <span id="storageStatsText" class="text-[10px] text-slate-500">v4.5 • Per-Video Store</span>
+          <span class="text-[10px] text-slate-500">v4.8 • On-Demand Match</span>
         </div>
 
       </div>
@@ -351,7 +275,7 @@
 
   <script>
     /*
-     * DRIVECAST v4.5 - COMPLETE, ERROR-FREE JAVASCRIPT LOGIC
+     * DRIVECAST v4.8 - ON-DEMAND BOOKMARK LOADING
      */
     const STORAGE_KEY = 'drivecast_v4_data';
     const PREF_KEY = 'drivecast_v4_prefs';
@@ -361,7 +285,7 @@
       currentVideoId: '',
       currentVideoTitle: '',
       currentVideoBaseName: '',
-      currentVideoType: 'local',
+      currentVideoFileName: '',
       isPlaying: false,
       isMuted: false,
       volume: 0.9,
@@ -369,8 +293,7 @@
       currentRateIndex: 1,
       bookmarks: [],
       subtitles: [],
-      subtitlesEnabled: true,
-      currentDirectoryHandle: null
+      subtitlesEnabled: true
     };
 
     // DOM Elements
@@ -378,10 +301,6 @@
     const bigPlayBtn = document.getElementById('bigPlayBtn');
     const playerViewport = document.getElementById('playerViewport');
     const emptyPlayerPlaceholder = document.getElementById('emptyPlayerPlaceholder');
-    const relinkOverlay = document.getElementById('relinkOverlay');
-    const relinkTitleText = document.getElementById('relinkTitleText');
-    const relinkSubText = document.getElementById('relinkSubText');
-    const relinkFileInput = document.getElementById('relinkFileInput');
     const mediaLoader = document.getElementById('mediaLoader');
     const sourceLabel = document.getElementById('sourceLabel');
     const videoTitleLabel = document.getElementById('videoTitleLabel');
@@ -404,31 +323,16 @@
     const volHighIcon = document.getElementById('volHighIcon');
     const volMuteIcon = document.getElementById('volMuteIcon');
 
-    const localFileInput = document.getElementById('localFileInput');
+    const podcastFileInput = document.getElementById('podcastFileInput');
     const placeholderFileInput = document.getElementById('placeholderFileInput');
-    const srtFileInput = document.getElementById('srtFileInput');
-    const openFolderBtn = document.getElementById('openFolderBtn');
-    const placeholderFolderBtn = document.getElementById('placeholderFolderBtn');
-    const folderFallbackInput = document.getElementById('folderFallbackInput');
 
     const addBookmarkBtn = document.getElementById('addBookmarkBtn');
     const bookmarkCount = document.getElementById('bookmarkCount');
     const bookmarksContainer = document.getElementById('bookmarksContainer');
     const clearAllBookmarksBtn = document.getElementById('clearAllBookmarksBtn');
     const exportTxtBtn = document.getElementById('exportTxtBtn');
-    const saveFolderFileBtn = document.getElementById('saveFolderFileBtn');
-
-    const libraryToggleBtn = document.getElementById('libraryToggleBtn');
-    const libraryDrawer = document.getElementById('libraryDrawer');
-    const closeLibraryBtn = document.getElementById('closeLibraryBtn');
-    const libraryItemsContainer = document.getElementById('libraryItemsContainer');
-    const libraryBadge = document.getElementById('libraryBadge');
-    const clearAllLocalStorageBtn = document.getElementById('clearAllLocalStorageBtn');
-    const storageSizeLabel = document.getElementById('storageSizeLabel');
 
     const storageErrorBanner = document.getElementById('storageErrorBanner');
-    const subStorageStatus = document.getElementById('subStorageStatus');
-    const storageStatsText = document.getElementById('storageStatsText');
     const toast = document.getElementById('toast');
     const toastMsg = document.getElementById('toastMsg');
 
@@ -467,20 +371,17 @@
       }, 2600);
     }
 
-    function sanitizeKey(str) {
-      return String(str || 'video').toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(-64);
-    }
-
     function normalizeName(filename) {
       if (!filename) return '';
       return filename
-        .replace(/\.[^/.]+$/, '')
+        .replace(/\.(mp4|m4v|webm|mov|mkv|mp3|m4a|wav|ogg|aac|srt|vtt|json)$/i, '')
+        .replace(/\.(en|eng|fr|es|de|cc|forced|default)$/i, '')
         .toLowerCase()
         .replace(/[\s\-_.\(\)\[\]]+/g, ' ')
         .trim();
     }
 
-    function getStoredData() {
+    function getDatabase() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return { lastActiveId: '', videos: {} };
@@ -490,100 +391,124 @@
         return parsed;
       } catch (e) {
         console.error('localStorage read error:', e);
-        handleStorageError();
+        if (storageErrorBanner) storageErrorBanner.classList.remove('hidden');
         return { lastActiveId: '', videos: {} };
       }
     }
 
-    function setStoredData(data) {
+    function saveDatabase(data) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        updateStorageStatusDisplay();
-        return true;
       } catch (e) {
         console.error('localStorage write error:', e);
-        handleStorageError();
-        return false;
+        if (storageErrorBanner) storageErrorBanner.classList.remove('hidden');
       }
     }
 
-    function handleStorageError() {
-      if (storageErrorBanner) storageErrorBanner.classList.remove('hidden');
-      if (subStorageStatus) {
-        subStorageStatus.textContent = 'Storage Error';
-        subStorageStatus.className = 'text-[11px] text-red-400 font-mono';
-      }
-    }
-
-    function updateStorageStatusDisplay() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY) || '';
-        const data = getStoredData();
-        const videoCount = Object.keys(data.videos || {}).length;
-        if (libraryBadge) libraryBadge.textContent = videoCount;
-        
-        const bytes = new Blob([raw]).size;
-        const kb = (bytes / 1024).toFixed(1);
-        if (storageSizeLabel) storageSizeLabel.textContent = `${kb} KB used`;
-        if (storageStatsText) storageStatsText.textContent = `v4.5 • ${videoCount} video(s) saved`;
-      } catch (e) {}
-    }
-
-    function saveCurrentVideoToLocalStorage() {
+    function saveCurrentVideoToDatabase() {
       if (!state.currentVideoId) return;
+      try {
+        const db = getDatabase();
+        db.lastActiveId = state.currentVideoId;
+        
+        // Find existing or create entry
+        const existingEntry = db.videos[state.currentVideoId] || {};
 
-      const data = getStoredData();
-      data.lastActiveId = state.currentVideoId;
-
-      data.videos[state.currentVideoId] = {
-        id: state.currentVideoId,
-        title: state.currentVideoTitle,
-        type: 'local',
-        bookmarks: state.bookmarks || [],
-        lastSeekTime: media && !isNaN(media.currentTime) ? media.currentTime : 0,
-        updatedAt: Date.now()
-      };
-
-      setStoredData(data);
+        db.videos[state.currentVideoId] = {
+          ...existingEntry,
+          id: state.currentVideoId,
+          title: state.currentVideoTitle,
+          baseName: state.currentVideoBaseName,
+          fileName: state.currentVideoFileName,
+          bookmarks: state.bookmarks,
+          subtitles: state.subtitles,
+          lastSeekTime: media && !isNaN(media.currentTime) ? media.currentTime : 0,
+          updatedAt: Date.now()
+        };
+        saveDatabase(db);
+      } catch (e) {
+        console.error('Failed to save to database:', e);
+      }
     }
 
-    function parseTimeToSeconds(timeStr) {
-      const parts = timeStr.trim().replace(',', '.').split(':');
+    function parseTimestamp(timeStr) {
+      if (!timeStr) return 0;
+      const cleaned = timeStr.trim().replace(',', '.');
+      const parts = cleaned.split(':');
       if (parts.length === 3) {
         return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
       }
       if (parts.length === 2) {
         return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
       }
-      return 0;
+      return parseFloat(cleaned) || 0;
     }
 
-    function parseSRT(srtContent) {
-      const pattern = /(\d+)\r?\n(\d{2}:\d{2}:\d{2}[,\.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,\.]\d{3})\r?\n([\s\S]*?)(?=\r?\n\r?\n\d+|\r?\n\r?\n?$|$)/g;
+    function parseSRTorVTT(rawText) {
+      if (!rawText) return [];
+      const sanitized = rawText
+        .replace(/^\uFEFF/, '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n');
+
       const cues = [];
-      let match;
-      while ((match = pattern.exec(srtContent)) !== null) {
-        cues.push({
-          start: parseTimeToSeconds(match[2]),
-          end: parseTimeToSeconds(match[3]),
-          text: match[4].replace(/\r?\n/g, ' ').trim()
-        });
+      const blocks = sanitized.split(/\n\s*\n/);
+
+      for (const block of blocks) {
+        const lines = block.trim().split('\n');
+        if (lines.length === 0) continue;
+
+        let arrowLineIdx = -1;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes('-->')) {
+            arrowLineIdx = i;
+            break;
+          }
+        }
+
+        if (arrowLineIdx === -1) continue;
+
+        const timeLine = lines[arrowLineIdx];
+        const sides = timeLine.split('-->');
+        if (sides.length !== 2) continue;
+
+        const startStr = sides[0].trim();
+        const endStr = sides[1].trim().split(/\s+/)[0];
+
+        const start = parseTimestamp(startStr);
+        const end = parseTimestamp(endStr);
+
+        const rawTextLines = lines.slice(arrowLineIdx + 1);
+        const text = rawTextLines
+          .join(' ')
+          .replace(/<[^>]+>/g, '')
+          .replace(/\{[^\}]+\}/g, '')
+          .trim();
+
+        if (text && !isNaN(start) && !isNaN(end) && end >= start) {
+          cues.push({ start, end, text });
+        }
       }
+
       return cues;
     }
 
     function applySubtitles(srtText, srtFileName = 'subtitles.srt') {
       try {
-        state.subtitles = parseSRT(srtText);
+        state.subtitles = parseSRTorVTT(srtText);
         if (state.subtitles.length > 0) {
+          state.subtitlesEnabled = true;
           srtBadge.classList.remove('hidden');
-          srtBadge.textContent = 'SRT ON';
-          showToast(`Subtitles attached (${state.subtitles.length} lines)`);
+          srtBadge.textContent = `SRT ON (${state.subtitles.length})`;
+          toggleSubtitlesBtn.classList.add('text-indigo-400');
+          toggleSubtitlesBtn.classList.remove('text-slate-400');
+          saveCurrentVideoToDatabase();
+          showToast(`SRT linked: ${srtFileName} (${state.subtitles.length} cues)`);
         } else {
           resetSubtitlesUI();
         }
       } catch (err) {
-        console.error('Failed to parse SRT:', err);
+        console.error('Failed to parse subtitles:', err);
         resetSubtitlesUI();
       }
     }
@@ -593,6 +518,8 @@
       srtBadge.classList.add('hidden');
       subtitleOverlay.classList.add('hidden');
       subtitleText.textContent = '';
+      toggleSubtitlesBtn.classList.remove('text-indigo-400');
+      toggleSubtitlesBtn.classList.add('text-slate-400');
     }
 
     function getCurrentSubtitleSentence(currentTime) {
@@ -614,12 +541,12 @@
           album: 'Local Bookmarks'
         });
 
-        // Intercept nexttrack (AirPods stem double-click) to trigger a bookmark
+        // AirPods double-tap stem trigger -> Adds Bookmark
         navigator.mediaSession.setActionHandler('nexttrack', () => {
           triggerBookmarkCreation('AirPods double-tap');
         });
 
-        // Intercept previoustrack (AirPods stem triple-click) to also trigger a bookmark
+        // AirPods triple-tap stem trigger -> Adds Bookmark
         navigator.mediaSession.setActionHandler('previoustrack', () => {
           triggerBookmarkCreation('AirPods remote');
         });
@@ -647,10 +574,10 @@
       if (media.paused) {
         playIcon.classList.remove('hidden');
         pauseIcon.classList.add('hidden');
-        if (state.currentVideoId && !relinkOverlay.classList.contains('hidden')) {
-          bigPlayBtn.classList.add('hidden');
-        } else if (state.currentVideoId) {
+        if (state.currentVideoId) {
           bigPlayBtn.classList.remove('hidden');
+        } else {
+          bigPlayBtn.classList.add('hidden');
         }
       } else {
         playIcon.classList.add('hidden');
@@ -659,23 +586,69 @@
       }
     }
 
-    function loadVideoSource(url, id, title, seekToTime = null) {
-      state.currentVideoId = id;
-      state.currentVideoTitle = title;
-      state.currentVideoBaseName = normalizeName(title);
-      state.currentVideoType = 'local';
-      state.bookmarks = [];
-      resetSubtitlesUI();
+    function handleSelectedFiles(filesList) {
+      if (!filesList || filesList.length === 0) return;
+      const files = Array.from(filesList);
 
-      sourceLabel.textContent = 'Local MP4 File';
-      videoTitleLabel.textContent = title;
+      // Locate audio or video podcast file
+      const mediaFile = files.find(f => 
+        f.name.match(/\.(mp4|m4v|webm|mov|mkv|mp3|m4a|wav|ogg|aac)$/i) || 
+        f.type.startsWith('video/') || 
+        f.type.startsWith('audio/')
+      );
+
+      if (!mediaFile) {
+        showToast('Please select a valid video or audio podcast file');
+        return;
+      }
+
+      const rawTitle = mediaFile.name.replace(/\.[^/.]+$/, '');
+      const normName = normalizeName(mediaFile.name);
+      const isAudio = mediaFile.type.startsWith('audio/') || mediaFile.name.match(/\.(mp3|m4a|wav|ogg|aac)$/i);
+
+      // 1. Check if video/podcast is already in the database (by normalized filename)
+      const db = getDatabase();
+      const existingKey = Object.keys(db.videos).find(k => {
+        const entry = db.videos[k];
+        return entry.fileName === mediaFile.name || 
+               normalizeName(entry.title) === normName ||
+               normalizeName(entry.fileName) === normName;
+      });
+
+      let loadedBookmarks = [];
+      let loadedSubtitles = [];
+
+      if (existingKey && db.videos[existingKey]) {
+        // Matched existing database entry
+        const entry = db.videos[existingKey];
+        state.currentVideoId = entry.id;
+        loadedBookmarks = Array.isArray(entry.bookmarks) ? [...entry.bookmarks] : [];
+        loadedSubtitles = Array.isArray(entry.subtitles) ? [...entry.subtitles] : [];
+        showToast(`Loaded "${rawTitle}" (${loadedBookmarks.length} bookmarks found)`);
+      } else {
+        // Create brand new database entry
+        const newId = 'podcast_' + normName.replace(/\s+/g, '_') + '_' + Date.now();
+        state.currentVideoId = newId;
+        loadedBookmarks = [];
+        loadedSubtitles = [];
+        showToast(`New podcast entry created for "${rawTitle}"`);
+      }
+
+      state.currentVideoTitle = rawTitle;
+      state.currentVideoBaseName = normName;
+      state.currentVideoFileName = mediaFile.name;
+      state.bookmarks = loadedBookmarks;
+      state.subtitles = loadedSubtitles;
+
+      sourceLabel.textContent = isAudio ? 'Audio Podcast' : 'Video Podcast';
+      videoTitleLabel.textContent = rawTitle;
 
       emptyPlayerPlaceholder.classList.add('hidden');
-      relinkOverlay.classList.add('hidden');
       media.classList.remove('hidden');
       mediaLoader.classList.remove('hidden');
 
-      media.src = url;
+      const fileUrl = URL.createObjectURL(mediaFile);
+      media.src = fileUrl;
       media.playbackRate = state.playbackRates[state.currentRateIndex] || 1.0;
 
       try {
@@ -685,22 +658,53 @@
       }
       volumeBar.value = state.volume;
 
-      const data = getStoredData();
-      if (data.videos[id] && Array.isArray(data.videos[id].bookmarks)) {
-        state.bookmarks = [...data.videos[id].bookmarks];
-      } else {
-        const matchingKey = Object.keys(data.videos).find(k => normalizeName(data.videos[k].title) === state.currentVideoBaseName);
-        if (matchingKey && Array.isArray(data.videos[matchingKey].bookmarks)) {
-          state.bookmarks = [...data.videos[matchingKey].bookmarks];
-        } else {
-          state.bookmarks = [];
-        }
-      }
-
       renderBookmarks();
-      saveCurrentVideoToLocalStorage();
       setupAirPodsMediaSession();
 
+      // 2. Check if an SRT file is included in the selection or matches the database
+      const srtFiles = files.filter(f => f.name.match(/\.(srt|vtt)$/i));
+      let matchingSrt = null;
+
+      if (srtFiles.length === 1) {
+        matchingSrt = srtFiles[0];
+      } else if (srtFiles.length > 1) {
+        matchingSrt = srtFiles.find(f => normalizeName(f.name) === normName) ||
+                      srtFiles.find(f => normalizeName(f.name).includes(normName) || normName.includes(normalizeName(f.name))) ||
+                      srtFiles[0];
+      }
+
+      if (matchingSrt) {
+        matchingSrt.text().then(text => {
+          applySubtitles(text, matchingSrt.name);
+        }).catch(err => console.error('SRT read error:', err));
+      } else if (state.subtitles.length > 0) {
+        // Subtitles were already restored from the database!
+        state.subtitlesEnabled = true;
+        srtBadge.classList.remove('hidden');
+        srtBadge.textContent = `SRT ON (${state.subtitles.length})`;
+        toggleSubtitlesBtn.classList.add('text-indigo-400');
+        toggleSubtitlesBtn.classList.remove('text-slate-400');
+      } else {
+        resetSubtitlesUI();
+      }
+
+      // Check for bookmarks JSON in selection as well
+      const matchingJson = files.find(f => f.name.toLowerCase().endsWith('.json') && normalizeName(f.name).includes(normName));
+      if (matchingJson) {
+        matchingJson.text().then(jsonText => {
+          try {
+            const parsed = JSON.parse(jsonText);
+            const importedList = Array.isArray(parsed.bookmarks) ? parsed.bookmarks : (Array.isArray(parsed) ? parsed : null);
+            if (importedList && importedList.length > 0) {
+              state.bookmarks = importedList;
+              renderBookmarks();
+              saveCurrentVideoToDatabase();
+            }
+          } catch (e) {}
+        });
+      }
+
+      saveCurrentVideoToDatabase();
       media.load();
 
       const playPromise = media.play();
@@ -708,102 +712,18 @@
         playPromise.then(() => {
           state.isPlaying = true;
           updatePlayPauseUI();
-          if (seekToTime !== null && seekToTime > 0) {
-            media.currentTime = seekToTime;
-          }
-        }).catch((err) => {
-          console.warn('Playback requires tap:', err);
+        }).catch(() => {
           state.isPlaying = false;
           updatePlayPauseUI();
         }).finally(() => {
           mediaLoader.classList.add('hidden');
         });
       }
-
-      showToast(`Loaded: ${title}`);
-    }
-
-    function restoreSessionFromData(videoEntry) {
-      if (!videoEntry) return;
-
-      state.currentVideoId = videoEntry.id;
-      state.currentVideoTitle = videoEntry.title;
-      state.currentVideoBaseName = normalizeName(videoEntry.title);
-      state.currentVideoType = 'local';
-      state.bookmarks = Array.isArray(videoEntry.bookmarks) ? [...videoEntry.bookmarks] : [];
-      resetSubtitlesUI();
-
-      videoTitleLabel.textContent = videoEntry.title;
-      renderBookmarks();
-
-      sourceLabel.textContent = 'Saved Local Video';
-      emptyPlayerPlaceholder.classList.add('hidden');
-      relinkTitleText.textContent = videoEntry.title;
-      relinkSubText.textContent = `Restored ${state.bookmarks.length} bookmark(s). Select the MP4 to resume.`;
-      relinkOverlay.classList.remove('hidden');
-      showToast(`Bookmarks restored: ${videoEntry.title}`);
-    }
-
-    function handleSelectedFiles(filesList) {
-      if (!filesList || filesList.length === 0) return;
-      const files = Array.from(filesList);
-
-      const videoFile = files.find(f => f.name.match(/\.(mp4|m4v|webm|mov|mkv)$/i) || f.type.startsWith('video/'));
-      if (!videoFile) {
-        showToast('No video file found in selection');
-        return;
-      }
-
-      const rawBaseName = videoFile.name.replace(/\.[^/.]+$/, '');
-      const normBaseName = normalizeName(videoFile.name);
-      const videoId = 'file_' + sanitizeKey(videoFile.name) + '_' + videoFile.size;
-
-      const fileUrl = URL.createObjectURL(videoFile);
-      loadVideoSource(fileUrl, videoId, rawBaseName);
-
-      // Strict SRT matching
-      const matchingSrt = files.find(f => {
-        if (!f.name.toLowerCase().endsWith('.srt') && !f.name.toLowerCase().endsWith('.vtt')) return false;
-        const srtNorm = normalizeName(f.name);
-        return srtNorm === normBaseName || srtNorm.startsWith(normBaseName) || normBaseName.startsWith(srtNorm);
-      }) || (files.length === 2 ? files.find(f => f.name.toLowerCase().endsWith('.srt')) : null);
-
-      if (matchingSrt) {
-        matchingSrt.text().then(text => {
-          applySubtitles(text, matchingSrt.name);
-        }).catch(err => console.error('SRT read error:', err));
-      } else {
-        resetSubtitlesUI();
-      }
-
-      // Check for matching bookmarks JSON
-      const matchingBookmarksJson = files.find(f => {
-        if (!f.name.toLowerCase().endsWith('.json')) return false;
-        const jsonNorm = normalizeName(f.name);
-        return jsonNorm.includes(normBaseName) || jsonNorm === `${normBaseName} bookmarks`;
-      });
-
-      if (matchingBookmarksJson) {
-        matchingBookmarksJson.text().then(jsonText => {
-          try {
-            const parsed = JSON.parse(jsonText);
-            const loadedList = Array.isArray(parsed.bookmarks) ? parsed.bookmarks : (Array.isArray(parsed) ? parsed : null);
-            if (loadedList) {
-              state.bookmarks = loadedList;
-              renderBookmarks();
-              saveCurrentVideoToLocalStorage();
-              showToast(`Loaded ${loadedList.length} bookmarks from JSON`);
-            }
-          } catch (e) {
-            console.error('Error reading bookmarks JSON:', e);
-          }
-        }).catch(err => console.error('JSON read error:', err));
-      }
     }
 
     function triggerBookmarkCreation(sourceTag = '') {
       if (!state.currentVideoId) {
-        showToast('Please load an MP4 file first');
+        showToast('Please choose a podcast first');
         return;
       }
 
@@ -819,12 +739,12 @@
 
       state.bookmarks.push(newBm);
       state.bookmarks.sort((a, b) => a.time - b.time);
-      saveCurrentVideoToLocalStorage();
+      saveCurrentVideoToDatabase();
       renderBookmarks();
 
       const label = sourceTag ? `[${sourceTag}] ` : '';
       if (subtitlePreview) {
-        showToast(`${label}Bookmarked: "${subtitlePreview.slice(0, 30)}..."`);
+        showToast(`${label}Bookmarked: "${subtitlePreview.slice(0, 32)}..."`);
       } else {
         showToast(`${label}Bookmarked at ${formatTime(cur)}`);
       }
@@ -833,6 +753,15 @@
     function renderBookmarks() {
       bookmarkCount.textContent = state.bookmarks.length;
       bookmarksContainer.innerHTML = '';
+
+      if (!state.currentVideoId) {
+        bookmarksContainer.innerHTML = `
+          <div class="text-center py-10 text-slate-500 text-xs">
+            Choose a podcast to view or add bookmarks.
+          </div>
+        `;
+        return;
+      }
 
       if (state.bookmarks.length === 0) {
         bookmarksContainer.innerHTML = `
@@ -871,12 +800,12 @@
         const noteInput = item.querySelector('.note-input');
         noteInput.addEventListener('change', (e) => {
           bm.note = e.target.value.trim();
-          saveCurrentVideoToLocalStorage();
+          saveCurrentVideoToDatabase();
         });
 
         item.querySelector('.delete-btn').addEventListener('click', () => {
           state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
-          saveCurrentVideoToLocalStorage();
+          saveCurrentVideoToDatabase();
           renderBookmarks();
         });
 
@@ -889,9 +818,9 @@
     clearAllBookmarksBtn.addEventListener('click', () => {
       if (!state.currentVideoId || state.bookmarks.length === 0) return;
       state.bookmarks = [];
-      saveCurrentVideoToLocalStorage();
+      saveCurrentVideoToDatabase();
       renderBookmarks();
-      showToast('Bookmarks cleared for this video');
+      showToast('Bookmarks cleared for this podcast');
     });
 
     exportTxtBtn.addEventListener('click', () => {
@@ -901,9 +830,9 @@
       }
 
       state.bookmarks.sort((a, b) => a.time - b.time);
-      const title = state.currentVideoTitle || 'DriveCast_Video';
+      const title = state.currentVideoTitle || 'DriveCast_Podcast';
       let content = `Bookmarks for: ${title}\r\n`;
-      content += `Generated by DriveCast v4.5 (${new Date().toLocaleDateString()})\r\n`;
+      content += `Generated by DriveCast v4.7 (${new Date().toLocaleDateString()})\r\n`;
       content += `----------------------------------------\r\n\r\n`;
 
       state.bookmarks.forEach(bm => {
@@ -921,132 +850,6 @@
       URL.revokeObjectURL(downloadUrl);
 
       showToast('Exported bookmarks as .txt');
-    });
-
-    saveFolderFileBtn.addEventListener('click', async () => {
-      if (!state.currentVideoId) {
-        showToast('Please load a video first');
-        return;
-      }
-
-      const title = state.currentVideoTitle || 'video';
-      const fileData = {
-        videoId: state.currentVideoId,
-        title: title,
-        lastSeekTime: media ? media.currentTime : 0,
-        bookmarks: state.bookmarks,
-        updatedAt: new Date().toISOString()
-      };
-      const jsonStr = JSON.stringify(fileData, null, 2);
-
-      if (state.currentDirectoryHandle) {
-        try {
-          const fileHandle = await state.currentDirectoryHandle.getFileHandle(`${title}_bookmarks.json`, { create: true });
-          const writable = await fileHandle.createWritable();
-          await writable.write(jsonStr);
-          await writable.close();
-          showToast(`Saved ${title}_bookmarks.json directly in folder!`);
-          return;
-        } catch (err) {
-          console.warn('Folder write fallback:', err);
-        }
-      }
-
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = `${title}_bookmarks.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(downloadUrl);
-
-      showToast(`Downloaded ${title}_bookmarks.json`);
-    });
-
-    function renderLibrary() {
-      libraryItemsContainer.innerHTML = '';
-      const data = getStoredData();
-      const keys = Object.keys(data.videos || {});
-
-      if (keys.length === 0) {
-        libraryItemsContainer.innerHTML = `
-          <div class="text-center py-12 text-slate-500 text-xs">
-            No saved videos found in localStorage.
-          </div>
-        `;
-        return;
-      }
-
-      keys.forEach(k => {
-        const item = data.videos[k];
-        const el = document.createElement('div');
-        el.className = 'p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between gap-3';
-        
-        const bmCount = Array.isArray(item.bookmarks) ? item.bookmarks.length : 0;
-
-        el.innerHTML = `
-          <div class="min-w-0 flex-1 cursor-pointer load-entry-info">
-            <span class="text-[9px] font-mono uppercase tracking-wider text-indigo-400 block">Local MP4</span>
-            <h4 class="text-xs font-bold text-white truncate">${escapeHtml(item.title)}</h4>
-            <span class="text-[11px] text-slate-400 font-mono">${bmCount} bookmarks</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <button class="load-video-btn bg-indigo-600/90 hover:bg-indigo-600 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">
-              Open
-            </button>
-            <button class="remove-video-btn text-slate-500 hover:text-red-400 p-1.5 rounded-lg transition" title="Delete from localStorage">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-          </div>
-        `;
-
-        const openHandler = () => {
-          restoreSessionFromData(item);
-          libraryDrawer.classList.add('hidden');
-        };
-
-        el.querySelector('.load-video-btn').addEventListener('click', openHandler);
-        el.querySelector('.load-entry-info').addEventListener('click', openHandler);
-
-        el.querySelector('.remove-video-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          const currentData = getStoredData();
-          delete currentData.videos[k];
-          if (currentData.lastActiveId === k) currentData.lastActiveId = '';
-          setStoredData(currentData);
-
-          if (state.currentVideoId === k) {
-            state.bookmarks = [];
-            renderBookmarks();
-          }
-          renderLibrary();
-          showToast('Deleted from localStorage');
-        });
-
-        libraryItemsContainer.appendChild(el);
-      });
-    }
-
-    libraryToggleBtn.addEventListener('click', () => {
-      renderLibrary();
-      libraryDrawer.classList.remove('hidden');
-    });
-
-    closeLibraryBtn.addEventListener('click', () => {
-      libraryDrawer.classList.add('hidden');
-    });
-
-    clearAllLocalStorageBtn.addEventListener('click', () => {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-        state.bookmarks = [];
-        renderBookmarks();
-        renderLibrary();
-        updateStorageStatusDisplay();
-        showToast('All localStorage data cleared');
-      } catch (e) {}
     });
 
     media.addEventListener('play', () => {
@@ -1179,48 +982,9 @@
       }
     });
 
-    localFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
+    // File Inputs Listeners
+    podcastFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
     placeholderFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
-    relinkFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
-
-    srtFileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        file.text().then(text => applySubtitles(text, file.name));
-      }
-    });
-
-    async function handleOpenFolder() {
-      if ('showDirectoryPicker' in window) {
-        try {
-          const dirHandle = await window.showDirectoryPicker();
-          state.currentDirectoryHandle = dirHandle;
-          const collectedFiles = [];
-          for await (const entry of dirHandle.values()) {
-            if (entry.kind === 'file') {
-              const file = await entry.getFile();
-              collectedFiles.push(file);
-            }
-          }
-          if (collectedFiles.length > 0) {
-            handleSelectedFiles(collectedFiles);
-          } else {
-            showToast('No files found in folder');
-          }
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.warn('DirectoryPicker failed, opening fallback input:', err);
-            folderFallbackInput.click();
-          }
-        }
-      } else {
-        folderFallbackInput.click();
-      }
-    }
-
-    openFolderBtn.addEventListener('click', handleOpenFolder);
-    placeholderFolderBtn.addEventListener('click', handleOpenFolder);
-    folderFallbackInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
 
     // Drag and Drop
     ['dragenter', 'dragover'].forEach(name => {
@@ -1258,25 +1022,21 @@
       speedBtn.textContent = `${state.playbackRates[state.currentRateIndex]}x`;
       volumeBar.value = state.volume;
 
-      const data = getStoredData();
-      updateStorageStatusDisplay();
-
-      if (data.lastActiveId && data.videos[data.lastActiveId]) {
-        restoreSessionFromData(data.videos[data.lastActiveId]);
-      } else {
-        const videoKeys = Object.keys(data.videos);
-        if (videoKeys.length > 0) {
-          restoreSessionFromData(data.videos[videoKeys[0]]);
-        } else {
-          renderBookmarks();
-        }
-      }
+      // Clean start: wait until the user selects a file before loading bookmarks
+      state.currentVideoId = '';
+      state.currentVideoTitle = '';
+      state.bookmarks = [];
+      state.subtitles = [];
+      videoTitleLabel.textContent = 'Choose a podcast to start';
+      sourceLabel.textContent = 'Ready';
+      emptyPlayerPlaceholder.classList.remove('hidden');
+      renderBookmarks();
 
       setupAirPodsMediaSession();
     }
 
     window.addEventListener('beforeunload', () => {
-      saveCurrentVideoToLocalStorage();
+      saveCurrentVideoToDatabase();
     });
 
     if (document.readyState === 'loading') {
