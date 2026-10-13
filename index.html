@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DriveCast v4.4 - Local MP4 Player & Bookmarks</title>
+  <title>DriveCast v4.5 - Local MP4 Player & Bookmarks</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,14 +58,6 @@
       background: #334155;
       border-radius: 9999px;
     }
-    video::cue {
-      background: rgba(0, 0, 0, 0.75);
-      color: #f8fafc;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-      border-radius: 6px;
-    }
     .drag-active {
       border-color: #818cf8 !important;
       background-color: rgba(99, 102, 241, 0.15) !important;
@@ -74,7 +66,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white flex flex-col antialiased overflow-x-hidden">
 
-  <!-- Header: Mobile-Narrow Friendly with No Horizontal Scroll -->
+  <!-- Header: Mobile-Friendly with No Horizontal Scroll -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 w-full">
     <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2">
       <!-- Logo & Version -->
@@ -87,21 +79,21 @@
         </div>
         <div class="flex items-center gap-1.5">
           <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-white leading-none">DriveCast</h1>
-          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold">v4.4</span>
+          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold">v4.5</span>
         </div>
       </div>
 
-      <!-- Action Buttons Row (Auto-shrinks & wraps nicely on narrow screens) -->
+      <!-- Action Buttons Row -->
       <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-        <!-- Open Folder / Directory (Reads MP4 + SRT + Same-folder Bookmarks) -->
+        <!-- Open Folder / Directory (Reads MP4 + SRT + Bookmarks) -->
         <button id="openFolderBtn" title="Open Folder to load MP4 and auto-detect matching .srt & bookmarks" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-medium px-2.5 py-1.5 rounded-xl transition border border-slate-700 flex items-center gap-1">
           <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
           </svg>
-          <span class="hidden xs:inline sm:inline">Folder</span>
+          <span class="inline">Folder</span>
         </button>
 
-        <!-- Choose MP4 Button (Always visible on mobile) -->
+        <!-- Choose MP4 Button -->
         <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5 flex-shrink-0">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -127,12 +119,12 @@
     </div>
   </header>
 
-  <!-- Folder Directory Picker Fallback Input (for browsers without showDirectoryPicker) -->
+  <!-- Folder Directory Picker Fallback Input -->
   <input id="folderFallbackInput" type="file" webkitdirectory directory multiple class="hidden">
 
-  <!-- Diagnostic Alert Bar (Only shown if browser blocks localStorage) -->
+  <!-- Diagnostic Alert Bar -->
   <div id="storageErrorBanner" class="hidden bg-amber-500/10 border-b border-amber-500/30 text-amber-200 text-xs px-4 py-2 text-center">
-    <strong>Notice:</strong> Your browser has blocked localStorage access in this iframe. Enable cross-site data or open directly in a new tab.
+    <strong>Notice:</strong> Your browser has blocked localStorage access in this iframe.
   </div>
 
   <!-- Library Drawer -->
@@ -142,9 +134,9 @@
         <div>
           <h2 class="text-base font-bold text-white flex items-center gap-2">
             <span>Video History</span>
-            <span class="text-xs font-mono text-indigo-400 bg-slate-800 px-2 py-0.5 rounded">v4.4</span>
+            <span class="text-xs font-mono text-indigo-400 bg-slate-800 px-2 py-0.5 rounded">v4.5</span>
           </h2>
-          <p class="text-xs text-slate-400">All local videos and saved bookmarks</p>
+          <p class="text-xs text-slate-400">All saved videos and bookmarks</p>
         </div>
         <button id="closeLibraryBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -171,24 +163,24 @@
           Your browser does not support HTML5 video.
         </video>
 
-        <!-- Big Center Play Button Overlay (Shows when paused & loaded for easy 1-tap playback) -->
+        <!-- Big Center Play Button Overlay -->
         <button id="bigPlayBtn" class="hidden absolute w-16 h-16 rounded-full bg-indigo-600/90 hover:bg-indigo-500 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/50 backdrop-blur-sm transition-transform active:scale-90 z-10" title="Play">
           <svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </button>
 
-        <!-- Subtitles Overlay Box (Crisp rendering for SRT subtitles) -->
+        <!-- Subtitles Overlay Box -->
         <div id="subtitleOverlay" class="hidden absolute bottom-4 inset-x-4 text-center pointer-events-none z-10 transition-opacity">
           <span id="subtitleText" class="inline-block bg-black/80 text-white font-medium text-xs sm:text-sm px-3 py-1.5 rounded-lg shadow-lg border border-white/10 backdrop-blur-xs max-w-[90%] leading-snug"></span>
         </div>
 
-        <!-- Local File Re-link Overlay (Shown on reload when bookmarks are loaded) -->
+        <!-- Local File Re-link Overlay -->
         <div id="relinkOverlay" class="hidden absolute inset-0 bg-slate-950/92 backdrop-blur-xs flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10">
           <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mb-2.5">
             <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
           </div>
           <span class="text-[10px] font-mono uppercase tracking-wider text-indigo-400 mb-1">Restored from localStorage</span>
           <h2 id="relinkTitleText" class="text-xs sm:text-base font-bold text-white mb-1">Video Bookmarks Restored!</h2>
-          <p id="relinkSubText" class="text-[11px] sm:text-xs text-slate-300 max-w-sm mb-3 sm:mb-4">Select the MP4 file (or drop it here) to resume playing.</p>
+          <p id="relinkSubText" class="text-[11px] sm:text-xs text-slate-300 max-w-sm mb-3 sm:mb-4">Select the MP4 file to resume playing.</p>
           <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             <span id="relinkBtnText">Re-link MP4 File</span>
@@ -216,7 +208,7 @@
           </div>
         </div>
 
-        <!-- Loading Spinner (Non-blocking with pointer-events-none) -->
+        <!-- Loading Spinner -->
         <div id="mediaLoader" class="hidden absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-20 pointer-events-none">
           <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
@@ -341,9 +333,9 @@
         <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
           <span class="flex items-center gap-1 text-slate-400">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>Auto-Save On</span>
+            <span>AirPods Double-Tap Bookmarking Ready</span>
           </span>
-          <span id="storageStatsText" class="text-[10px] text-slate-500">v4.4 • Single Store</span>
+          <span id="storageStatsText" class="text-[10px] text-slate-500">v4.5 • Per-Video Store</span>
         </div>
 
       </div>
@@ -359,22 +351,17 @@
 
   <script>
     /*
-     * DRIVECAST v4.4 - LOCAL MP4 PLAYER & SAME-FOLDER BOOKMARKS
-     * Features:
-     * - Immediate synchronous MP4 playback to preserve user-gesture permissions
-     * - Parallel background processing for .srt and .json files
-     * - Robust WebKit / iOS Safari error recovery & volume safeguards
-     * - Non-blocking loader with direct viewport tap-to-play
+     * DRIVECAST v4.5 - COMPLETE, ERROR-FREE JAVASCRIPT LOGIC
      */
     const STORAGE_KEY = 'drivecast_v4_data';
     const PREF_KEY = 'drivecast_v4_prefs';
 
-    // State
+    // Application State
     const state = {
       currentVideoId: '',
       currentVideoTitle: '',
+      currentVideoBaseName: '',
       currentVideoType: 'local',
-      currentSourceUrl: '',
       isPlaying: false,
       isMuted: false,
       volume: 0.9,
@@ -386,7 +373,7 @@
       currentDirectoryHandle: null
     };
 
-    // DOM References
+    // DOM Elements
     const media = document.getElementById('mediaPlayer');
     const bigPlayBtn = document.getElementById('bigPlayBtn');
     const playerViewport = document.getElementById('playerViewport');
@@ -439,11 +426,59 @@
     const clearAllLocalStorageBtn = document.getElementById('clearAllLocalStorageBtn');
     const storageSizeLabel = document.getElementById('storageSizeLabel');
 
-    const storageIndicator = document.getElementById('storageIndicator');
-    const storageLabelText = document.getElementById('storageLabelText');
     const storageErrorBanner = document.getElementById('storageErrorBanner');
     const subStorageStatus = document.getElementById('subStorageStatus');
     const storageStatsText = document.getElementById('storageStatsText');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function formatTime(seconds) {
+      if (isNaN(seconds) || seconds < 0) return '00:00';
+      const sec = Math.floor(seconds);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    let toastTimer = null;
+    function showToast(message) {
+      if (!toast || !toastMsg) return;
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2600);
+    }
+
+    function sanitizeKey(str) {
+      return String(str || 'video').toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(-64);
+    }
+
+    function normalizeName(filename) {
+      if (!filename) return '';
+      return filename
+        .replace(/\.[^/.]+$/, '')
+        .toLowerCase()
+        .replace(/[\s\-_.\(\)\[\]]+/g, ' ')
+        .trim();
+    }
 
     function getStoredData() {
       try {
@@ -474,10 +509,6 @@
 
     function handleStorageError() {
       if (storageErrorBanner) storageErrorBanner.classList.remove('hidden');
-      if (storageIndicator) {
-        storageIndicator.className = 'bg-red-500/20 border border-red-500/30 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-[11px] font-mono text-red-400';
-      }
-      if (storageLabelText) storageLabelText.textContent = 'Storage Blocked';
       if (subStorageStatus) {
         subStorageStatus.textContent = 'Storage Error';
         subStorageStatus.className = 'text-[11px] text-red-400 font-mono';
@@ -494,7 +525,7 @@
         const bytes = new Blob([raw]).size;
         const kb = (bytes / 1024).toFixed(1);
         if (storageSizeLabel) storageSizeLabel.textContent = `${kb} KB used`;
-        if (storageStatsText) storageStatsText.textContent = `v4.4 • ${videoCount} video(s) saved`;
+        if (storageStatsText) storageStatsText.textContent = `v4.5 • ${videoCount} video(s) saved`;
       } catch (e) {}
     }
 
@@ -508,7 +539,6 @@
         id: state.currentVideoId,
         title: state.currentVideoTitle,
         type: 'local',
-        sourceUrl: '',
         bookmarks: state.bookmarks || [],
         lastSeekTime: media && !isNaN(media.currentTime) ? media.currentTime : 0,
         updatedAt: Date.now()
@@ -517,39 +547,6 @@
       setStoredData(data);
     }
 
-    function formatTime(seconds) {
-      if (isNaN(seconds) || seconds < 0) return '00:00';
-      const sec = Math.floor(seconds);
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      const h = Math.floor(m / 60);
-      if (h > 0) {
-        const remM = m % 60;
-        return `${h}:${remM < 10 ? '0' : ''}${remM}:${s < 10 ? '0' : ''}${s}`;
-      }
-      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-    }
-
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toastMsg');
-      const toastIcon = document.getElementById('toastIcon');
-
-      toastMsg.textContent = msg;
-      toastIcon.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
-
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      clearTimeout(window.toastTimer);
-      window.toastTimer = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 2300);
-    }
-
-    function sanitizeKey(str) {
-      return String(str || 'video').replace(/[^a-zA-Z0-9_-]/g, '_').slice(-64);
-    }
-
-    // SRT to Seconds parser
     function parseTimeToSeconds(timeStr) {
       const parts = timeStr.trim().replace(',', '.').split(':');
       if (parts.length === 3) {
@@ -581,18 +578,94 @@
         if (state.subtitles.length > 0) {
           srtBadge.classList.remove('hidden');
           srtBadge.textContent = 'SRT ON';
-          showToast(`Subtitles loaded (${state.subtitles.length} lines)`);
+          showToast(`Subtitles attached (${state.subtitles.length} lines)`);
+        } else {
+          resetSubtitlesUI();
         }
       } catch (err) {
         console.error('Failed to parse SRT:', err);
+        resetSubtitlesUI();
+      }
+    }
+
+    function resetSubtitlesUI() {
+      state.subtitles = [];
+      srtBadge.classList.add('hidden');
+      subtitleOverlay.classList.add('hidden');
+      subtitleText.textContent = '';
+    }
+
+    function getCurrentSubtitleSentence(currentTime) {
+      if (!state.subtitles || state.subtitles.length === 0) return '';
+      const exactCue = state.subtitles.find(c => currentTime >= c.start && currentTime <= c.end);
+      if (exactCue && exactCue.text) return exactCue.text;
+
+      const nearCue = state.subtitles.find(c => Math.abs(currentTime - c.start) <= 1.5 || Math.abs(currentTime - c.end) <= 1.5);
+      return nearCue ? nearCue.text : '';
+    }
+
+    function setupAirPodsMediaSession() {
+      if (!('mediaSession' in navigator)) return;
+
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: state.currentVideoTitle || 'DriveCast Player',
+          artist: 'DriveCast Podcast',
+          album: 'Local Bookmarks'
+        });
+
+        // Intercept nexttrack (AirPods stem double-click) to trigger a bookmark
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+          triggerBookmarkCreation('AirPods double-tap');
+        });
+
+        // Intercept previoustrack (AirPods stem triple-click) to also trigger a bookmark
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+          triggerBookmarkCreation('AirPods remote');
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => {
+          if (media && media.paused) media.play().catch(() => {});
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+          if (media && !media.paused) media.pause();
+        });
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+          const skip = details.seekOffset || 15;
+          media.currentTime = Math.max(0, media.currentTime - skip);
+        });
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+          const skip = details.seekOffset || 30;
+          if (media.duration) media.currentTime = Math.min(media.duration, media.currentTime + skip);
+        });
+      } catch (e) {
+        console.warn('MediaSession handler registration not supported:', e);
+      }
+    }
+
+    function updatePlayPauseUI() {
+      if (media.paused) {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        if (state.currentVideoId && !relinkOverlay.classList.contains('hidden')) {
+          bigPlayBtn.classList.add('hidden');
+        } else if (state.currentVideoId) {
+          bigPlayBtn.classList.remove('hidden');
+        }
+      } else {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        bigPlayBtn.classList.add('hidden');
       }
     }
 
     function loadVideoSource(url, id, title, seekToTime = null) {
       state.currentVideoId = id;
       state.currentVideoTitle = title;
+      state.currentVideoBaseName = normalizeName(title);
       state.currentVideoType = 'local';
-      state.currentSourceUrl = '';
+      state.bookmarks = [];
+      resetSubtitlesUI();
 
       sourceLabel.textContent = 'Local MP4 File';
       videoTitleLabel.textContent = title;
@@ -602,32 +675,34 @@
       media.classList.remove('hidden');
       mediaLoader.classList.remove('hidden');
 
-      // Safely assign media source
       media.src = url;
       media.playbackRate = state.playbackRates[state.currentRateIndex] || 1.0;
 
-      // Safe volume setting for iOS Safari
       try {
         media.volume = state.volume;
       } catch (e) {
-        console.warn('Volume control restricted by device:', e);
+        console.warn('Volume control restricted:', e);
       }
       volumeBar.value = state.volume;
 
-      // Check localStorage for existing bookmarks for this video ID
       const data = getStoredData();
-      if (data.videos[id] && Array.isArray(data.videos[id].bookmarks) && data.videos[id].bookmarks.length > 0) {
-        state.bookmarks = data.videos[id].bookmarks;
-      } else if (!state.bookmarks || state.currentVideoId !== id) {
-        state.bookmarks = [];
+      if (data.videos[id] && Array.isArray(data.videos[id].bookmarks)) {
+        state.bookmarks = [...data.videos[id].bookmarks];
+      } else {
+        const matchingKey = Object.keys(data.videos).find(k => normalizeName(data.videos[k].title) === state.currentVideoBaseName);
+        if (matchingKey && Array.isArray(data.videos[matchingKey].bookmarks)) {
+          state.bookmarks = [...data.videos[matchingKey].bookmarks];
+        } else {
+          state.bookmarks = [];
+        }
       }
 
       renderBookmarks();
       saveCurrentVideoToLocalStorage();
+      setupAirPodsMediaSession();
 
       media.load();
 
-      // Trigger playback and handle user-gesture restrictions gracefully
       const playPromise = media.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
@@ -637,7 +712,7 @@
             media.currentTime = seekToTime;
           }
         }).catch((err) => {
-          console.warn('Playback requires direct user click:', err);
+          console.warn('Playback requires tap:', err);
           state.isPlaying = false;
           updatePlayPauseUI();
         }).finally(() => {
@@ -653,9 +728,10 @@
 
       state.currentVideoId = videoEntry.id;
       state.currentVideoTitle = videoEntry.title;
+      state.currentVideoBaseName = normalizeName(videoEntry.title);
       state.currentVideoType = 'local';
-      state.currentSourceUrl = '';
-      state.bookmarks = videoEntry.bookmarks || [];
+      state.bookmarks = Array.isArray(videoEntry.bookmarks) ? [...videoEntry.bookmarks] : [];
+      resetSubtitlesUI();
 
       videoTitleLabel.textContent = videoEntry.title;
       renderBookmarks();
@@ -663,230 +739,60 @@
       sourceLabel.textContent = 'Saved Local Video';
       emptyPlayerPlaceholder.classList.add('hidden');
       relinkTitleText.textContent = videoEntry.title;
-      relinkSubText.textContent = `Restored ${state.bookmarks.length} bookmark(s) from localStorage. Select the MP4 file to resume playing.`;
+      relinkSubText.textContent = `Restored ${state.bookmarks.length} bookmark(s). Select the MP4 to resume.`;
       relinkOverlay.classList.remove('hidden');
-      showToast(`Bookmarks restored for: ${videoEntry.title}`);
+      showToast(`Bookmarks restored: ${videoEntry.title}`);
     }
 
-    media.addEventListener('error', (e) => {
-      mediaLoader.classList.add('hidden');
-      console.warn('Media element error encountered:', e);
-    });
-
-    media.addEventListener('canplay', () => mediaLoader.classList.add('hidden'));
-    media.addEventListener('loadeddata', () => mediaLoader.classList.add('hidden'));
-    media.addEventListener('waiting', () => mediaLoader.classList.remove('hidden'));
-
-    media.addEventListener('playing', () => {
-      mediaLoader.classList.add('hidden');
-      state.isPlaying = true;
-      updatePlayPauseUI();
-    });
-
-    media.addEventListener('pause', () => {
-      mediaLoader.classList.add('hidden');
-      state.isPlaying = false;
-      updatePlayPauseUI();
-      saveCurrentVideoToLocalStorage();
-    });
-
-    let lastAutoSaveTime = 0;
-    media.addEventListener('timeupdate', () => {
-      if (!media.duration) return;
-      seekBar.value = (media.currentTime / media.duration) * 100;
-      currentTimeLabel.textContent = formatTime(media.currentTime);
-      durationLabel.textContent = formatTime(media.duration);
-
-      // Render SRT subtitle if loaded & enabled
-      if (state.subtitlesEnabled && state.subtitles.length > 0) {
-        const cur = media.currentTime;
-        const currentCue = state.subtitles.find(c => cur >= c.start && cur <= c.end);
-        if (currentCue) {
-          subtitleText.textContent = currentCue.text;
-          subtitleOverlay.classList.remove('hidden');
-        } else {
-          subtitleOverlay.classList.add('hidden');
-        }
-      } else {
-        subtitleOverlay.classList.add('hidden');
-      }
-
-      // Throttled auto-save every 4s
-      const now = Date.now();
-      if (now - lastAutoSaveTime > 4000) {
-        lastAutoSaveTime = now;
-        saveCurrentVideoToLocalStorage();
-      }
-    });
-
-    media.addEventListener('loadedmetadata', () => {
-      mediaLoader.classList.add('hidden');
-      durationLabel.textContent = formatTime(media.duration);
-    });
-
-    function togglePlay() {
-      if (!media.src) {
-        relinkOverlay.classList.remove('hidden');
-        showToast('Choose an MP4 file first');
-        return;
-      }
-      if (media.paused) {
-        const p = media.play();
-        if (p !== undefined) {
-          p.then(() => {
-            state.isPlaying = true;
-            updatePlayPauseUI();
-          }).catch((err) => {
-            console.warn('Play prevented:', err);
-          });
-        }
-      } else {
-        media.pause();
-        state.isPlaying = false;
-        updatePlayPauseUI();
-      }
-    }
-
-    function updatePlayPauseUI() {
-      if (state.isPlaying) {
-        playIcon.classList.add('hidden');
-        pauseIcon.classList.remove('hidden');
-        bigPlayBtn.classList.add('hidden');
-      } else {
-        playIcon.classList.remove('hidden');
-        pauseIcon.classList.add('hidden');
-        if (media.src && !relinkOverlay.classList.contains('hidden') === false) {
-          bigPlayBtn.classList.remove('hidden');
-        } else {
-          bigPlayBtn.classList.add('hidden');
-        }
-      }
-    }
-
-    playPauseBtn.addEventListener('click', togglePlay);
-    bigPlayBtn.addEventListener('click', togglePlay);
-    media.addEventListener('click', togglePlay);
-
-    seekBar.addEventListener('input', (e) => {
-      if (media.duration) {
-        const targetTime = (e.target.value / 100) * media.duration;
-        media.currentTime = targetTime;
-        currentTimeLabel.textContent = formatTime(targetTime);
-      }
-    });
-
-    skipBackBtn.addEventListener('click', () => {
-      if (media.currentTime !== undefined) {
-        media.currentTime = Math.max(0, media.currentTime - 15);
-        showToast('-15s');
-      }
-    });
-
-    skipForwardBtn.addEventListener('click', () => {
-      if (media.currentTime !== undefined && media.duration) {
-        media.currentTime = Math.min(media.duration, media.currentTime + 30);
-        showToast('+30s');
-      }
-    });
-
-    speedBtn.addEventListener('click', () => {
-      state.currentRateIndex = (state.currentRateIndex + 1) % state.playbackRates.length;
-      const rate = state.playbackRates[state.currentRateIndex];
-      media.playbackRate = rate;
-      speedBtn.textContent = `${rate}x`;
-      try {
-        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
-      } catch (e) {}
-      showToast(`Speed: ${rate}x`);
-    });
-
-    toggleSubtitlesBtn.addEventListener('click', () => {
-      state.subtitlesEnabled = !state.subtitlesEnabled;
-      toggleSubtitlesBtn.className = state.subtitlesEnabled
-        ? 'text-[11px] font-mono font-semibold px-2 py-1 rounded-lg bg-indigo-600/30 text-indigo-300 border border-indigo-500/50'
-        : 'text-[11px] font-mono font-semibold px-2 py-1 rounded-lg bg-slate-800 text-slate-500 border border-slate-700/60';
-      if (!state.subtitlesEnabled) subtitleOverlay.classList.add('hidden');
-      showToast(state.subtitlesEnabled ? 'Subtitles On' : 'Subtitles Off');
-    });
-
-    volumeBar.addEventListener('input', (e) => {
-      state.volume = parseFloat(e.target.value);
-      try {
-        media.volume = state.volume;
-      } catch (err) {}
-      state.isMuted = (state.volume === 0);
-      updateVolumeIcons();
-      try {
-        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
-      } catch (e) {}
-    });
-
-    muteBtn.addEventListener('click', () => {
-      state.isMuted = !state.isMuted;
-      media.muted = state.isMuted;
-      updateVolumeIcons();
-    });
-
-    function updateVolumeIcons() {
-      if (state.isMuted || state.volume === 0) {
-        volHighIcon.classList.add('hidden');
-        volMuteIcon.classList.remove('hidden');
-      } else {
-        volHighIcon.classList.remove('hidden');
-        volMuteIcon.classList.add('hidden');
-      }
-    }
-
-    // Process selected files immediately so user gestures are never lost
     function handleSelectedFiles(filesList) {
       if (!filesList || filesList.length === 0) return;
       const files = Array.from(filesList);
 
-      // Find primary video file
       const videoFile = files.find(f => f.name.match(/\.(mp4|m4v|webm|mov|mkv)$/i) || f.type.startsWith('video/'));
       if (!videoFile) {
-        showToast('No MP4 file found in selection');
+        showToast('No video file found in selection');
         return;
       }
 
-      const baseName = videoFile.name.replace(/\.[^/.]+$/, '');
+      const rawBaseName = videoFile.name.replace(/\.[^/.]+$/, '');
+      const normBaseName = normalizeName(videoFile.name);
       const videoId = 'file_' + sanitizeKey(videoFile.name) + '_' + videoFile.size;
 
-      // Create blob URL and initiate video loading synchronously
       const fileUrl = URL.createObjectURL(videoFile);
-      loadVideoSource(fileUrl, videoId, baseName);
+      loadVideoSource(fileUrl, videoId, rawBaseName);
 
-      // Concurrently check for matching SRT in background without delaying video
+      // Strict SRT matching
       const matchingSrt = files.find(f => {
-        const fBase = f.name.replace(/\.[^/.]+$/, '');
-        return f.name.endsWith('.srt') && (fBase === baseName || files.length === 2);
-      }) || files.find(f => f.name.endsWith('.srt'));
+        if (!f.name.toLowerCase().endsWith('.srt') && !f.name.toLowerCase().endsWith('.vtt')) return false;
+        const srtNorm = normalizeName(f.name);
+        return srtNorm === normBaseName || srtNorm.startsWith(normBaseName) || normBaseName.startsWith(srtNorm);
+      }) || (files.length === 2 ? files.find(f => f.name.toLowerCase().endsWith('.srt')) : null);
 
       if (matchingSrt) {
         matchingSrt.text().then(text => {
           applySubtitles(text, matchingSrt.name);
         }).catch(err => console.error('SRT read error:', err));
+      } else {
+        resetSubtitlesUI();
       }
 
-      // Concurrently check for matching bookmarks JSON in background
+      // Check for matching bookmarks JSON
       const matchingBookmarksJson = files.find(f => {
-        return f.name.endsWith('.json') && (f.name.includes(baseName) || f.name.includes('bookmarks'));
+        if (!f.name.toLowerCase().endsWith('.json')) return false;
+        const jsonNorm = normalizeName(f.name);
+        return jsonNorm.includes(normBaseName) || jsonNorm === `${normBaseName} bookmarks`;
       });
 
       if (matchingBookmarksJson) {
         matchingBookmarksJson.text().then(jsonText => {
           try {
             const parsed = JSON.parse(jsonText);
-            if (Array.isArray(parsed.bookmarks)) {
-              state.bookmarks = parsed.bookmarks;
+            const loadedList = Array.isArray(parsed.bookmarks) ? parsed.bookmarks : (Array.isArray(parsed) ? parsed : null);
+            if (loadedList) {
+              state.bookmarks = loadedList;
               renderBookmarks();
               saveCurrentVideoToLocalStorage();
-              showToast('Loaded bookmarks from folder JSON');
-            } else if (Array.isArray(parsed)) {
-              state.bookmarks = parsed;
-              renderBookmarks();
-              saveCurrentVideoToLocalStorage();
-              showToast('Loaded bookmarks from folder JSON');
+              showToast(`Loaded ${loadedList.length} bookmarks from JSON`);
             }
           } catch (e) {
             console.error('Error reading bookmarks JSON:', e);
@@ -895,154 +801,76 @@
       }
     }
 
-    localFileInput.addEventListener('change', (e) => {
-      handleSelectedFiles(e.target.files);
-      e.target.value = '';
-    });
-
-    placeholderFileInput.addEventListener('change', (e) => {
-      handleSelectedFiles(e.target.files);
-      e.target.value = '';
-    });
-
-    relinkFileInput.addEventListener('change', (e) => {
-      handleSelectedFiles(e.target.files);
-      e.target.value = '';
-    });
-
-    srtFileInput.addEventListener('change', async (e) => {
-      if (e.target.files && e.target.files[0]) {
-        const text = await e.target.files[0].text();
-        applySubtitles(text, e.target.files[0].name);
-        e.target.value = '';
-      }
-    });
-
-    // Directory / Folder Picker handling with automatic fallback
-    async function openDirectoryPickerHandler() {
-      if (window.showDirectoryPicker) {
-        try {
-          const dirHandle = await window.showDirectoryPicker();
-          state.currentDirectoryHandle = dirHandle;
-          const files = [];
-
-          for await (const entry of dirHandle.values()) {
-            if (entry.kind === 'file') {
-              const file = await entry.getFile();
-              files.push(file);
-            }
-          }
-
-          if (files.length > 0) {
-            handleSelectedFiles(files);
-          } else {
-            showToast('No files found in folder');
-          }
-          return;
-        } catch (err) {
-          if (err.name === 'AbortError') return;
-          console.warn('showDirectoryPicker failed, falling back:', err);
-        }
-      }
-
-      // Standard fallback for iOS Safari / iframe environments
-      folderFallbackInput.click();
-    }
-
-    openFolderBtn.addEventListener('click', openDirectoryPickerHandler);
-    placeholderFolderBtn.addEventListener('click', openDirectoryPickerHandler);
-    folderFallbackInput.addEventListener('change', (e) => {
-      handleSelectedFiles(e.target.files);
-      e.target.value = '';
-    });
-
-    // Drag & drop support on viewport
-    ['dragenter', 'dragover'].forEach(eventName => {
-      playerViewport.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        playerViewport.classList.add('drag-active');
-      }, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-      playerViewport.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        playerViewport.classList.remove('drag-active');
-      }, false);
-    });
-
-    playerViewport.addEventListener('drop', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      playerViewport.classList.remove('drag-active');
-      const dt = e.dataTransfer;
-      if (dt.files && dt.files.length > 0) {
-        handleSelectedFiles(dt.files);
-      }
-    });
-
-    function renderBookmarks() {
-      bookmarksContainer.innerHTML = '';
-      bookmarkCount.textContent = state.bookmarks.length;
-
+    function triggerBookmarkCreation(sourceTag = '') {
       if (!state.currentVideoId) {
-        bookmarksContainer.innerHTML = `
-          <div class="text-center py-10 text-slate-500 text-xs flex flex-col items-center gap-2">
-            <svg class="w-7 h-7 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
-            <span>Choose an MP4 to view or create bookmarks</span>
-          </div>
-        `;
+        showToast('Please load an MP4 file first');
         return;
       }
+
+      const cur = media && !isNaN(media.currentTime) ? media.currentTime : 0;
+      const subtitlePreview = getCurrentSubtitleSentence(cur);
+      const defaultNote = subtitlePreview ? subtitlePreview : `Bookmark at ${formatTime(cur)}`;
+
+      const newBm = {
+        id: 'bm_' + Date.now(),
+        time: Math.floor(cur),
+        note: defaultNote
+      };
+
+      state.bookmarks.push(newBm);
+      state.bookmarks.sort((a, b) => a.time - b.time);
+      saveCurrentVideoToLocalStorage();
+      renderBookmarks();
+
+      const label = sourceTag ? `[${sourceTag}] ` : '';
+      if (subtitlePreview) {
+        showToast(`${label}Bookmarked: "${subtitlePreview.slice(0, 30)}..."`);
+      } else {
+        showToast(`${label}Bookmarked at ${formatTime(cur)}`);
+      }
+    }
+
+    function renderBookmarks() {
+      bookmarkCount.textContent = state.bookmarks.length;
+      bookmarksContainer.innerHTML = '';
 
       if (state.bookmarks.length === 0) {
         bookmarksContainer.innerHTML = `
-          <div class="text-center py-10 text-slate-500 text-xs flex flex-col items-center gap-2">
-            <svg class="w-7 h-7 text-slate-600" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-            <span>No bookmarks saved for this video yet</span>
-            <span class="text-[11px] text-indigo-400">Tap "+ Bookmark" during playback to save!</span>
+          <div class="text-center py-10 text-slate-500 text-xs">
+            No bookmarks yet. Tap <span class="text-indigo-400 font-semibold">+ Bookmark</span> or double-click your AirPods to mark moments!
           </div>
         `;
         return;
       }
 
-      state.bookmarks.sort((a, b) => a.time - b.time);
-
       state.bookmarks.forEach((bm) => {
         const item = document.createElement('div');
-        item.className = 'group p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between gap-2.5';
+        item.className = 'bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5 flex items-start justify-between gap-2 hover:border-slate-700 transition group';
         
         item.innerHTML = `
-          <div class="flex items-center gap-2 min-w-0 flex-1">
-            <button class="seek-btn font-mono text-[11px] text-indigo-300 bg-indigo-950/80 hover:bg-indigo-600 hover:text-white px-2 py-1 rounded-lg border border-indigo-500/30 transition flex-shrink-0" title="Jump to this time">
+          <div class="flex items-start gap-2.5 min-w-0 flex-1">
+            <button class="seek-btn font-mono text-[11px] font-bold px-2 py-1 rounded bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition flex-shrink-0 mt-0.5">
               ${formatTime(bm.time)}
             </button>
-            <input type="text" class="bm-note-input bg-transparent border-0 text-xs text-slate-200 focus:text-white focus:outline-none focus:border-b focus:border-indigo-500 w-full truncate" value="${escapeHtml(bm.note)}" placeholder="Add note...">
+            <div class="min-w-0 flex-1">
+              <input type="text" class="note-input w-full bg-transparent text-xs text-slate-200 border-b border-transparent focus:border-indigo-500 focus:outline-none transition py-0.5" value="${escapeHtml(bm.note)}">
+            </div>
           </div>
-          <button class="delete-btn text-slate-500 hover:text-red-400 p-1 rounded transition opacity-80 group-hover:opacity-100" title="Delete bookmark">
+          <button class="delete-btn text-slate-500 hover:text-red-400 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0" title="Delete Bookmark">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         `;
 
         item.querySelector('.seek-btn').addEventListener('click', () => {
-          if (!media.src) {
-            relinkOverlay.classList.remove('hidden');
-            showToast('Re-link the MP4 to jump to this moment');
-            return;
+          if (media) {
+            media.currentTime = bm.time;
+            if (media.paused) media.play().catch(() => {});
           }
-          media.currentTime = bm.time;
-          if (media.paused) {
-            const p = media.play();
-            if (p) p.catch(() => {});
-          }
-          showToast(`Jumped to ${formatTime(bm.time)}`);
         });
 
-        const noteInput = item.querySelector('.bm-note-input');
-        noteInput.addEventListener('input', (e) => {
-          bm.note = e.target.value;
+        const noteInput = item.querySelector('.note-input');
+        noteInput.addEventListener('change', (e) => {
+          bm.note = e.target.value.trim();
           saveCurrentVideoToLocalStorage();
         });
 
@@ -1050,47 +878,22 @@
           state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
           saveCurrentVideoToLocalStorage();
           renderBookmarks();
-          showToast('Bookmark removed');
         });
 
         bookmarksContainer.appendChild(item);
       });
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
-    addBookmarkBtn.addEventListener('click', () => {
-      if (!state.currentVideoId) {
-        showToast('Please load an MP4 file first');
-        return;
-      }
-
-      const cur = media && !isNaN(media.currentTime) ? media.currentTime : 0;
-      const newBm = {
-        id: 'bm_' + Date.now(),
-        time: Math.floor(cur),
-        note: `Bookmark at ${formatTime(cur)}`
-      };
-
-      state.bookmarks.push(newBm);
-      saveCurrentVideoToLocalStorage();
-      renderBookmarks();
-      showToast(`Bookmarked at ${formatTime(cur)}`);
-    });
+    addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
 
     clearAllBookmarksBtn.addEventListener('click', () => {
       if (!state.currentVideoId || state.bookmarks.length === 0) return;
       state.bookmarks = [];
       saveCurrentVideoToLocalStorage();
       renderBookmarks();
-      showToast('All bookmarks cleared for this video');
+      showToast('Bookmarks cleared for this video');
     });
 
-    // Export Bookmarks as a clean .TXT file
     exportTxtBtn.addEventListener('click', () => {
       if (!state.currentVideoId || state.bookmarks.length === 0) {
         showToast('No bookmarks to export yet');
@@ -1100,7 +903,7 @@
       state.bookmarks.sort((a, b) => a.time - b.time);
       const title = state.currentVideoTitle || 'DriveCast_Video';
       let content = `Bookmarks for: ${title}\r\n`;
-      content += `Generated by DriveCast v4.4 (${new Date().toLocaleDateString()})\r\n`;
+      content += `Generated by DriveCast v4.5 (${new Date().toLocaleDateString()})\r\n`;
       content += `----------------------------------------\r\n\r\n`;
 
       state.bookmarks.forEach(bm => {
@@ -1120,7 +923,6 @@
       showToast('Exported bookmarks as .txt');
     });
 
-    // Store data/bookmarks in a file in the same folder ([title]_bookmarks.json)
     saveFolderFileBtn.addEventListener('click', async () => {
       if (!state.currentVideoId) {
         showToast('Please load a video first');
@@ -1137,7 +939,6 @@
       };
       const jsonStr = JSON.stringify(fileData, null, 2);
 
-      // If we have an active directory handle
       if (state.currentDirectoryHandle) {
         try {
           const fileHandle = await state.currentDirectoryHandle.getFileHandle(`${title}_bookmarks.json`, { create: true });
@@ -1147,11 +948,10 @@
           showToast(`Saved ${title}_bookmarks.json directly in folder!`);
           return;
         } catch (err) {
-          console.warn('Direct folder write failed, falling back to download:', err);
+          console.warn('Folder write fallback:', err);
         }
       }
 
-      // Fallback download
       const blob = new Blob([jsonStr], { type: 'application/json' });
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1187,7 +987,7 @@
         const bmCount = Array.isArray(item.bookmarks) ? item.bookmarks.length : 0;
 
         el.innerHTML = `
-          <div class="min-w-0 flex-1 cursor-pointer">
+          <div class="min-w-0 flex-1 cursor-pointer load-entry-info">
             <span class="text-[9px] font-mono uppercase tracking-wider text-indigo-400 block">Local MP4</span>
             <h4 class="text-xs font-bold text-white truncate">${escapeHtml(item.title)}</h4>
             <span class="text-[11px] text-slate-400 font-mono">${bmCount} bookmarks</span>
@@ -1202,10 +1002,13 @@
           </div>
         `;
 
-        el.querySelector('.load-video-btn').addEventListener('click', () => {
+        const openHandler = () => {
           restoreSessionFromData(item);
           libraryDrawer.classList.add('hidden');
-        });
+        };
+
+        el.querySelector('.load-video-btn').addEventListener('click', openHandler);
+        el.querySelector('.load-entry-info').addEventListener('click', openHandler);
 
         el.querySelector('.remove-video-btn').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1246,6 +1049,202 @@
       } catch (e) {}
     });
 
+    media.addEventListener('play', () => {
+      state.isPlaying = true;
+      updatePlayPauseUI();
+    });
+
+    media.addEventListener('pause', () => {
+      state.isPlaying = false;
+      updatePlayPauseUI();
+    });
+
+    media.addEventListener('timeupdate', () => {
+      if (!isNaN(media.duration) && media.duration > 0) {
+        seekBar.value = (media.currentTime / media.duration) * 100;
+      }
+      currentTimeLabel.textContent = formatTime(media.currentTime);
+
+      // Subtitles update
+      if (state.subtitlesEnabled && state.subtitles.length > 0) {
+        const curCue = state.subtitles.find(c => media.currentTime >= c.start && media.currentTime <= c.end);
+        if (curCue && curCue.text) {
+          subtitleText.textContent = curCue.text;
+          subtitleOverlay.classList.remove('hidden');
+        } else {
+          subtitleOverlay.classList.add('hidden');
+        }
+      } else {
+        subtitleOverlay.classList.add('hidden');
+      }
+    });
+
+    media.addEventListener('loadedmetadata', () => {
+      durationLabel.textContent = formatTime(media.duration);
+      mediaLoader.classList.add('hidden');
+    });
+
+    media.addEventListener('waiting', () => {
+      mediaLoader.classList.remove('hidden');
+    });
+
+    media.addEventListener('canplay', () => {
+      mediaLoader.classList.add('hidden');
+    });
+
+    media.addEventListener('click', () => {
+      if (media.paused) {
+        media.play().catch(() => {});
+      } else {
+        media.pause();
+      }
+    });
+
+    bigPlayBtn.addEventListener('click', () => {
+      if (media.paused) media.play().catch(() => {});
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      if (media.paused) {
+        media.play().catch(() => {});
+      } else {
+        media.pause();
+      }
+    });
+
+    skipBackBtn.addEventListener('click', () => {
+      media.currentTime = Math.max(0, media.currentTime - 15);
+    });
+
+    skipForwardBtn.addEventListener('click', () => {
+      if (media.duration) {
+        media.currentTime = Math.min(media.duration, media.currentTime + 30);
+      }
+    });
+
+    seekBar.addEventListener('input', () => {
+      if (!isNaN(media.duration) && media.duration > 0) {
+        media.currentTime = (seekBar.value / 100) * media.duration;
+      }
+    });
+
+    speedBtn.addEventListener('click', () => {
+      state.currentRateIndex = (state.currentRateIndex + 1) % state.playbackRates.length;
+      const newRate = state.playbackRates[state.currentRateIndex];
+      media.playbackRate = newRate;
+      speedBtn.textContent = `${newRate}x`;
+      try {
+        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
+      } catch (e) {}
+    });
+
+    toggleSubtitlesBtn.addEventListener('click', () => {
+      state.subtitlesEnabled = !state.subtitlesEnabled;
+      if (state.subtitlesEnabled) {
+        toggleSubtitlesBtn.classList.add('text-indigo-400');
+        toggleSubtitlesBtn.classList.remove('text-slate-400');
+      } else {
+        toggleSubtitlesBtn.classList.remove('text-indigo-400');
+        toggleSubtitlesBtn.classList.add('text-slate-400');
+        subtitleOverlay.classList.add('hidden');
+      }
+    });
+
+    volumeBar.addEventListener('input', (e) => {
+      state.volume = parseFloat(e.target.value);
+      try {
+        media.volume = state.volume;
+      } catch (err) {}
+      if (state.volume === 0) {
+        volHighIcon.classList.add('hidden');
+        volMuteIcon.classList.remove('hidden');
+      } else {
+        volHighIcon.classList.remove('hidden');
+        volMuteIcon.classList.add('hidden');
+      }
+      try {
+        localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
+      } catch (e) {}
+    });
+
+    muteBtn.addEventListener('click', () => {
+      if (media.muted) {
+        media.muted = false;
+        volHighIcon.classList.remove('hidden');
+        volMuteIcon.classList.add('hidden');
+      } else {
+        media.muted = true;
+        volHighIcon.classList.add('hidden');
+        volMuteIcon.classList.remove('hidden');
+      }
+    });
+
+    localFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
+    placeholderFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
+    relinkFileInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
+
+    srtFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        file.text().then(text => applySubtitles(text, file.name));
+      }
+    });
+
+    async function handleOpenFolder() {
+      if ('showDirectoryPicker' in window) {
+        try {
+          const dirHandle = await window.showDirectoryPicker();
+          state.currentDirectoryHandle = dirHandle;
+          const collectedFiles = [];
+          for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file') {
+              const file = await entry.getFile();
+              collectedFiles.push(file);
+            }
+          }
+          if (collectedFiles.length > 0) {
+            handleSelectedFiles(collectedFiles);
+          } else {
+            showToast('No files found in folder');
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.warn('DirectoryPicker failed, opening fallback input:', err);
+            folderFallbackInput.click();
+          }
+        }
+      } else {
+        folderFallbackInput.click();
+      }
+    }
+
+    openFolderBtn.addEventListener('click', handleOpenFolder);
+    placeholderFolderBtn.addEventListener('click', handleOpenFolder);
+    folderFallbackInput.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
+
+    // Drag and Drop
+    ['dragenter', 'dragover'].forEach(name => {
+      playerViewport.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        playerViewport.classList.add('drag-active');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+      playerViewport.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        playerViewport.classList.remove('drag-active');
+      });
+    });
+
+    playerViewport.addEventListener('drop', (e) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleSelectedFiles(e.dataTransfer.files);
+      }
+    });
+
     function bootApplication() {
       try {
         const rawPref = localStorage.getItem(PREF_KEY);
@@ -1272,6 +1271,8 @@
           renderBookmarks();
         }
       }
+
+      setupAirPodsMediaSession();
     }
 
     window.addEventListener('beforeunload', () => {
