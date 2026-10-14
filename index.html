@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>DriveCast v5.1 - Podcast Player & Bookmarks</title>
+  <title>DriveCast v5.4 - Podcast Player & Bookmarks</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,15 +74,57 @@
       border-radius: 0.25rem;
       font-weight: 600;
     }
+    .sentence-highlight {
+      background: linear-gradient(120deg, rgba(245, 158, 11, 0.28) 0%, rgba(251, 191, 36, 0.38) 100%);
+      color: #fef08a;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+      border-bottom: 1.5px solid rgba(251, 191, 36, 0.7);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.35rem;
+      font-weight: 600;
+      display: inline;
+    }
+    .no-inner-scroll {
+      overflow: hidden !important;
+      resize: none !important;
+      min-height: 48px;
+    }
+    .stepper-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      padding: 0 6px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      background-color: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .stepper-btn:hover:not(:disabled) {
+      background-color: #334155;
+      color: #ffffff;
+      border-color: #64748b;
+    }
+    .stepper-btn:active:not(:disabled) {
+      transform: scale(0.94);
+    }
+    .stepper-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white antialiased overflow-x-hidden">
 
-  <!-- Header: Brand, Version & Unified Multi-Select Picker -->
+  <!-- Header: Brand, Version 5.4 & Multi-Select Picker -->
   <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 w-full px-4 py-2.5 sm:py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
       
-      <!-- Brand & Version 5.1 Indicator -->
+      <!-- Brand & Version 5.4 Indicator -->
       <div class="flex items-center gap-2.5">
         <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 flex-shrink-0">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,18 +134,18 @@
         </div>
         <div class="flex items-center gap-1.5">
           <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-white leading-none">DriveCast</h1>
-          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-full font-mono font-bold tracking-wider">v5.1</span>
+          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-full font-mono font-bold tracking-wider">v5.4</span>
         </div>
       </div>
 
-      <!-- Single Primary Action: Choose Podcast (iOS Multi-Select: MP4, MP3, M4A, SRT together) -->
+      <!-- Single Primary Action: Choose Podcast -->
       <div>
         <input 
           type="file" 
           id="podcastPicker" 
           class="hidden" 
           multiple 
-          accept=".mp4,.m4a,.mp3,.wav,.webm,.srt,.vtt,text/plain,*/*" 
+          accept=".mp4,.m4a,.mp3,.wav,.webm,.srt,.vtt,.txt,text/plain,*/*" 
         />
         <button 
           id="choosePodcastBtn" 
@@ -160,7 +202,7 @@
           ></span>
         </div>
 
-        <!-- Idle State Placeholder (Shown until podcast is selected) -->
+        <!-- Idle State Placeholder -->
         <div 
           id="idlePlaceholder" 
           class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10"
@@ -172,7 +214,7 @@
           </div>
           <h2 class="text-sm sm:text-base font-bold text-white mb-1">No Podcast Loaded</h2>
           <p class="text-xs text-slate-400 max-w-xs mb-4">
-            Tap <strong>Choose Podcast</strong> to pick an MP4, MP3, or M4A file. You can select your matching SRT at the same time.
+            Tap <strong>Choose Podcast</strong> to pick an MP4, MP3, or M4A file. You can select your matching SRT and bookmarks TXT at the same time.
           </p>
           <button 
             id="idleChooseBtn" 
@@ -212,7 +254,7 @@
             disabled 
             class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 flex-shrink-0 shadow-md shadow-indigo-600/30 cursor-pointer"
           >
-            <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
             <span>+ Bookmark</span>
           </button>
         </div>
@@ -281,7 +323,7 @@
 
     <!-- RIGHT COLUMN: Bookmarks & Transcript Search (5 Cols) -->
     <div class="lg:col-span-5 flex flex-col gap-3">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col flex-1 shadow-lg min-h-[420px]">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col flex-1 shadow-lg min-h-[440px]">
         
         <!-- Tab Selector: Bookmarks vs Search SRT -->
         <div class="flex items-center justify-between pb-3 border-b border-slate-800 gap-2">
@@ -310,6 +352,18 @@
 
           <!-- Bookmarks Action Buttons -->
           <div id="bookmarkActionsRow" class="flex items-center gap-1.5">
+            <input type="file" id="importTxtInput" class="hidden" accept=".txt,text/plain" />
+            <button 
+              id="importTxtBtn" 
+              type="button" 
+              disabled 
+              title="Import Bookmarks from a .txt file" 
+              class="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white px-2 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1 cursor-pointer"
+            >
+              <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              <span>Import</span>
+            </button>
+
             <button 
               id="exportTxtBtn" 
               type="button" 
@@ -335,7 +389,7 @@
 
         <!-- PANEL 1: Bookmarks View -->
         <div id="bookmarksPanel" class="flex flex-col flex-1">
-          <div id="bookmarksContainer" class="flex-1 overflow-y-auto py-3 space-y-2 pr-1 max-h-[440px]">
+          <div id="bookmarksContainer" class="flex-1 overflow-y-auto py-3 space-y-3 pr-1 max-h-[480px]">
             <div class="text-center py-10 text-slate-500 text-xs">
               Choose a podcast to view or add bookmarks.
             </div>
@@ -384,7 +438,7 @@
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             <span>AirPods Double-Tap Ready</span>
           </span>
-          <span class="text-[10px] text-slate-500 font-bold">v5.1</span>
+          <span class="text-[10px] text-slate-400 font-bold bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded">v5.4 &bull; 3-Stepper Controller</span>
         </div>
 
       </div>
@@ -417,8 +471,9 @@
         currentRateIndex: 1,
         bookmarks: [],
         subtitles: [],
+        allSentences: [], // Full episode sentence stream with time boundaries
         subtitlesEnabled: true,
-        activeTab: 'bookmarks', // 'bookmarks' or 'search'
+        activeTab: 'bookmarks',
         searchQuery: '',
         searchResults: []
       };
@@ -455,7 +510,6 @@
       const choosePodcastBtn = document.getElementById('choosePodcastBtn');
       const idleChooseBtn = document.getElementById('idleChooseBtn');
 
-      // Right Column Tabs
       const tabBookmarksBtn = document.getElementById('tabBookmarksBtn');
       const tabSearchBtn = document.getElementById('tabSearchBtn');
       const bookmarkActionsRow = document.getElementById('bookmarkActionsRow');
@@ -468,6 +522,8 @@
       const bookmarksContainer = document.getElementById('bookmarksContainer');
       const clearAllBookmarksBtn = document.getElementById('clearAllBookmarksBtn');
       const exportTxtBtn = document.getElementById('exportTxtBtn');
+      const importTxtBtn = document.getElementById('importTxtBtn');
+      const importTxtInput = document.getElementById('importTxtInput');
 
       const transcriptSearchInput = document.getElementById('transcriptSearchInput');
       const clearSearchInputBtn = document.getElementById('clearSearchInputBtn');
@@ -477,22 +533,16 @@
       const toast = document.getElementById('toast');
       const toastMsg = document.getElementById('toastMsg');
 
-      // Web Audio API: Subtle pleasant bookmark chime
+      // Subtle bookmark audio chime
       let audioCtx = null;
       function playBookmarkChime() {
         try {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
           if (!AudioContextClass) return;
-          if (!audioCtx) {
-            audioCtx = new AudioContextClass();
-          }
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
 
           const now = audioCtx.currentTime;
-
-          // Note 1: High subtle harmonic (E6 ~ 1318.5 Hz)
           const osc1 = audioCtx.createOscillator();
           const gain1 = audioCtx.createGain();
           osc1.type = 'sine';
@@ -505,7 +555,6 @@
           osc1.start(now);
           osc1.stop(now + 0.23);
 
-          // Note 2: Gentle resolution tone (B6 ~ 1975.5 Hz)
           const osc2 = audioCtx.createOscillator();
           const gain2 = audioCtx.createGain();
           osc2.type = 'sine';
@@ -522,7 +571,6 @@
         }
       }
 
-      // Helper: Format Seconds to MM:SS or HH:MM:SS
       function formatTime(seconds) {
         if (isNaN(seconds) || seconds < 0) return '00:00';
         const sec = Math.floor(seconds);
@@ -676,96 +724,201 @@
         return cues;
       }
 
-      // Extract up to 20 words before & 20 words after the currently spoken word,
-      // stopping at a period (.) if encountered so sentences begin and end cleanly.
-      function extractContextWordsAtTime(currentTime) {
-        if (!state.subtitles || state.subtitles.length === 0) return '';
+      // Sentence Segmenter with Intl.Segmenter & Fallback
+      function getSentenceSegments(text, locale = 'en') {
+        if (!text) return [];
 
-        // 1. Locate current or closest cue
-        let cueIdx = state.subtitles.findIndex(c => currentTime >= c.start && currentTime <= c.end);
-        if (cueIdx === -1) {
+        if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+          try {
+            const segmenter = new Intl.Segmenter(locale, { granularity: 'sentence' });
+            const iterator = segmenter.segment(text);
+            const sentences = [];
+            for (const item of iterator) {
+              const s = item.segment.trim();
+              if (s) {
+                sentences.push({
+                  text: s,
+                  index: item.index,
+                  length: item.segment.length
+                });
+              }
+            }
+            if (sentences.length > 0) return sentences;
+          } catch (e) {
+            console.debug('Intl.Segmenter fallback to rule-based segmentation:', e);
+          }
+        }
+
+        const abbrevRegex = /\b(Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Fig|Gen|St|U\.S|U\.K|A\.M|P\.M)\./gi;
+        const masked = text.replace(abbrevRegex, (match) => match.replace(/\./g, '__DOT__'));
+        const splits = masked.split(/(?<=[.!?…])\s+(?=[A-Z0-9"“'‘])/);
+        const results = [];
+        let runningIdx = 0;
+
+        for (const part of splits) {
+          const restored = part.replace(/__DOT__/g, '.').trim();
+          if (restored) {
+            results.push({
+              text: restored,
+              index: runningIdx,
+              length: part.length
+            });
+          }
+          runningIdx += part.length + 1;
+        }
+
+        return results;
+      }
+
+      // Rebuild the full episode global sentence stream
+      function buildEpisodeSentencesStream() {
+        if (!state.subtitles || state.subtitles.length === 0) {
+          state.allSentences = [];
+          return;
+        }
+
+        const wordTokens = [];
+        for (let i = 0; i < state.subtitles.length; i++) {
+          const cue = state.subtitles[i];
+          const words = cue.text.replace(/\r?\n+/g, ' ').trim().split(/\s+/).filter(Boolean);
+          if (words.length === 0) continue;
+          const cueDur = Math.max(0.05, (cue.end - cue.start));
+          words.forEach((w, wIdx) => {
+            const wordTime = cue.start + (wIdx / words.length) * cueDur;
+            wordTokens.push({ word: w, time: wordTime, cueIdx: i });
+          });
+        }
+
+        if (wordTokens.length === 0) {
+          state.allSentences = [];
+          return;
+        }
+
+        const fullBlock = wordTokens.map(t => t.word).join(' ');
+        const rawSegments = getSentenceSegments(fullBlock);
+
+        let charCounter = 0;
+        let wordIdx = 0;
+
+        state.allSentences = rawSegments.map((seg, idx) => {
+          while (wordIdx < wordTokens.length && charCounter < seg.index) {
+            charCounter += wordTokens[wordIdx].word.length + 1;
+            wordIdx++;
+          }
+          const startTimestamp = wordTokens[Math.min(wordIdx, wordTokens.length - 1)].time;
+
+          const segEndChar = seg.index + seg.length;
+          while (wordIdx < wordTokens.length && charCounter < segEndChar) {
+            charCounter += wordTokens[wordIdx].word.length + 1;
+            wordIdx++;
+          }
+          const endTimestamp = wordTokens[Math.min(Math.max(0, wordIdx - 1), wordTokens.length - 1)].time;
+          const wordsCount = seg.text.split(/\s+/).filter(Boolean).length;
+
+          let cleanText = seg.text.trim();
+          cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
+          if (!/[.!?…]$/.test(cleanText)) cleanText += '.';
+
+          return {
+            index: idx,
+            text: cleanText,
+            start: startTimestamp,
+            end: endTimestamp,
+            wordCount: wordsCount
+          };
+        });
+      }
+
+      // Finds target sentence for a timestamp, factoring in reaction delay (first 2s of a sentence)
+      function findTargetSentenceIndexForTime(currentTime) {
+        if (!state.allSentences || state.allSentences.length === 0) return -1;
+
+        let targetIdx = state.allSentences.findIndex(s => currentTime >= s.start && currentTime <= s.end);
+        if (targetIdx === -1) {
           let closestDiff = Infinity;
-          state.subtitles.forEach((c, idx) => {
-            const diff = Math.min(Math.abs(currentTime - c.start), Math.abs(currentTime - c.end));
+          state.allSentences.forEach((s, idx) => {
+            const diff = Math.min(Math.abs(currentTime - s.start), Math.abs(currentTime - s.end));
             if (diff < closestDiff) {
               closestDiff = diff;
-              cueIdx = idx;
+              targetIdx = idx;
             }
           });
         }
-        if (cueIdx === -1) return '';
 
-        // 2. Build local token list around this cue (+- 15 cues)
-        const winStart = Math.max(0, cueIdx - 15);
-        const winEnd = Math.min(state.subtitles.length - 1, cueIdx + 15);
+        if (targetIdx === -1) targetIdx = 0;
 
-        const wordTokens = [];
-        let activeWordIdx = -1;
+        // User Reaction Time Compensation:
+        // If clicked within first 2.0s of sentence start, user was reacting to previous sentence!
+        const matched = state.allSentences[targetIdx];
+        if (matched && (currentTime - matched.start) < 2.0 && targetIdx > 0) {
+          targetIdx = targetIdx - 1;
+        }
 
-        for (let i = winStart; i <= winEnd; i++) {
-          const cue = state.subtitles[i];
-          const rawText = cue.text.replace(/\r?\n+/g, ' ').trim();
-          if (!rawText) continue;
+        return targetIdx;
+      }
 
-          const cueWords = rawText.split(/\s+/).filter(Boolean);
-          if (cueWords.length === 0) continue;
-
-          // Estimate which word inside the active cue is being spoken right now
-          let wordOffsetInCue = 0;
-          if (i === cueIdx) {
-            const cueDur = Math.max(0.1, cue.end - cue.start);
-            const ratio = Math.max(0, Math.min(1, (currentTime - cue.start) / cueDur));
-            wordOffsetInCue = Math.min(cueWords.length - 1, Math.floor(ratio * cueWords.length));
+      // Reconstructs rendered HTML and plain text for a bookmark using prefix, target, and suffix
+      function buildBookmarkHtml(bm) {
+        // If no transcript sentences available, fall back to stored fields
+        if (!state.allSentences || state.allSentences.length === 0 || bm.targetIndex === undefined || bm.targetIndex < 0) {
+          if (bm.targetSentence) {
+            const prev = bm.prefixSentences && bm.prefixSentences.length > 0 ? bm.prefixSentences.join(' ') + ' ' : '';
+            const next = bm.suffixSentences && bm.suffixSentences.length > 0 ? ' ' + bm.suffixSentences.join(' ') : '';
+            let html = '';
+            if (prev) html += `<span class="text-slate-400 font-normal">${escapeHtml(prev)}</span>`;
+            html += `<span class="sentence-highlight">${escapeHtml(bm.targetSentence)}</span>`;
+            if (next) html += `<span class="text-slate-400 font-normal">${escapeHtml(next)}</span>`;
+            return {
+              html,
+              plain: [prev.trim(), bm.targetSentence, next.trim()].filter(Boolean).join(' ')
+            };
           }
-
-          const startIndex = wordTokens.length;
-          cueWords.forEach(w => wordTokens.push(w));
-
-          if (i === cueIdx) {
-            activeWordIdx = startIndex + wordOffsetInCue;
-          }
+          // Imported with unknown position -> highlight entire text
+          return {
+            html: `<span class="sentence-highlight">${escapeHtml(bm.note || '')}</span>`,
+            plain: bm.note || ''
+          };
         }
 
-        if (wordTokens.length === 0) return state.subtitles[cueIdx]?.text?.trim() || '';
-        if (activeWordIdx === -1) activeWordIdx = Math.floor(wordTokens.length / 2);
+        const total = state.allSentences.length;
+        const targetIdx = Math.max(0, Math.min(total - 1, bm.targetIndex));
+        const prefixCount = Math.max(0, bm.prefixCount !== undefined ? bm.prefixCount : 1);
+        const suffixCount = Math.max(0, bm.suffixCount !== undefined ? bm.suffixCount : 1);
 
-        // 3. Scan up to 20 words backward (stop if a word ending with a period is encountered)
-        let backwardWords = [];
-        for (let i = activeWordIdx - 1; i >= Math.max(0, activeWordIdx - 20); i--) {
-          const w = wordTokens[i];
-          if (w.endsWith('.') || w.includes('.')) {
-            break;
-          }
-          backwardWords.unshift(w);
+        const startIdx = Math.max(0, targetIdx - prefixCount);
+        const endIdx = Math.min(total - 1, targetIdx + suffixCount);
+
+        const prefixItems = [];
+        for (let i = startIdx; i < targetIdx; i++) {
+          prefixItems.push(state.allSentences[i].text);
         }
 
-        // 4. Scan up to 20 words forward (stop after the word containing a period)
-        let forwardWords = [];
-        for (let i = activeWordIdx + 1; i <= Math.min(wordTokens.length - 1, activeWordIdx + 20); i++) {
-          const w = wordTokens[i];
-          forwardWords.push(w);
-          if (w.endsWith('.') || w.includes('.')) {
-            break;
-          }
+        const targetText = state.allSentences[targetIdx].text;
+
+        const suffixItems = [];
+        for (let i = targetIdx + 1; i <= endIdx; i++) {
+          suffixItems.push(state.allSentences[i].text);
         }
 
-        const centerWord = wordTokens[activeWordIdx] ? [wordTokens[activeWordIdx]] : [];
-        const combined = [...backwardWords, ...centerWord, ...forwardWords].join(' ').trim();
-
-        if (!combined) {
-          return state.subtitles[cueIdx]?.text?.trim() || '';
+        let html = '';
+        if (prefixItems.length > 0) {
+          html += `<span class="text-slate-400 font-normal">${escapeHtml(prefixItems.join(' '))} </span>`;
+        }
+        html += `<span class="sentence-highlight">${escapeHtml(targetText)}</span>`;
+        if (suffixItems.length > 0) {
+          html += `<span class="text-slate-400 font-normal"> ${escapeHtml(suffixItems.join(' '))}</span>`;
         }
 
-        // 5. Clean up leading/trailing punctuation and format cleanly
-        let result = combined.replace(/^[\s,;:\-–—.]+/, '').trim();
-        if (result.length > 0) {
-          result = result.charAt(0).toUpperCase() + result.slice(1);
-        }
-        if (result.length > 0 && !/[.!?…]$/.test(result)) {
-          result += '.';
-        }
+        const plain = [prefixItems.join(' '), targetText, suffixItems.join(' ')].filter(Boolean).join(' ');
 
-        return result;
+        return {
+          html,
+          plain,
+          targetText,
+          prefixItems,
+          suffixItems,
+          resolvedIndex: targetIdx
+        };
       }
 
       function applySubtitles(srtText, srtFileName) {
@@ -777,11 +930,22 @@
             badgeSRT.textContent = `SRT ON (${state.subtitles.length})`;
             toggleSubtitlesBtn.classList.add('text-indigo-400');
             toggleSubtitlesBtn.classList.remove('text-slate-400');
+            
+            buildEpisodeSentencesStream();
+
+            // Re-bind bookmarks to exact sentence indices if not yet resolved
+            state.bookmarks.forEach(bm => {
+              if ((bm.targetIndex === undefined || bm.targetIndex === -1) && state.allSentences.length > 0) {
+                bm.targetIndex = findTargetSentenceIndexForTime(bm.time);
+                if (bm.prefixCount === undefined) bm.prefixCount = 1;
+                if (bm.suffixCount === undefined) bm.suffixCount = 1;
+              }
+            });
+
             saveCurrentVideoToDatabase();
+            renderBookmarks();
             showToast(`SRT linked: ${srtFileName || 'subtitles'} (${state.subtitles.length} lines)`);
-            if (state.searchQuery) {
-              performTranscriptSearch(state.searchQuery);
-            }
+            if (state.searchQuery) performTranscriptSearch(state.searchQuery);
           } else {
             resetSubtitlesUI();
           }
@@ -793,6 +957,7 @@
 
       function resetSubtitlesUI() {
         state.subtitles = [];
+        state.allSentences = [];
         badgeSRT.classList.add('hidden');
         subtitleOverlay.classList.add('hidden');
         subtitleText.textContent = '';
@@ -801,11 +966,8 @@
         renderSearchResults();
       }
 
-      // Keep iOS Lock Screen scrubber and Dynamic Island synced with exact time and duration
       function updateLockscreenPositionState() {
-        if (!('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) {
-          return;
-        }
+        if (!('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) return;
         if (media && !isNaN(media.duration) && media.duration > 0 && !isNaN(media.currentTime)) {
           try {
             navigator.mediaSession.setPositionState({
@@ -829,17 +991,14 @@
             album: 'Local Bookmarks'
           });
 
-          // AirPods double-tap stem trigger -> Creates Bookmark
           navigator.mediaSession.setActionHandler('nexttrack', () => {
             triggerBookmarkCreation('AirPods double-tap');
           });
 
-          // AirPods triple-tap stem trigger -> Creates Bookmark
           navigator.mediaSession.setActionHandler('previoustrack', () => {
             triggerBookmarkCreation('AirPods remote');
           });
 
-          // Lockscreen Scrubbing & Tapping Support (iOS Safari seekto)
           navigator.mediaSession.setActionHandler('seekto', (details) => {
             if (details.seekTime !== undefined && !isNaN(details.seekTime) && media) {
               media.currentTime = Math.max(0, Math.min(media.duration || Infinity, details.seekTime));
@@ -888,7 +1047,6 @@
         if (!filesList || filesList.length === 0) return;
         const files = Array.from(filesList);
 
-        // 1. Locate media file (MP4, MP3, M4A, etc.)
         const mediaFile = files.find(f => 
           f.type.startsWith('video/') || 
           f.type.startsWith('audio/') || 
@@ -904,7 +1062,6 @@
         const normName = normalizeName(mediaFile.name);
         const isAudio = mediaFile.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|aac)$/i.test(mediaFile.name);
 
-        // 2. Query database for existing entry matching by filename or normalized name
         const db = getDatabase();
         const existingKey = Object.keys(db.videos).find(k => {
           const entry = db.videos[k];
@@ -941,13 +1098,13 @@
         sourceLabel.textContent = isAudio ? 'Audio Podcast' : 'Video Podcast';
         videoTitleLabel.textContent = rawTitle;
 
-        // Reveal media screen, enable controls
         idlePlaceholder.classList.add('hidden');
         media.classList.remove('hidden');
         mediaLoader.classList.remove('hidden');
         addBookmarkBtn.disabled = false;
         playPauseBtn.disabled = false;
         exportTxtBtn.disabled = state.bookmarks.length === 0;
+        importTxtBtn.disabled = false;
 
         const fileUrl = URL.createObjectURL(mediaFile);
         media.src = fileUrl;
@@ -960,10 +1117,7 @@
         }
         volumeBar.value = state.volume;
 
-        renderBookmarks();
-        setupAirPodsMediaSession();
-
-        // 3. Check if an SRT file is included in this selection
+        // Check if an SRT file is included
         const srtFiles = files.filter(f => /\.(srt|vtt)$/i.test(f.name));
         let matchingSrt = null;
 
@@ -983,17 +1137,36 @@
             console.warn('SRT read error:', err);
           }
         } else if (state.subtitles.length > 0) {
-          // Restore previously saved subtitles from database
           state.subtitlesEnabled = true;
           badgeSRT.classList.remove('hidden');
           badgeSRT.textContent = `SRT ON (${state.subtitles.length})`;
           toggleSubtitlesBtn.classList.add('text-indigo-400');
           toggleSubtitlesBtn.classList.remove('text-slate-400');
+          buildEpisodeSentencesStream();
           if (state.searchQuery) performTranscriptSearch(state.searchQuery);
         } else {
           resetSubtitlesUI();
         }
 
+        // Check if a .txt bookmarks file is included
+        const txtFiles = files.filter(f => /\.txt$/i.test(f.name));
+        if (txtFiles.length > 0) {
+          const matchingTxt = txtFiles.find(f => normalizeName(f.name).includes(normName) || normName.includes(normalizeName(f.name))) || txtFiles[0];
+          if (matchingTxt) {
+            try {
+              const text = await matchingTxt.text();
+              const addedCount = importBookmarksFromText(text);
+              if (addedCount > 0) {
+                showToast(`Imported ${addedCount} bookmark${addedCount === 1 ? '' : 's'} from ${matchingTxt.name}`);
+              }
+            } catch (err) {
+              console.warn('Auto-import TXT error:', err);
+            }
+          }
+        }
+
+        renderBookmarks();
+        setupAirPodsMediaSession();
         saveCurrentVideoToDatabase();
         media.load();
 
@@ -1018,18 +1191,37 @@
           return;
         }
 
-        // Play the subtle chime feedback
         playBookmarkChime();
 
         const curTime = media && !isNaN(media.currentTime) ? media.currentTime : 0;
-        const sentencePreview = extractContextWordsAtTime(curTime);
-        const noteText = sentencePreview || `Bookmark at ${formatTime(curTime)}`;
+        let targetIdx = -1;
+        let prefixCount = 1;
+        let suffixCount = 1;
+
+        if (state.allSentences && state.allSentences.length > 0) {
+          targetIdx = findTargetSentenceIndexForTime(curTime);
+          const chosen = state.allSentences[targetIdx];
+          // If words >= 50, default prefix/suffix to 0, otherwise 1
+          if (chosen && chosen.wordCount >= 50) {
+            prefixCount = 0;
+            suffixCount = 0;
+          } else {
+            prefixCount = 1;
+            suffixCount = 1;
+          }
+        }
 
         const newBookmark = {
-          id: 'bm_' + Date.now(),
+          id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
           time: Math.floor(curTime),
-          note: noteText
+          targetIndex: targetIdx,
+          prefixCount: prefixCount,
+          suffixCount: suffixCount,
+          note: `Bookmark at ${formatTime(curTime)}`
         };
+
+        const resolved = buildBookmarkHtml(newBookmark);
+        newBookmark.note = resolved.plain;
 
         state.bookmarks.push(newBookmark);
         state.bookmarks.sort((a, b) => a.time - b.time);
@@ -1037,16 +1229,24 @@
         renderBookmarks();
 
         const tagPrefix = sourceTag ? `[${sourceTag}] ` : '';
-        if (sentencePreview) {
-          showToast(`${tagPrefix}Bookmarked: "${sentencePreview.slice(0, 36)}..."`);
+        const previewExcerpt = resolved.targetText || resolved.plain;
+        if (previewExcerpt) {
+          showToast(`${tagPrefix}Bookmarked: "${previewExcerpt.slice(0, 36)}..."`);
         } else {
           showToast(`${tagPrefix}Bookmarked at ${formatTime(curTime)}`);
         }
       }
 
+      function autoResizeTextarea(el) {
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight) + 'px';
+      }
+
       function renderBookmarks() {
         bookmarkCount.textContent = state.bookmarks.length;
         exportTxtBtn.disabled = state.bookmarks.length === 0;
+        importTxtBtn.disabled = !state.currentVideoId;
         bookmarksContainer.innerHTML = '';
 
         if (!state.currentVideoId) {
@@ -1061,7 +1261,7 @@
         if (state.bookmarks.length === 0) {
           bookmarksContainer.innerHTML = `
             <div class="text-center py-10 text-slate-500 text-xs leading-relaxed">
-              No bookmarks yet.<br>Tap <span class="text-indigo-400 font-semibold">+ Bookmark</span> or double-press your AirPods to capture sentences!
+              No bookmarks yet.<br>Tap <span class="text-indigo-400 font-semibold">+ Bookmark</span> or double-press your AirPods stem to capture sentences!
             </div>
           `;
           return;
@@ -1069,21 +1269,79 @@
 
         state.bookmarks.forEach((bm) => {
           const item = document.createElement('div');
-          item.className = 'bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5 flex flex-col gap-1.5 hover:border-slate-700 transition group';
+          item.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex flex-col gap-2.5 hover:border-slate-700 transition group';
+
+          // Ensure default stepper properties exist
+          if (bm.prefixCount === undefined) bm.prefixCount = 1;
+          if (bm.suffixCount === undefined) bm.suffixCount = 1;
+          if (bm.targetIndex === undefined && state.allSentences.length > 0) {
+            bm.targetIndex = findTargetSentenceIndexForTime(bm.time);
+          }
+
+          const resolved = buildBookmarkHtml(bm);
+          const hasStream = state.allSentences && state.allSentences.length > 0 && bm.targetIndex !== undefined && bm.targetIndex >= 0;
+          const currentTargetDisplay = hasStream ? `S${bm.targetIndex + 1}` : 'N/A';
 
           item.innerHTML = `
             <div class="flex items-center justify-between gap-2">
               <button type="button" class="seek-btn font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition flex-shrink-0 cursor-pointer">
                 ${formatTime(bm.time)}
               </button>
-              <button type="button" class="delete-btn text-slate-500 hover:text-rose-400 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0 cursor-pointer" title="Delete Bookmark">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
+              
+              <div class="flex items-center gap-1">
+                <button type="button" class="toggle-edit-btn text-slate-400 hover:text-indigo-300 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0 cursor-pointer" title="Edit Note">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                </button>
+                <button type="button" class="delete-btn text-slate-500 hover:text-rose-400 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0 cursor-pointer" title="Delete Bookmark">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
             </div>
+
+            <!-- Triple Double-Stepper Toolbar for Sentence Context & Highlight Shift -->
+            <div class="flex items-center justify-between gap-1 bg-slate-900/90 border border-slate-800/90 rounded-lg p-1.5 flex-wrap">
+              
+              <!-- Double Button 1: Prefix Sentences Before Highlight -->
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] font-mono text-slate-400 uppercase font-semibold">Pre</span>
+                <div class="inline-flex rounded-md overflow-hidden border border-slate-700/80 shadow-xs">
+                  <button type="button" class="stepper-btn prefix-minus" title="Fewer sentences before" ${!hasStream ? 'disabled' : ''}>-</button>
+                  <span class="prefix-val bg-slate-950 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-200 border-x border-slate-700/80 flex items-center justify-center min-w-[20px]">${bm.prefixCount}</span>
+                  <button type="button" class="stepper-btn prefix-plus" title="More sentences before" ${!hasStream ? 'disabled' : ''}>+</button>
+                </div>
+              </div>
+
+              <!-- Double Button 2: Shift Highlight Left / Right -->
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] font-mono text-amber-400 uppercase font-semibold">Highlight</span>
+                <div class="inline-flex rounded-md overflow-hidden border border-amber-500/40 shadow-xs">
+                  <button type="button" class="stepper-btn shift-left" title="Shift highlight earlier" ${!hasStream ? 'disabled' : ''}>◀</button>
+                  <span class="highlight-val bg-slate-950 px-1.5 py-0.5 text-[10px] font-mono font-bold text-amber-300 border-x border-amber-500/40 flex items-center justify-center min-w-[28px]">${currentTargetDisplay}</span>
+                  <button type="button" class="stepper-btn shift-right" title="Shift highlight later" ${!hasStream ? 'disabled' : ''}>▶</button>
+                </div>
+              </div>
+
+              <!-- Double Button 3: Suffix Sentences After Highlight -->
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] font-mono text-slate-400 uppercase font-semibold">Post</span>
+                <div class="inline-flex rounded-md overflow-hidden border border-slate-700/80 shadow-xs">
+                  <button type="button" class="stepper-btn suffix-minus" title="Fewer sentences after" ${!hasStream ? 'disabled' : ''}>-</button>
+                  <span class="suffix-val bg-slate-950 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-200 border-x border-slate-700/80 flex items-center justify-center min-w-[20px]">${bm.suffixCount}</span>
+                  <button type="button" class="stepper-btn suffix-plus" title="More sentences after" ${!hasStream ? 'disabled' : ''}>+</button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Visual Sentence Preview with Highlighter Effect (Fluid height, NO scrollbar) -->
+            <div class="sentence-box bg-slate-900/60 rounded-lg p-2.5 text-xs text-slate-200 border border-slate-800/80 leading-relaxed break-words">
+              ${resolved.html}
+            </div>
+
+            <!-- Inline Editable Textarea -->
             <textarea 
-              rows="2" 
-              class="note-input w-full bg-slate-900/60 rounded-lg p-1.5 text-xs text-slate-200 border border-slate-700/40 focus:border-indigo-500 focus:outline-none resize-none leading-relaxed"
-              placeholder="Sentence or note..."
+              class="note-editor no-inner-scroll hidden w-full bg-slate-900 rounded-lg p-2 text-xs text-slate-100 border border-indigo-500/50 focus:outline-none leading-relaxed"
+              placeholder="Edit note..."
             >${escapeHtml(bm.note)}</textarea>
           `;
 
@@ -1096,14 +1354,110 @@
             }
           });
 
-          // Inline note edits
-          const noteInput = item.querySelector('.note-input');
-          noteInput.addEventListener('input', (e) => {
+          const sentenceBox = item.querySelector('.sentence-box');
+          const noteEditor = item.querySelector('.note-editor');
+          const toggleEditBtn = item.querySelector('.toggle-edit-btn');
+          const prefixVal = item.querySelector('.prefix-val');
+          const highlightVal = item.querySelector('.highlight-val');
+          const suffixVal = item.querySelector('.suffix-val');
+
+          // Stepper 1: Prefix Sentences (- / +)
+          item.querySelector('.prefix-minus').addEventListener('click', () => {
+            if (bm.prefixCount > 0) {
+              bm.prefixCount--;
+              prefixVal.textContent = bm.prefixCount;
+              const res = buildBookmarkHtml(bm);
+              sentenceBox.innerHTML = res.html;
+              bm.note = res.plain;
+              noteEditor.value = res.plain;
+              saveCurrentVideoToDatabase();
+            }
+          });
+
+          item.querySelector('.prefix-plus').addEventListener('click', () => {
+            if (bm.prefixCount < 10) {
+              bm.prefixCount++;
+              prefixVal.textContent = bm.prefixCount;
+              const res = buildBookmarkHtml(bm);
+              sentenceBox.innerHTML = res.html;
+              bm.note = res.plain;
+              noteEditor.value = res.plain;
+              saveCurrentVideoToDatabase();
+            }
+          });
+
+          // Stepper 2: Shift Highlight Left / Right (◀ / ▶)
+          item.querySelector('.shift-left').addEventListener('click', () => {
+            if (hasStream && bm.targetIndex > 0) {
+              bm.targetIndex--;
+              highlightVal.textContent = `S${bm.targetIndex + 1}`;
+              const res = buildBookmarkHtml(bm);
+              sentenceBox.innerHTML = res.html;
+              bm.note = res.plain;
+              noteEditor.value = res.plain;
+              saveCurrentVideoToDatabase();
+            }
+          });
+
+          item.querySelector('.shift-right').addEventListener('click', () => {
+            if (hasStream && bm.targetIndex < state.allSentences.length - 1) {
+              bm.targetIndex++;
+              highlightVal.textContent = `S${bm.targetIndex + 1}`;
+              const res = buildBookmarkHtml(bm);
+              sentenceBox.innerHTML = res.html;
+              bm.note = res.plain;
+              noteEditor.value = res.plain;
+              saveCurrentVideoToDatabase();
+            }
+          });
+
+          // Stepper 3: Suffix Sentences (- / +)
+          item.querySelector('.suffix-minus').addEventListener('click', () => {
+            if (bm.suffixCount > 0) {
+              bm.suffixCount--;
+              suffixVal.textContent = bm.suffixCount;
+              const res = buildBookmarkHtml(bm);
+              sentenceBox.innerHTML = res.html;
+              bm.note = res.plain;
+              noteEditor.value = res.plain;
+              saveCurrentVideoToDatabase();
+            }
+          });
+
+          item.querySelector('.suffix-plus').addEventListener('click', () => {
+            if (bm.suffixCount < 10) {
+              bm.suffixCount++;
+              suffixVal.textContent = bm.suffixCount;
+              const res = buildBookmarkHtml(bm);
+              sentenceBox.innerHTML = res.html;
+              bm.note = res.plain;
+              noteEditor.value = res.plain;
+              saveCurrentVideoToDatabase();
+            }
+          });
+
+          // Inline note editor toggle
+          toggleEditBtn.addEventListener('click', () => {
+            const isEditing = !noteEditor.classList.contains('hidden');
+            if (isEditing) {
+              noteEditor.classList.add('hidden');
+              sentenceBox.classList.remove('hidden');
+            } else {
+              sentenceBox.classList.add('hidden');
+              noteEditor.classList.remove('hidden');
+              autoResizeTextarea(noteEditor);
+              noteEditor.focus();
+            }
+          });
+
+          noteEditor.addEventListener('input', (e) => {
             bm.note = e.target.value;
+            bm.targetSentence = e.target.value;
+            sentenceBox.innerHTML = `<span class="sentence-highlight">${escapeHtml(e.target.value)}</span>`;
+            autoResizeTextarea(noteEditor);
             saveCurrentVideoToDatabase();
           });
 
-          // Delete bookmark
           item.querySelector('.delete-btn').addEventListener('click', () => {
             state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
             saveCurrentVideoToDatabase();
@@ -1114,16 +1468,86 @@
         });
       }
 
-      addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
+      // Import bookmarks from text with bracketed highlight tag parsing
+      function importBookmarksFromText(rawText) {
+        if (!rawText || !state.currentVideoId) return 0;
 
-      clearAllBookmarksBtn.addEventListener('click', () => {
-        if (!state.currentVideoId || state.bookmarks.length === 0) return;
-        state.bookmarks = [];
-        saveCurrentVideoToDatabase();
-        renderBookmarks();
-        showToast('Bookmarks cleared for this podcast');
-      });
+        const lines = rawText.split(/\r?\n/);
+        const parsed = [];
+        // Matches [HH:MM:SS] or [MM:SS] optionally followed by [Highlight: S#] or [H:#] or [Pos:#]
+        const lineRegex = /^\s*\[(\d{1,2}:\d{2}(?::\d{2})?)\](?:\s*\[(?:Highlight:\s*S?|H:|Pos:)(\d+)\])?\s*(.*)$/i;
 
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          const match = line.match(lineRegex);
+          if (match) {
+            const timeStr = match[1];
+            const explicitPos = match[2] ? parseInt(match[2], 10) : null;
+            let noteText = match[3] ? match[3].trim() : '';
+
+            // Clean any decorative markup from text if present
+            let targetSentence = '';
+            const hlMatch = noteText.match(/<HL>(.*?)<\/HL>/i);
+            if (hlMatch) {
+              targetSentence = hlMatch[1].trim();
+              noteText = noteText.replace(/<HL>(.*?)<\/HL>/gi, '$1');
+            }
+
+            const timeSec = Math.floor(parseTimestamp(timeStr));
+
+            if (!isNaN(timeSec)) {
+              parsed.push({
+                time: timeSec,
+                explicitIndex: explicitPos !== null && !isNaN(explicitPos) ? explicitPos - 1 : null,
+                targetSentence: targetSentence,
+                note: noteText || `Bookmark at ${formatTime(timeSec)}`
+              });
+            }
+          }
+        }
+
+        if (parsed.length === 0) return 0;
+
+        let addedCount = 0;
+
+        parsed.forEach(incoming => {
+          const exists = state.bookmarks.some(existing => {
+            const sameTime = Math.abs(existing.time - incoming.time) <= 1;
+            const sameNote = existing.note.trim().toLowerCase() === incoming.note.trim().toLowerCase() && Math.abs(existing.time - incoming.time) <= 3;
+            return sameTime || sameNote;
+          });
+
+          if (!exists) {
+            let targetIdx = -1;
+            if (incoming.explicitIndex !== null && incoming.explicitIndex >= 0) {
+              targetIdx = incoming.explicitIndex;
+            } else if (state.allSentences && state.allSentences.length > 0) {
+              targetIdx = findTargetSentenceIndexForTime(incoming.time);
+            }
+
+            state.bookmarks.push({
+              id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+              time: incoming.time,
+              targetIndex: targetIdx,
+              prefixCount: 1,
+              suffixCount: 1,
+              note: incoming.note,
+              targetSentence: incoming.targetSentence || (targetIdx === -1 ? incoming.note : '')
+            });
+            addedCount++;
+          }
+        });
+
+        if (addedCount > 0) {
+          state.bookmarks.sort((a, b) => a.time - b.time);
+          saveCurrentVideoToDatabase();
+          renderBookmarks();
+        }
+
+        return addedCount;
+      }
+
+      // Export bookmarks: keeps exact timecode and bracketed position of the highlight (sentence number)
       exportTxtBtn.addEventListener('click', () => {
         if (!state.currentVideoId || state.bookmarks.length === 0) {
           showToast('No bookmarks to export yet');
@@ -1137,7 +1561,16 @@
         content += `==========================================\r\n\r\n`;
 
         state.bookmarks.forEach(bm => {
-          content += `[${formatTime(bm.time)}] ${bm.note || '(No note)'}\r\n\r\n`;
+          const res = buildBookmarkHtml(bm);
+          const hasStream = state.allSentences && state.allSentences.length > 0 && bm.targetIndex !== undefined && bm.targetIndex >= 0;
+          
+          let posTag = '';
+          if (hasStream) {
+            // Sentence number 1-based (e.g. [Highlight: S42])
+            posTag = `[Highlight: S${bm.targetIndex + 1}] `;
+          }
+
+          content += `[${formatTime(bm.time)}] ${posTag}${res.plain || bm.note || '(No note)'}\r\n\r\n`;
         });
 
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -1153,7 +1586,44 @@
         showToast('Exported bookmarks as .txt');
       });
 
-      // Transcript Search Engine
+      importTxtBtn.addEventListener('click', () => {
+        if (!state.currentVideoId) {
+          showToast('Choose a podcast first');
+          return;
+        }
+        importTxtInput.click();
+      });
+
+      importTxtInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        try {
+          const content = await file.text();
+          const added = importBookmarksFromText(content);
+          if (added > 0) {
+            showToast(`Imported ${added} bookmark${added === 1 ? '' : 's'}`);
+          } else {
+            showToast('No new bookmarks found or all already exist');
+          }
+        } catch (err) {
+          console.warn('Failed to read TXT file:', err);
+          showToast('Could not read the bookmarks file');
+        } finally {
+          importTxtInput.value = '';
+        }
+      });
+
+      addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
+
+      clearAllBookmarksBtn.addEventListener('click', () => {
+        if (!state.currentVideoId || state.bookmarks.length === 0) return;
+        state.bookmarks = [];
+        saveCurrentVideoToDatabase();
+        renderBookmarks();
+        showToast('Bookmarks cleared for this podcast');
+      });
+
       function performTranscriptSearch(query) {
         state.searchQuery = query.trim();
         clearSearchInputBtn.classList.toggle('hidden', state.searchQuery === '');
@@ -1229,7 +1699,6 @@
         }
 
         state.searchResults.forEach((cue) => {
-          // Calculate jump time: exactly 5 seconds before the word/cue starts (clamped to 0)
           const leadTime = Math.max(0, cue.start - 5);
           const item = document.createElement('div');
           item.className = 'bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5 flex flex-col gap-1.5 hover:border-indigo-500/50 hover:bg-slate-950 transition cursor-pointer group';
@@ -1248,7 +1717,6 @@
             </p>
           `;
 
-          // Tapping anywhere on the result jumps to -5s and plays
           item.addEventListener('click', () => {
             if (media) {
               media.currentTime = leadTime;
@@ -1262,7 +1730,6 @@
         });
       }
 
-      // Tab Switching
       function switchTab(tabName) {
         state.activeTab = tabName;
         if (tabName === 'bookmarks') {
@@ -1294,7 +1761,6 @@
         transcriptSearchInput.focus();
       });
 
-      // Video Event Listeners
       media.addEventListener('play', () => {
         state.isPlaying = true;
         updatePlayPauseUI();
@@ -1315,14 +1781,12 @@
         }
         currentTimeLabel.textContent = formatTime(media.currentTime);
 
-        // Keep lock screen scrubber synced every 1.5 seconds during continuous playback
         const now = Date.now();
         if (now - lastLockscreenSync > 1500) {
           updateLockscreenPositionState();
           lastLockscreenSync = now;
         }
 
-        // Subtitles live display
         if (state.subtitlesEnabled && state.subtitles.length > 0) {
           const curCue = state.subtitles.find(c => media.currentTime >= c.start && media.currentTime <= c.end);
           if (curCue && curCue.text) {
@@ -1342,17 +1806,9 @@
         updateLockscreenPositionState();
       });
 
-      media.addEventListener('durationchange', () => {
-        updateLockscreenPositionState();
-      });
-
-      media.addEventListener('ratechange', () => {
-        updateLockscreenPositionState();
-      });
-
-      media.addEventListener('seeked', () => {
-        updateLockscreenPositionState();
-      });
+      media.addEventListener('durationchange', updateLockscreenPositionState);
+      media.addEventListener('ratechange', updateLockscreenPositionState);
+      media.addEventListener('seeked', updateLockscreenPositionState);
 
       media.addEventListener('waiting', () => {
         mediaLoader.classList.remove('hidden');
@@ -1453,12 +1909,10 @@
         }
       });
 
-      // File Picker Events
       choosePodcastBtn.addEventListener('click', () => podcastPicker.click());
       idleChooseBtn.addEventListener('click', () => podcastPicker.click());
       podcastPicker.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
 
-      // Drag and Drop
       ['dragenter', 'dragover'].forEach(name => {
         playerContainer.addEventListener(name, (e) => {
           e.preventDefault();
@@ -1495,11 +1949,11 @@
         speedBtn.textContent = `${state.playbackRates[state.currentRateIndex]}x`;
         volumeBar.value = state.volume;
 
-        // Clean start: Start idle until user selects a podcast
         state.currentVideoId = '';
         state.currentVideoTitle = '';
         state.bookmarks = [];
         state.subtitles = [];
+        state.allSentences = [];
         videoTitleLabel.textContent = 'Choose a podcast to start';
         sourceLabel.textContent = 'Ready';
         idlePlaceholder.classList.remove('hidden');
@@ -1507,6 +1961,7 @@
         addBookmarkBtn.disabled = true;
         playPauseBtn.disabled = true;
         exportTxtBtn.disabled = true;
+        importTxtBtn.disabled = true;
         renderBookmarks();
         renderSearchResults();
 
