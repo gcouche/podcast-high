@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>DriveCast v7.0 • Local MP4 Player &amp; Bookmarks</title>
+  <title>DriveCast v7.1 • Local MP4 Player &amp; Bookmarks</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -92,7 +92,7 @@
       </div>
       <div class="flex items-center gap-1.5 min-w-0">
         <h1 class="font-bold text-sm sm:text-base tracking-tight text-white truncate">DriveCast</h1>
-        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v7.0</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v7.1</span>
       </div>
     </div>
 
@@ -404,7 +404,7 @@
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
       <span id="airpodsStatus">AirPods Double-Tap Ready</span>
     </div>
-    <span class="text-slate-500">DriveCast v7.0 &bull; Continuous Sentence Engine</span>
+    <span class="text-slate-500">DriveCast v7.1 &bull; Continuous Sentence Engine</span>
   </footer>
 
   <!-- Toast Notification Box -->
@@ -543,6 +543,33 @@
       }
       return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
+
+    function formatBookmarkDate(timestamp) {
+      const d = timestamp ? new Date(timestamp) : new Date();
+      const day = d.getDate() < 10 ? '0' + d.getDate() : d.getDate();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = months[d.getMonth()];
+      const year = d.getFullYear();
+      return `${day} ${month} ${year}`;
+    }
+
+    // Mac Spacebar Play / Pause Shortcut (ignoring inputs/textareas)
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        const target = e.target;
+        const tagName = target && target.tagName ? target.tagName.toUpperCase() : '';
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA' || (target && target.isContentEditable)) {
+          return;
+        }
+        e.preventDefault();
+        if (!state.videoUrl) return;
+        if (media.paused) {
+          media.play().catch(err => console.warn('Play error:', err));
+        } else {
+          media.pause();
+        }
+      }
+    });
 
     function parseTimestamp(timestampStr) {
       if (!timestampStr) return NaN;
@@ -814,6 +841,7 @@
       const newBookmark = {
         id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
         time: bookmarkedTime,
+        createdAt: Date.now(),
         targetSentenceIndex: targetIdx,
         shiftOffset: 0,
         span: spanCount,
@@ -822,7 +850,8 @@
         userCustomNote: null
       };
 
-      state.bookmarks.unshift(newBookmark);
+      state.bookmarks.push(newBookmark);
+      state.bookmarks.sort((a, b) => a.time - b.time);
       saveBookmarksToStorage();
       renderBookmarks();
       playChime(true);
@@ -1068,6 +1097,9 @@
     }
 
     function renderBookmarks() {
+      // Present highlights sorted in chronological timecode order
+      state.bookmarks.sort((a, b) => a.time - b.time);
+
       bookmarksContainer.innerHTML = '';
       bookmarksCountBadge.textContent = state.bookmarks.length;
 
@@ -1082,12 +1114,12 @@
         const card = document.createElement('div');
         card.className = 'bg-slate-950/70 border border-slate-800/90 rounded-xl p-3 flex flex-col gap-2 hover:border-slate-700 transition shadow-sm';
 
-        // Row 1: Timecode, Retarget Trigger, Edit & Delete
+        // Row 1: Timecode, Creation Date, Retarget Trigger, Edit & Delete
         const topRow = document.createElement('div');
         topRow.className = 'flex items-center justify-between gap-2';
 
         const leftMeta = document.createElement('div');
-        leftMeta.className = 'flex items-center gap-1.5';
+        leftMeta.className = 'flex items-center gap-1.5 flex-wrap';
 
         // Clickable Timecode Badge (Jumps to exact audio timestamp)
         const timeBadge = document.createElement('button');
@@ -1100,6 +1132,12 @@
           updateMediaSessionPosition();
         };
         leftMeta.appendChild(timeBadge);
+
+        // Date Highlight Created
+        const dateBadge = document.createElement('span');
+        dateBadge.className = 'text-[11px] font-medium text-slate-400 select-none';
+        dateBadge.textContent = formatBookmarkDate(bm.createdAt);
+        leftMeta.appendChild(dateBadge);
 
         // Independent Two-Step Timecode Retarget Button (Does not alter text/sentence selection)
         const retargetBtn = document.createElement('button');
@@ -1590,10 +1628,14 @@
         return;
       }
 
+      // Order highlights chronologically by timecode
+      const sortedBookmarks = state.bookmarks.slice().sort((a, b) => a.time - b.time);
+
       let exportContent = `DRIVECAST BOOKMARKS EXPORT\nEpisode: ${state.currentFileName || 'Untitled'}\nExported: ${new Date().toLocaleString()}\n\n`;
 
-      state.bookmarks.forEach((bm) => {
+      sortedBookmarks.forEach((bm) => {
         const timecode = formatTime(bm.time);
+        const dateStr = formatBookmarkDate(bm.createdAt);
         let noteText = '';
 
         if (bm.userCustomNote !== null) {
@@ -1624,7 +1666,7 @@
         }
 
         const tag = `[Highlight: S${(bm.targetSentenceIndex || 0) + 1}, Span: ${bm.span || 1}, Pre: ${bm.preCount || 0}, Post: ${bm.postCount || 0}]`;
-        exportContent += `[${timecode}] ${tag}\n${noteText}\n\n`;
+        exportContent += `[${timecode}] - ${dateStr} ${tag}\n${noteText}\n\n`;
       });
 
       const blob = new Blob([exportContent], { type: 'text/plain;charset=utf-8' });
@@ -1658,9 +1700,10 @@
 
       while (i < lines.length) {
         const line = lines[i].trim();
-        const timeMatch = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]/);
+        const timeMatch = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\](?:\s*-\s*([0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{4}))?/);
         if (timeMatch) {
           const timestampSec = parseTimestamp(timeMatch[1]);
+          const parsedDate = timeMatch[2] ? new Date(timeMatch[2]).getTime() : Date.now();
           
           let hlIndex = -1;
           let spanCount = 1;
@@ -1698,6 +1741,7 @@
             state.bookmarks.push({
               id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
               time: timestampSec,
+              createdAt: parsedDate || Date.now(),
               targetSentenceIndex: targetIdx,
               shiftOffset: 0,
               span: spanCount,
@@ -1743,8 +1787,12 @@
         return;
       }
 
+      // Order highlights chronologically by timecode
+      const sortedBookmarks = state.bookmarks.slice().sort((a, b) => a.time - b.time);
+
       const zip = new JSZip();
-      const title = sanitizeForXml((state.currentFileName || 'Podcast').replace(/\.[^/.]+$/, ''));
+      const rawTitle = (state.currentFileName || 'Podcast Highlights').replace(/\.[^/.]+$/, '');
+      const title = sanitizeForXml(rawTitle);
       const dateStr = new Date().toISOString().split('T')[0];
 
       // 1. mimetype (Uncompressed)
@@ -1758,34 +1806,79 @@
   </rootfiles>
 </container>`);
 
-      // 3. Build Bookmark XHTML Content
+      // 3. Build Book-Formatted Bookmark XHTML Content
       let chapterHtml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>${title} - Highlights</title>
+  <title>${title}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif; line-height: 1.6; margin: 5%; color: #1e293b; }
-    h1 { font-size: 1.5em; border-bottom: 2px solid #6366f1; padding-bottom: 0.3em; margin-bottom: 1em; color: #0f172a; }
-    .bookmark-entry { margin-bottom: 1.8em; padding-bottom: 1.2em; border-bottom: 1px solid #e2e8f0; }
-    .timestamp { display: inline-block; background-color: #e0e7ff; color: #3730a3; font-weight: bold; font-family: monospace; font-size: 0.85em; padding: 2px 6px; border-radius: 4px; margin-bottom: 0.5em; }
-    .passage { font-size: 1em; color: #475569; }
-    .highlight { background-color: #fef08a; color: #854d0e; font-weight: 600; padding: 1px 3px; border-radius: 2px; }
+    @page { margin: 1.5cm; }
+    body {
+      font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, "Times New Roman", serif;
+      color: #000000;
+      background-color: #ffffff;
+      line-height: 1.7;
+      margin: 5% 8%;
+      font-size: 1.05em;
+    }
+    h1 {
+      font-family: Georgia, "Palatino Linotype", Palatino, "Times New Roman", serif;
+      font-size: 1.4em;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 0.3em;
+      color: #000000;
+      line-height: 1.3;
+    }
+    .highlight-count {
+      font-size: 1.05em;
+      color: #111111;
+      margin-bottom: 2.5em;
+      font-weight: normal;
+    }
+    .bookmark-block {
+      margin-bottom: 2.4em;
+    }
+    .bookmark-header {
+      font-size: 1em;
+      color: #000000;
+      font-weight: normal;
+      margin-bottom: 0.7em;
+    }
+    .passage {
+      font-size: 1em;
+      color: #000000;
+      text-align: justify;
+      text-justify: inter-word;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .highlight {
+      background-color: #fae69e;
+      color: #000000;
+      padding: 1px 2px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
   </style>
 </head>
 <body>
-  <h1>${title} &#8226; Highlights</h1>
+  <h1>${title}</h1>
+  <div class="highlight-count">${sortedBookmarks.length} Highlights</div>
 `;
 
-      state.bookmarks.forEach((bm) => {
+      sortedBookmarks.forEach((bm) => {
         const timecode = formatTime(bm.time);
-        chapterHtml += `  <div class="bookmark-entry">\n`;
-        chapterHtml += `    <div class="timestamp">${timecode}</div>\n`;
-        chapterHtml += `    <div class="passage">\n`;
+        const dateLabel = formatBookmarkDate(bm.createdAt);
+
+        chapterHtml += `  <div class="bookmark-block">\n`;
+        chapterHtml += `    <div class="bookmark-header">[${timecode}] - ${dateLabel}</div>\n`;
+        chapterHtml += `    <p class="passage">`;
 
         if (bm.userCustomNote !== null) {
-          chapterHtml += `      <span>${sanitizeForXml(bm.userCustomNote)}</span>\n`;
+          chapterHtml += `${sanitizeForXml(bm.userCustomNote)}`;
         } else if (state.sentences.length > 0 && bm.targetSentenceIndex !== -1) {
           const preSentences = [];
           for (let p = Math.max(0, bm.targetSentenceIndex - (bm.preCount || 0)); p < bm.targetSentenceIndex; p++) {
@@ -1803,18 +1896,17 @@
           }
 
           if (preSentences.length) {
-            chapterHtml += `      <span>${sanitizeForXml(preSentences.join(' '))} </span>`;
+            chapterHtml += `${sanitizeForXml(preSentences.join(' '))} `;
           }
           chapterHtml += `<span class="highlight">${sanitizeForXml(targetSentences.join(' '))}</span>`;
           if (postSentences.length) {
-            chapterHtml += `<span> ${sanitizeForXml(postSentences.join(' '))}</span>`;
+            chapterHtml += ` ${sanitizeForXml(postSentences.join(' '))}`;
           }
-          chapterHtml += `\n`;
         } else {
-          chapterHtml += `      <span>Bookmark marker at ${timecode}</span>\n`;
+          chapterHtml += `Bookmark marker at ${timecode}`;
         }
 
-        chapterHtml += `    </div>\n  </div>\n`;
+        chapterHtml += `</p>\n  </div>\n`;
       });
 
       chapterHtml += `</body>\n</html>`;
@@ -1831,7 +1923,7 @@
 <body>
   <nav epub:type="toc" id="toc">
     <h1>Table of Contents</h1>
-    <ol><li><a href="chapter.xhtml">${title} - Highlights</a></li></ol>
+    <ol><li><a href="chapter.xhtml">${title}</a></li></ol>
   </nav>
 </body>
 </html>`);
@@ -1840,7 +1932,7 @@
       oebps.file('toc.ncx', `<?xml version="1.0" encoding="UTF-8"?>
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
   <head><meta name="dtb:uid" content="urn:uuid:drivecast-${Date.now()}"/></head>
-  <docTitle><text>${title} - Highlights</text></docTitle>
+  <docTitle><text>${title}</text></docTitle>
   <navMap>
     <navPoint id="navpoint-1" playOrder="1">
       <navLabel><text>${title}</text></navLabel>
@@ -1854,7 +1946,7 @@
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="BookId">urn:uuid:drivecast-${Date.now()}</dc:identifier>
-    <dc:title>${title} - Highlights</dc:title>
+    <dc:title>${title}</dc:title>
     <dc:language>en</dc:language>
     <dc:date>${dateStr}</dc:date>
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.[0-9]+Z$/, 'Z')}</meta>
@@ -1874,7 +1966,7 @@
       const dlUrl = URL.createObjectURL(epubBlob);
       const dlLink = document.createElement('a');
       dlLink.href = dlUrl;
-      dlLink.download = `${(state.currentFileName || 'podcast').replace(/\.[^/.]+$/, '')}_highlights.epub`;
+      dlLink.download = `${rawTitle}_highlights.epub`;
       document.body.appendChild(dlLink);
       dlLink.click();
       document.body.removeChild(dlLink);
