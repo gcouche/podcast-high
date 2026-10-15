@@ -1,2067 +1,1814 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>DriveCast v5.7 - Podcast Player & Bookmarks</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DriveCast v6.8 • Local MP4 Player &amp; Bookmarks</title>
+  
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace']
-          }
-        }
-      }
-    }
-  </script>
+  <!-- JSZip CDN for direct client-side ePub generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
+    /* Prevent unwanted rubber-band scrolling and horizontal overflow */
     html, body {
+      height: 100%;
       max-width: 100vw;
       overflow-x: hidden;
-      background-color: #090d16;
-      color: #f1f5f9;
-      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    input[type=range] {
-      -webkit-appearance: none;
-      background: transparent;
+
+    *, *:before, *:after {
+      box-sizing: inherit;
     }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      height: 14px;
-      width: 14px;
-      border-radius: 9999px;
-      background: #818cf8;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
-      transition: transform 0.15s ease, background-color 0.15s ease;
-      margin-top: -4px;
-    }
-    input[type=range]::-webkit-slider-thumb:hover {
-      transform: scale(1.25);
-      background: #a5b4fc;
-    }
-    input[type=range]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 6px;
-      cursor: pointer;
-      background: #1e293b;
-      border-radius: 9999px;
-    }
+
+    /* Custom Scrollbars */
     ::-webkit-scrollbar {
-      width: 5px;
+      width: 6px;
+      height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #090d16;
+      background: rgba(15, 23, 42, 0.6);
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
+      background: rgba(51, 65, 85, 0.6);
       border-radius: 9999px;
     }
-    .drag-target-active {
-      border-color: #818cf8 !important;
-      background-color: rgba(99, 102, 241, 0.12) !important;
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(71, 85, 105, 0.8);
     }
-    mark.highlight {
-      background-color: rgba(245, 158, 11, 0.35);
-      color: #fbbf24;
-      padding: 0.1rem 0.25rem;
-      border-radius: 0.25rem;
-      font-weight: 600;
-    }
+
+    /* Glowing Amber Sentence Highlighter */
     .sentence-highlight {
-      background: linear-gradient(120deg, rgba(245, 158, 11, 0.28) 0%, rgba(251, 191, 36, 0.38) 100%);
-      color: #fef08a;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
-      border-bottom: 1.5px solid rgba(251, 191, 36, 0.7);
-      padding: 0.15rem 0.35rem;
-      border-radius: 0.35rem;
+      background: linear-gradient(120deg, rgba(245, 158, 11, 0.35) 0%, rgba(251, 191, 36, 0.42) 100%);
+      border-bottom: 2px solid rgba(245, 158, 11, 0.95);
+      border-radius: 3px;
+      padding: 1px 4px;
+      color: #fef3c7;
       font-weight: 600;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.22);
       display: inline;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-    }
-    .no-inner-scroll {
-      overflow: hidden !important;
-      resize: none !important;
-      min-height: 48px;
-    }
-    .stepper-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 22px;
-      padding: 0 5px;
-      font-size: 10px;
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      background-color: #1e293b;
-      color: #cbd5e1;
-      border: 1px solid #334155;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-    .stepper-btn:hover:not(:disabled) {
-      background-color: #334155;
-      color: #ffffff;
-      border-color: #64748b;
-    }
-    .stepper-btn:active:not(:disabled) {
-      transform: scale(0.94);
-    }
-    .stepper-btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
     }
 
-    /* iOS & Mobile Font Enhancement: +1pt (+1.33px) across UI & Sentence Reading */
+    /* iOS 1pt Typography Scaling for Enhanced On-The-Go Reading */
     @supports (-webkit-touch-callout: none) {
-      body {
-        font-size: calc(1rem + 1pt);
-      }
-      .sentence-box,
-      .sentence-box span,
-      .sentence-highlight,
-      .note-editor {
-        font-size: calc(0.75rem + 1pt) !important; /* ~13.33px instead of 12px for clear readability */
-        line-height: 1.65 !important;
-      }
-      #subtitleText {
-        font-size: calc(0.875rem + 1pt) !important;
-      }
-      .stepper-btn {
-        font-size: calc(10px + 1pt) !important;
-      }
-      #videoTitleLabel {
-        font-size: calc(0.875rem + 1pt) !important;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .sentence-box,
-      .sentence-box span,
-      .sentence-highlight,
-      .note-editor {
+      .sentence-text-card {
         font-size: calc(0.75rem + 1pt) !important;
         line-height: 1.65 !important;
       }
+      .sentence-highlight {
+        font-size: calc(0.75rem + 1pt) !important;
+      }
+      .card-stepper-btn {
+        padding-top: 0.35rem !important;
+        padding-bottom: 0.35rem !important;
+      }
+    }
+
+    /* Pulse animation for armed timecode retarget trigger */
+    @keyframes armedPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.82; transform: scale(1.08); }
+    }
+    .armed-pulse {
+      animation: armedPulse 1.2s infinite ease-in-out;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white antialiased overflow-x-hidden">
+<body class="flex flex-col h-full bg-slate-950 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
 
-  <!-- Header: Brand, Version 5.4 & Multi-Select Picker -->
-  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 w-full px-4 py-2.5 sm:py-3">
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
-      
-      <!-- Brand & Version 5.6 Indicator -->
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 flex-shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-white leading-none">DriveCast</h1>
-          <span class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-full font-mono font-bold tracking-wider">v5.7</span>
-        </div>
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md px-3 sm:px-4 py-2.5 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 text-white font-black text-sm shrink-0">
+        DC
       </div>
-
-      <!-- Single Primary Action: Choose Podcast -->
-      <div>
-        <input 
-          type="file" 
-          id="podcastPicker" 
-          class="hidden" 
-          multiple 
-          accept=".mp4,.m4a,.mp3,.wav,.webm,.srt,.vtt,.txt,text/plain,*/*" 
-        />
-        <button 
-          id="choosePodcastBtn" 
-          type="button"
-          class="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-600/30 transition cursor-pointer flex-shrink-0"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-          </svg>
-          <span>Choose Podcast</span>
-        </button>
+      <div class="flex items-center gap-1.5 min-w-0">
+        <h1 class="font-bold text-sm sm:text-base tracking-tight text-white truncate">DriveCast</h1>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v6.8</span>
       </div>
+    </div>
 
+    <!-- Header Action Buttons -->
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- Settings Drawer Trigger -->
+      <button id="settingsBtn" title="Open Settings" class="h-8 w-8 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/60">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </button>
+
+      <!-- Choose Media / SRT File Input -->
+      <label class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-md shadow-indigo-600/30 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+        </svg>
+        <span class="truncate">Choose Podcast</span>
+        <input type="file" id="mediaFileInput" accept="video/mp4,audio/mp3,audio/m4a,audio/aac,audio/*,video/*,.srt,.txt" multiple class="hidden">
+      </label>
     </div>
   </header>
 
-  <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-5 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0">
+  <!-- Main Grid Workspace -->
+  <main class="flex-1 min-h-0 w-full max-w-7xl mx-auto p-2 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 overflow-hidden">
     
-    <!-- LEFT COLUMN: Video/Audio Player & Transport (7 Cols) -->
-    <div class="lg:col-span-7 flex flex-col gap-3 sm:gap-4 min-w-0 w-full">
-      
-      <!-- Video / Audio Viewport Area -->
-      <div 
-        id="playerContainer" 
-        class="relative bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl aspect-video flex items-center justify-center transition-colors group"
-      >
-        <video 
-          id="mediaPlayer" 
-          class="w-full h-full object-contain cursor-pointer hidden" 
-          playsinline 
-          webkit-playsinline 
-          preload="metadata"
-        >
-          Your browser does not support HTML5 media.
-        </video>
-
-        <!-- Big Center Play Button Overlay -->
-        <button 
-          id="bigPlayOverlayBtn" 
-          class="hidden absolute w-16 h-16 rounded-full bg-indigo-600/90 hover:bg-indigo-500 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/50 backdrop-blur-sm transition-transform active:scale-90 z-20" 
-          title="Play"
-        >
-          <svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-
-        <!-- Dynamic Subtitle Overlay Box -->
-        <div 
-          id="subtitleOverlay" 
-          class="hidden absolute bottom-3 inset-x-3 text-center pointer-events-none z-20 transition-opacity"
-        >
-          <span 
-            id="subtitleText" 
-            class="inline-block bg-black/85 text-white font-medium text-xs sm:text-sm px-3.5 py-1.5 rounded-lg shadow-lg border border-white/10 backdrop-blur-xs max-w-[92%] leading-relaxed"
-          ></span>
-        </div>
-
-        <!-- Idle State Placeholder -->
-        <div 
-          id="idlePlaceholder" 
-          class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10"
-        >
-          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
-            </svg>
-          </div>
-          <h2 class="text-sm sm:text-base font-bold text-white mb-1">No Podcast Loaded</h2>
-          <p class="text-xs text-slate-400 max-w-xs mb-4">
-            Tap <strong>Choose Podcast</strong> to pick an MP4, MP3, or M4A file. You can select your matching SRT and bookmarks TXT at the same time.
-          </p>
-          <button 
-            id="idleChooseBtn" 
-            type="button" 
-            class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-            </svg>
-            <span>Choose Podcast</span>
-          </button>
-        </div>
-
-        <!-- Loading Spinner -->
-        <div id="mediaLoader" class="hidden absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-30 pointer-events-none">
-          <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </div>
-
-      <!-- Player Transport Controls Bar -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3 shadow-lg">
+    <!-- LEFT COLUMN: Video/Audio Player Stage -->
+    <div class="lg:col-span-7 flex flex-col gap-2 min-h-0 w-full overflow-hidden">
+      <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-2.5 sm:p-3 flex flex-col gap-2 shadow-xl shrink-0">
         
-        <!-- Track Header & Primary +Bookmark Button -->
-        <div class="flex items-center justify-between gap-2.5">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span id="sourceLabel" class="text-[10px] font-mono uppercase tracking-wider text-indigo-400 block truncate">Ready</span>
-              <span id="badgeSaved" class="hidden text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">SAVED</span>
-              <span id="badgeSRT" class="hidden text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded">SRT ON</span>
-            </div>
-            <h2 id="videoTitleLabel" class="text-xs sm:text-sm md:text-base font-bold text-white truncate mt-0.5">Choose a podcast to start</h2>
+        <!-- Media Canvas & Dynamic Subtitle Overlay Box -->
+        <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center group shadow-inner">
+          <video id="mediaPlayer" playsinline class="w-full h-full object-contain hidden"></video>
+          
+          <!-- Empty Player Placeholder State -->
+          <div id="emptyVideoState" class="flex flex-col items-center justify-center p-6 text-center text-slate-500">
+            <svg class="w-12 h-12 mb-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <p class="text-sm font-semibold text-slate-400">No media loaded</p>
+            <p class="text-xs text-slate-500 mt-0.5">Select an MP4/Audio file and an SRT subtitle file</p>
           </div>
 
-          <button 
-            id="addBookmarkBtn" 
-            type="button" 
-            disabled 
-            class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-semibold px-2.5 sm:px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 flex-shrink-0 shadow-md shadow-indigo-600/30 cursor-pointer"
-          >
-            <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+          <!-- Dynamic On-Screen Subtitle Box -->
+          <div id="subtitleBox" class="absolute bottom-3 left-3 right-3 text-center pointer-events-none transition duration-200 hidden">
+            <span id="subtitleText" class="inline-block bg-black/85 text-amber-200 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-sm max-w-[95%] leading-relaxed border border-amber-500/20"></span>
+          </div>
+        </div>
+
+        <!-- Episode Meta Bar -->
+        <div class="flex items-center justify-between gap-2 px-1 pt-1">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span id="mediaTypeBadge" class="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-slate-800 text-slate-400 border border-slate-700/60 uppercase">PODCAST</span>
+            <span id="srtStatusBadge" class="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-slate-800 text-slate-500 border border-slate-700/60 uppercase">NO SRT</span>
+            <span id="mediaFileName" class="text-xs font-semibold text-slate-300 truncate max-w-[200px] sm:max-w-xs">No episode loaded</span>
+          </div>
+
+          <!-- Primary Bookmark Creator Button -->
+          <button id="addBookmarkBtn" class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30 shrink-0 transition">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path>
+            </svg>
             <span>+ Bookmark</span>
           </button>
         </div>
 
-        <!-- Scrubber Range Bar -->
-        <div class="flex flex-col gap-1">
-          <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1" class="w-full">
-          <div class="flex justify-between text-[10px] sm:text-[11px] font-mono text-slate-400">
-            <span id="currentTimeLabel">00:00</span>
-            <span id="durationLabel">00:00</span>
-          </div>
+        <!-- Scrubber Timeline -->
+        <div class="flex items-center gap-2 pt-1 px-1">
+          <span id="currentTimeDisplay" class="font-mono text-[11px] text-slate-400 w-11 shrink-0 text-left">00:00</span>
+          <input type="range" id="timeSlider" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+          <span id="durationDisplay" class="font-mono text-[11px] text-slate-400 w-11 shrink-0 text-right">00:00</span>
         </div>
 
-        <!-- Transport Buttons Row -->
-        <div class="flex items-center justify-between gap-1 sm:gap-1.5 pt-1 border-t border-slate-800/80 min-w-0">
-          
-          <!-- Speed & Subtitle Toggle -->
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <button id="speedBtn" type="button" class="text-[10px] sm:text-[11px] font-mono font-medium px-1.5 sm:px-2 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition border border-slate-700/60">
+        <!-- Transport Controls -->
+        <div class="flex items-center justify-between gap-2 pt-1 px-1">
+          <div class="flex items-center gap-1.5">
+            <!-- Playback Speed Button -->
+            <button id="playbackRateBtn" class="h-8 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/80 transition">
               1.0x
             </button>
-            <button id="toggleSubtitlesBtn" type="button" title="Toggle Subtitles" class="text-[10px] sm:text-[11px] font-mono font-semibold px-1.5 sm:px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition border border-slate-700/60">
-              CC
+            <!-- Closed Captions (CC) Toggle Button -->
+            <button id="ccToggleBtn" class="h-8 px-2 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition">
+              CC ON
             </button>
           </div>
 
-          <!-- Rewind, Play/Pause, Fast-Forward -->
-          <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-            <button id="skipBackBtn" type="button" title="Rewind 15s" class="p-1.5 sm:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/>
+          <!-- Central Transport Cluster: -10s, -1s, Play/Pause, +1s, +10s -->
+          <div class="flex items-center gap-1 sm:gap-1.5">
+            <!-- -10s Podcast Replay Button -->
+            <button id="skipBack10Btn" title="Rewind 10 seconds" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/60">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <text x="12" y="15.2" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" stroke="none" font-family="system-ui, sans-serif">10</text>
               </svg>
             </button>
 
-            <button 
-              id="playPauseBtn" 
-              type="button" 
-              disabled 
-              class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:opacity-40 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 transition flex-shrink-0"
-            >
-              <svg id="playIcon" class="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              <svg id="pauseIcon" class="hidden w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <!-- -1s Micro Step Button -->
+            <button id="stepBack1sBtn" title="Rewind 1 second" class="h-8 px-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center font-mono text-[10px] sm:text-[11px] font-semibold border border-slate-700/60 transition">
+              -1s
             </button>
 
-            <button id="skipForwardBtn" type="button" title="Forward 30s" class="p-1.5 sm:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition active:scale-95">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"/>
+            <!-- Play / Pause Button -->
+            <button id="playPauseBtn" class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-indigo-600/40 transition">
+              <svg id="playIcon" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"></path>
+              </svg>
+              <svg id="pauseIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+              </svg>
+            </button>
+
+            <!-- +1s Micro Step Button -->
+            <button id="stepFwd1sBtn" title="Forward 1 second" class="h-8 px-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center font-mono text-[10px] sm:text-[11px] font-semibold border border-slate-700/60 transition">
+              +1s
+            </button>
+
+            <!-- +10s Podcast Skip Button -->
+            <button id="skipFwd10Btn" title="Forward 10 seconds" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/60">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <text x="12" y="15.2" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" stroke="none" font-family="system-ui, sans-serif">10</text>
               </svg>
             </button>
           </div>
 
           <!-- Volume Controls -->
-          <div class="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-            <button id="muteBtn" type="button" class="text-slate-400 hover:text-white p-1">
-              <svg id="volHighIcon" class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-              <svg id="volMuteIcon" class="hidden w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z m12-2l4 4m0-4l-4 4"/></svg>
+          <div class="flex items-center gap-1.5">
+            <button id="muteBtn" class="text-slate-400 hover:text-white transition">
+              <svg id="volumeHighIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+              </svg>
+              <svg id="volumeMutedIcon" class="w-4 h-4 hidden text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+              </svg>
             </button>
-            <input id="volumeBar" type="range" min="0" max="1" step="0.05" value="0.9" class="w-10 sm:w-16">
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- RIGHT COLUMN: Bookmarks & Transcript Search (5 Cols) -->
-    <div class="lg:col-span-5 flex flex-col gap-3 min-w-0 w-full h-full">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col flex-1 shadow-lg min-h-[480px] lg:h-full min-w-0 w-full overflow-hidden">
-        
-        <!-- Tab Selector: Bookmarks vs Search SRT -->
-        <div class="flex flex-wrap items-center justify-between pb-2.5 sm:pb-3 border-b border-slate-800 gap-1.5 sm:gap-2 min-w-0 w-full flex-shrink-0">
-          
-          <div class="flex items-center gap-1 p-0.5 bg-slate-950/80 rounded-xl border border-slate-800 flex-shrink-0">
-            <button 
-              id="tabBookmarksBtn" 
-              type="button" 
-              class="px-2 sm:px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm"
-            >
-              <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-              <span>Bookmarks</span>
-              <span id="bookmarkCount" class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-indigo-800/80 text-white">0</span>
-            </button>
-
-            <button 
-              id="tabSearchBtn" 
-              type="button" 
-              class="px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white"
-            >
-              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <span>Search SRT</span>
-              <span id="searchResultCount" class="hidden text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300">0</span>
-            </button>
-          </div>
-
-          <!-- Bookmarks Action Buttons -->
-          <div id="bookmarkActionsRow" class="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 ml-auto">
-            <input type="file" id="importTxtInput" class="hidden" accept=".txt,text/plain" />
-            <button 
-              id="importTxtBtn" 
-              type="button" 
-              disabled 
-              title="Import Bookmarks from a .txt file" 
-              class="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white px-2 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1 cursor-pointer"
-            >
-              <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              <span>Import</span>
-            </button>
-
-            <button 
-              id="exportTxtBtn" 
-              type="button" 
-              disabled 
-              title="Export Bookmarks as .txt file" 
-              class="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white px-2 py-1 rounded-lg text-[11px] font-medium transition border border-slate-700 flex items-center gap-1 cursor-pointer"
-            >
-              <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              <span>Export</span>
-            </button>
-
-            <button 
-              id="clearAllBookmarksBtn" 
-              type="button" 
-              title="Clear bookmarks for this video" 
-              class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer flex-shrink-0"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-          </div>
-
-        </div>
-
-        <!-- PANEL 1: Bookmarks View -->
-        <div id="bookmarksPanel" class="flex flex-col flex-1 min-h-0 min-w-0 w-full">
-          <div id="bookmarksContainer" class="flex-1 min-h-0 overflow-y-auto py-2.5 sm:py-3 space-y-3 pr-1 w-full">
-            <div class="text-center py-10 text-slate-500 text-xs">
-              Choose a podcast to view or add bookmarks.
-            </div>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" class="w-14 sm:w-16 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
           </div>
         </div>
-
-        <!-- PANEL 2: Transcript Search View -->
-        <div id="searchPanel" class="hidden flex flex-col flex-1 min-h-0 gap-2 pt-2 min-w-0 w-full">
-          
-          <!-- Search Input Box -->
-          <div class="relative flex-shrink-0">
-            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </div>
-            <input 
-              id="transcriptSearchInput" 
-              type="text" 
-              placeholder="Search words in transcript..." 
-              class="w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
-            />
-            <button 
-              id="clearSearchInputBtn" 
-              type="button" 
-              class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-white"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-
-          <div class="flex items-center justify-between text-[10px] text-slate-400 px-1 font-mono flex-shrink-0">
-            <span>Tap result to jump to -5s</span>
-            <span id="searchStatusLabel">No search term</span>
-          </div>
-
-          <!-- Search Results List -->
-          <div id="searchResultsContainer" class="flex-1 min-h-0 overflow-y-auto py-1 space-y-2 pr-1 w-full">
-            <div class="text-center py-10 text-slate-500 text-xs">
-              Load an SRT subtitle file and enter a word to search.
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom Status -->
-        <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono flex-shrink-0">
-          <span class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>AirPods Double-Tap Ready</span>
-          </span>
-          <span class="text-[10px] text-slate-400 font-bold bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded">v5.7 &bull; Full Height Fluid</span>
-        </div>
-
       </div>
     </div>
 
+    <!-- RIGHT COLUMN: Bookmarks Stream & Transcript Search -->
+    <div class="lg:col-span-5 flex flex-col min-h-0 w-full overflow-hidden bg-slate-900 border border-slate-800/80 rounded-2xl shadow-xl">
+      
+      <!-- Panel Header: Tabs and Action Buttons -->
+      <div class="p-2 sm:p-2.5 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-1.5 shrink-0 bg-slate-900/60">
+        <!-- Tabs -->
+        <div class="flex items-center gap-1">
+          <button id="tabBookmarksBtn" class="h-7 px-2.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path>
+            </svg>
+            <span>Bookmarks</span>
+            <span id="bookmarksCountBadge" class="bg-indigo-800 text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+          </button>
+          
+          <button id="tabSearchBtn" class="h-7 px-2.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 transition">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <span>Search SRT</span>
+          </button>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="flex items-center gap-1 flex-wrap">
+          <!-- Global Base Unit Cycle Button -->
+          <button id="globalSpanCycleBtn" title="Default highlight base unit (sentences)" class="h-7 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold transition">
+            HL: 1 sent
+          </button>
+
+          <!-- Import TXT Bookmarks Button -->
+          <label class="h-7 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition">
+            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            <span>Import</span>
+            <input type="file" id="importBookmarksFileInput" accept=".txt" class="hidden">
+          </label>
+
+          <!-- Export TXT Bookmarks Button -->
+          <button id="exportTxtBtn" class="h-7 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 text-[10px] font-semibold flex items-center gap-1 transition">
+            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span>TXT</span>
+          </button>
+
+          <!-- Export ePub Bookmarks Button -->
+          <button id="exportEpubBtn" class="h-7 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-[10px] font-semibold flex items-center gap-1 transition">
+            <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span>ePub</span>
+          </button>
+
+          <!-- Clear All Bookmarks Button -->
+          <button id="clearBookmarksBtn" title="Clear All Bookmarks" class="h-7 w-7 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 border border-slate-700/60 flex items-center justify-center transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel Body 1: Bookmarks List Stream -->
+      <div id="bookmarksPanel" class="flex-1 min-h-0 overflow-y-auto p-2 sm:p-3 flex flex-col gap-2.5">
+        <div id="bookmarksContainer" class="flex flex-col gap-2.5">
+          <!-- Empty State -->
+          <div id="emptyBookmarksState" class="py-12 flex flex-col items-center justify-center text-center text-slate-500">
+            <svg class="w-10 h-10 mb-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+            </svg>
+            <p class="text-xs font-semibold text-slate-400">No bookmarks yet</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Click <span class="text-indigo-400 font-medium">+ Bookmark</span> or double-tap your AirPods</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Body 2: Transcript Search View -->
+      <div id="searchPanel" class="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-3 flex flex-col gap-2.5 hidden">
+        <!-- Search Input Bar -->
+        <div class="relative shrink-0">
+          <input type="text" id="searchInput" placeholder="Search transcript keywords..." class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 pl-8 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+        <div id="searchResultsCount" class="text-[11px] font-semibold text-slate-400 px-1">0 results</div>
+        <div id="searchResultsContainer" class="flex flex-col gap-2 overflow-y-auto min-h-0">
+          <div class="py-10 text-center text-xs text-slate-500">Enter keywords above to search cues with auto -5s jump</div>
+        </div>
+      </div>
+    </div>
   </main>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white border border-slate-700 px-4 py-2.5 rounded-xl shadow-2xl text-xs z-50 transform translate-y-20 opacity-0 transition duration-300 flex items-center gap-2">
-    <span id="toastMsg">Notification message</span>
+  <!-- Settings Drawer Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded bg-indigo-600/30 text-indigo-400 flex items-center justify-center font-bold text-xs">⚙</div>
+          <h2 class="text-sm font-bold text-white">Playback &amp; Parsing Settings</h2>
+        </div>
+        <button id="closeSettingsBtn" class="text-slate-400 hover:text-white text-sm font-bold p-1">✕</button>
+      </div>
+
+      <!-- Settings Controls List -->
+      <div class="flex flex-col gap-4 text-xs">
+        
+        <!-- Setting 1: Linear Interpolation Toggle -->
+        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
+          <div>
+            <div class="font-semibold text-slate-200">Linear Interpolation</div>
+            <div class="text-[10px] text-slate-400">Proportional timing for multi-sentence cues</div>
+          </div>
+          <input type="checkbox" id="interpCheckbox" checked class="w-4 h-4 rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 cursor-pointer">
+        </div>
+
+        <!-- Setting 2: Sentence Word Cap (Max Upper Bound) -->
+        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
+          <div>
+            <div class="font-semibold text-slate-200">Sentence Word Cap (Max)</div>
+            <div class="text-[10px] text-slate-400">Max length for run-ons or unpunctuated cues</div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="wordCapMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
+            <span id="wordCapValDisplay" class="font-mono text-xs font-semibold text-indigo-300 w-9 text-center">70w</span>
+            <button id="wordCapPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
+          </div>
+        </div>
+
+        <!-- Setting 3: Interpolation Target (Min Word Count) -->
+        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
+          <div>
+            <div class="font-semibold text-slate-200">Interpolation Target (Min)</div>
+            <div class="text-[10px] text-slate-400">Min target words when interpolating long cues</div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="interpTargetMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
+            <span id="interpTargetValDisplay" class="font-mono text-xs font-semibold text-indigo-300 w-9 text-center">50w</span>
+            <button id="interpTargetPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
+          </div>
+        </div>
+
+        <!-- Setting 4: Bookmark Reaction Time Offset -->
+        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
+          <div>
+            <div class="font-semibold text-slate-200">Reaction Time Delay Offset</div>
+            <div class="text-[10px] text-slate-400">Offset applied when creating new bookmarks</div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="reactionOffsetMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
+            <span id="reactionOffsetValDisplay" class="font-mono text-xs font-semibold text-indigo-300 w-9 text-center">-10s</span>
+            <button id="reactionOffsetPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button id="doneSettingsBtn" class="h-8 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs text-white transition">
+          Done
+        </button>
+      </div>
+    </div>
   </div>
 
+  <!-- Footer Status Bar -->
+  <footer class="border-t border-slate-800/70 bg-slate-900/50 px-3 sm:px-4 py-2 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span id="airpodsStatus">AirPods Double-Tap Ready</span>
+    </div>
+    <span class="text-slate-500">DriveCast v6.8 &bull; Independent Time Sync</span>
+  </footer>
+
+  <!-- Toast Notification Box -->
+  <div id="toast" class="fixed bottom-12 right-4 z-50 bg-slate-800/95 text-slate-100 text-xs px-3 py-2 rounded-xl border border-slate-700 shadow-2xl transition-all duration-300 pointer-events-none opacity-0 translate-y-2"></div>
+
   <script>
-    (function () {
-      'use strict';
+    // Global Application State
+    const state = {
+      videoUrl: null,
+      videoName: '',
+      cues: [],               // Parsed raw SRT cues
+      sentences: [],          // Continuous sentence stream with character-accurate timings
+      bookmarks: [],          // Active bookmarks collection
+      armedTimeCorrectionId: null, // Holds ID of bookmark armed for timecode retarget
+      ccVisible: true,
+      playbackRate: 1.0,
+      globalSpan: 1,          // Default highlight base unit span (sentences)
+      interpolationEnabled: true,
+      wordCap: 70,            // Upper-bound sentence word cap
+      interpTargetWords: 50,  // Target minimum words for interpolated cues
+      reactionOffset: -10     // Reaction offset applied on button click / AirPods tap (-10s)
+    };
 
-      const STORAGE_KEY = 'drivecast_v4_data';
-      const PREF_KEY = 'drivecast_v4_prefs';
+    // Load persisted preferences
+    try {
+      const savedInterp = localStorage.getItem('dc_interp_enabled');
+      if (savedInterp !== null) state.interpolationEnabled = savedInterp === 'true';
 
-      // Application State
-      const state = {
-        currentVideoId: '',
-        currentVideoTitle: '',
-        currentVideoBaseName: '',
-        currentVideoFileName: '',
-        isPlaying: false,
-        isMuted: false,
-        volume: 0.9,
-        playbackRates: [0.75, 1.0, 1.25, 1.5, 2.0],
-        currentRateIndex: 1,
-        bookmarks: [],
-        subtitles: [],
-        allSentences: [], // Full episode sentence stream with time boundaries
-        subtitlesEnabled: true,
-        activeTab: 'bookmarks',
-        searchQuery: '',
-        searchResults: []
+      const savedWordCap = localStorage.getItem('dc_word_cap');
+      if (savedWordCap) state.wordCap = parseInt(savedWordCap, 10);
+
+      const savedInterpTarget = localStorage.getItem('dc_interp_target_words');
+      if (savedInterpTarget) state.interpTargetWords = parseInt(savedInterpTarget, 10);
+
+      const savedReaction = localStorage.getItem('dc_reaction_offset');
+      if (savedReaction !== null) state.reactionOffset = parseInt(savedReaction, 10);
+    } catch (e) {}
+
+    // Web Audio API Synthesized Two-Note Feedback Chime (No External Audio Files)
+    let audioCtx = null;
+    function playChime(success = true) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (success) {
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else {
+          osc.frequency.setValueAtTime(329.63, now); // E4
+          osc.frequency.linearRampToValueAtTime(261.63, now + 0.15); // C4
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        }
+      } catch (e) {}
+    }
+
+    // DOM Element Selections
+    const media = document.getElementById('mediaPlayer');
+    const emptyVideoState = document.getElementById('emptyVideoState');
+    const subtitleBox = document.getElementById('subtitleBox');
+    const subtitleText = document.getElementById('subtitleText');
+    const mediaFileInput = document.getElementById('mediaFileInput');
+    const mediaFileName = document.getElementById('mediaFileName');
+    const mediaTypeBadge = document.getElementById('mediaTypeBadge');
+    const srtStatusBadge = document.getElementById('srtStatusBadge');
+
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const timeSlider = document.getElementById('timeSlider');
+    const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+    const durationDisplay = document.getElementById('durationDisplay');
+    const playbackRateBtn = document.getElementById('playbackRateBtn');
+    const ccToggleBtn = document.getElementById('ccToggleBtn');
+    
+    // Transport Buttons
+    const skipBack10Btn = document.getElementById('skipBack10Btn');
+    const skipFwd10Btn = document.getElementById('skipFwd10Btn');
+    const stepBack1sBtn = document.getElementById('stepBack1sBtn');
+    const stepFwd1sBtn = document.getElementById('stepFwd1sBtn');
+    
+    const muteBtn = document.getElementById('muteBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeHighIcon = document.getElementById('volumeHighIcon');
+    const volumeMutedIcon = document.getElementById('volumeMutedIcon');
+
+    // Bookmarks and Search DOM
+    const addBookmarkBtn = document.getElementById('addBookmarkBtn');
+    const bookmarksContainer = document.getElementById('bookmarksContainer');
+    const emptyBookmarksState = document.getElementById('emptyBookmarksState');
+    const bookmarksCountBadge = document.getElementById('bookmarksCountBadge');
+    const tabBookmarksBtn = document.getElementById('tabBookmarksBtn');
+    const tabSearchBtn = document.getElementById('tabSearchBtn');
+    const bookmarksPanel = document.getElementById('bookmarksPanel');
+    const searchPanel = document.getElementById('searchPanel');
+    const searchInput = document.getElementById('searchInput');
+    const searchResultsContainer = document.getElementById('searchResultsContainer');
+    const searchResultsCount = document.getElementById('searchResultsCount');
+    const globalSpanCycleBtn = document.getElementById('globalSpanCycleBtn');
+    const importBookmarksFileInput = document.getElementById('importBookmarksFileInput');
+    const exportTxtBtn = document.getElementById('exportTxtBtn');
+    const exportEpubBtn = document.getElementById('exportEpubBtn');
+    const clearBookmarksBtn = document.getElementById('clearBookmarksBtn');
+
+    // Settings Modal DOM
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const doneSettingsBtn = document.getElementById('doneSettingsBtn');
+    const interpCheckbox = document.getElementById('interpCheckbox');
+    const wordCapMinusBtn = document.getElementById('wordCapMinusBtn');
+    const wordCapPlusBtn = document.getElementById('wordCapPlusBtn');
+    const wordCapValDisplay = document.getElementById('wordCapValDisplay');
+    const interpTargetMinusBtn = document.getElementById('interpTargetMinusBtn');
+    const interpTargetPlusBtn = document.getElementById('interpTargetPlusBtn');
+    const interpTargetValDisplay = document.getElementById('interpTargetValDisplay');
+    const reactionOffsetMinusBtn = document.getElementById('reactionOffsetMinusBtn');
+    const reactionOffsetPlusBtn = document.getElementById('reactionOffsetPlusBtn');
+    const reactionOffsetValDisplay = document.getElementById('reactionOffsetValDisplay');
+    const toast = document.getElementById('toast');
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-2');
+      }, 2600);
+    }
+
+    function formatTime(seconds) {
+      if (isNaN(seconds) || seconds < 0) return '00:00';
+      const sec = Math.floor(seconds);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h > 0) {
+        return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+      }
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function countWords(str) {
+      if (!str) return 0;
+      return str.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    // Parse standard SRT timecode (00:01:23,456) to seconds
+    function parseTimestamp(timeStr) {
+      if (!timeStr) return NaN;
+      const clean = timeStr.trim().replace(',', '.');
+      const parts = clean.split(':');
+      if (parts.length === 3) {
+        return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+      } else if (parts.length === 2) {
+        return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+      }
+      return NaN;
+    }
+
+    // Robust SRT subtitle parser
+    function parseSRT(data) {
+      const cues = [];
+      const blocks = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\n\s*\n/);
+      
+      for (const block of blocks) {
+        const lines = block.trim().split('\n').filter(Boolean);
+        if (lines.length < 2) continue;
+
+        let timeLineIndex = 0;
+        if (!lines[0].includes('-->') && lines.length > 1 && lines[1].includes('-->')) {
+          timeLineIndex = 1;
+        }
+
+        const arrowParts = lines[timeLineIndex].split('-->');
+        if (arrowParts.length !== 2) continue;
+
+        const start = parseTimestamp(arrowParts[0].trim());
+        const endPart = arrowParts[1].trim().split(/\s+/)[0];
+        const end = parseTimestamp(endPart);
+
+        if (isNaN(start) || isNaN(end)) continue;
+
+        const textLines = lines.slice(timeLineIndex + 1);
+        const text = textLines.join(' ')
+          .replace(/<[^>]*>/g, '') // strip HTML formatting tags
+          .replace(/\{[^}]*\}/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (text) {
+          cues.push({ start, end, text });
+        }
+      }
+      return cues;
+    }
+
+    // Abbreviation-aware sentence boundary segmenter
+    function tokenizeSentences(text) {
+      if (!text || !text.trim()) return [];
+
+      // Protect known abbreviations and decimal numbers
+      const abbreviations = [
+        'Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'Sr', 'Jr', 'vs', 'etc', 'eg', 'ie', 'al',
+        'M', 'Mme', 'Mlle', 'cf'
+      ];
+      let masked = text;
+      abbreviations.forEach(abbr => {
+        const regex = new RegExp(`\\b${abbr}\\.`, 'gi');
+        masked = masked.replace(regex, `${abbr}__DOT__`);
+      });
+      // Protect decimals (e.g. 3.14)
+      masked = masked.replace(/(\d)\.(\d)/g, '$1__DECIMAL__$2');
+
+      // Split at sentence boundaries: punctuation (. ! ? …) followed by whitespace, closing brackets, or quotes
+      const pattern = /([^.!?…]+[.!?…]+(?:["'”»\]\)]|\s+|$)|[^.!?…]+$)/g;
+      const rawSentences = masked.match(pattern) || [masked];
+
+      const results = [];
+      for (let s of rawSentences) {
+        // Restore masked dots
+        s = s.replace(/__DOT__/g, '.').replace(/__DECIMAL__/g, '.').trim();
+        if (s.length > 0) results.push(s);
+      }
+      return results;
+    }
+
+    function buildEpisodeSentencesStream() {
+      state.sentences = [];
+      if (!state.cues || state.cues.length === 0) return;
+
+      // Group cues into continuous segments
+      for (let cIdx = 0; cIdx < state.cues.length; cIdx++) {
+        const cue = state.cues[cIdx];
+        const cueDuration = Math.max(0.1, cue.end - cue.start);
+        const cueSentences = tokenizeSentences(cue.text);
+
+        if (cueSentences.length <= 1 || !state.interpolationEnabled) {
+          // Single sentence or interpolation disabled
+          cueSentences.forEach((rawSent) => {
+            const chunks = chunkSentenceByCap(rawSent, state.wordCap);
+            chunks.forEach((chunk) => {
+              state.sentences.push({
+                index: state.sentences.length,
+                text: chunk,
+                start: cue.start,
+                end: cue.end,
+                cueIndex: cIdx,
+                isInterpolated: false
+              });
+            });
+          });
+        } else {
+          // Multi-sentence cue with character-proportional linear interpolation
+          const totalChars = cueSentences.reduce((acc, s) => acc + s.length, 0);
+          let accumulatedChars = 0;
+
+          cueSentences.forEach((sent) => {
+            const sentStartPct = accumulatedChars / totalChars;
+            accumulatedChars += sent.length;
+            const sentEndPct = accumulatedChars / totalChars;
+
+            const sentStart = cue.start + (sentStartPct * cueDuration);
+            const sentEnd = cue.start + (sentEndPct * cueDuration);
+
+            const chunks = chunkSentenceByCap(sent, state.wordCap);
+            chunks.forEach((chunk) => {
+              state.sentences.push({
+                index: state.sentences.length,
+                text: chunk,
+                start: sentStart,
+                end: sentEnd,
+                cueIndex: cIdx,
+                isInterpolated: true
+              });
+            });
+          });
+        }
+      }
+    }
+
+    // Split long sentence chunks according to the configured sentence word cap
+    function chunkSentenceByCap(text, cap) {
+      const words = text.trim().split(/\s+/).filter(Boolean);
+      if (words.length <= cap) return [text];
+
+      const chunks = [];
+      for (let i = 0; i < words.length; i += cap) {
+        chunks.push(words.slice(i, i + cap).join(' '));
+      }
+      return chunks;
+    }
+
+    function findTargetSentenceIndexForTime(time) {
+      if (!state.sentences || state.sentences.length === 0) return -1;
+
+      // Find sentence overlapping the timecode
+      for (let i = 0; i < state.sentences.length; i++) {
+        const s = state.sentences[i];
+        if (time >= s.start && time <= s.end) {
+          // If in first 2 seconds, account for human reaction delay
+          if ((time - s.start < 2.0) && i > 0) {
+            return i - 1;
+          }
+          return i;
+        }
+      }
+
+      // If time is before first sentence
+      if (time < state.sentences[0].start) return 0;
+
+      // Find closest preceding sentence
+      for (let i = state.sentences.length - 1; i >= 0; i--) {
+        if (time >= state.sentences[i].start) return i;
+      }
+      return state.sentences.length - 1;
+    }
+
+    // Symmetrical sentence expansion for interpolated cues to meet minimum word count
+    function calculateInterpolatedSpanAndStart(targetIdx, minWords) {
+      if (!state.sentences || state.sentences.length === 0 || targetIdx < 0) {
+        return { startIdx: targetIdx, span: 1 };
+      }
+
+      let startIdx = targetIdx;
+      let endIdx = targetIdx;
+      let totalWords = countWords(state.sentences[targetIdx].text);
+
+      let expandBefore = true;
+      while (totalWords < minWords && (startIdx > 0 || endIdx < state.sentences.length - 1)) {
+        if (expandBefore && startIdx > 0) {
+          startIdx--;
+          totalWords += countWords(state.sentences[startIdx].text);
+          if (endIdx < state.sentences.length - 1) expandBefore = false;
+        } else if (endIdx < state.sentences.length - 1) {
+          endIdx++;
+          totalWords += countWords(state.sentences[endIdx].text);
+          if (startIdx > 0) expandBefore = true;
+        } else if (startIdx > 0) {
+          startIdx--;
+          totalWords += countWords(state.sentences[startIdx].text);
+        } else {
+          break;
+        }
+      }
+
+      return {
+        startIdx: startIdx,
+        span: Math.max(1, (endIdx - startIdx) + 1)
+      };
+    }
+
+    function triggerBookmarkCreation() {
+      if (!state.videoUrl) {
+        showToast('Load an episode first');
+        return;
+      }
+
+      const pressTime = media.currentTime;
+      // Reaction delay offset only applies on user click creation
+      const offsetTime = Math.max(0, pressTime + state.reactionOffset);
+
+      let targetIndex = -1;
+      let span = state.globalSpan;
+
+      if (state.sentences.length > 0) {
+        targetIndex = findTargetSentenceIndexForTime(offsetTime);
+        if (targetIndex >= 0) {
+          const sent = state.sentences[targetIndex];
+          if (sent && sent.isInterpolated) {
+            const spanInfo = calculateInterpolatedSpanAndStart(targetIndex, state.interpTargetWords);
+            targetIndex = spanInfo.startIdx;
+            span = spanInfo.span;
+          }
+        }
+      }
+
+      const newBookmark = {
+        id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        time: offsetTime,      // Permanent audio timecode
+        targetIndex: targetIndex,
+        span: span,            // Number of highlighted sentences
+        preCount: 1,           // Preceding context sentences
+        postCount: 1,          // Following context sentences
+        noteText: '',          // Optional user note
+        isEditing: false
       };
 
-      // DOM Elements
-      const media = document.getElementById('mediaPlayer');
-      const playerContainer = document.getElementById('playerContainer');
-      const idlePlaceholder = document.getElementById('idlePlaceholder');
-      const mediaLoader = document.getElementById('mediaLoader');
-      const bigPlayOverlayBtn = document.getElementById('bigPlayOverlayBtn');
-      const sourceLabel = document.getElementById('sourceLabel');
-      const videoTitleLabel = document.getElementById('videoTitleLabel');
-      const badgeSaved = document.getElementById('badgeSaved');
-      const badgeSRT = document.getElementById('badgeSRT');
-      const subtitleOverlay = document.getElementById('subtitleOverlay');
-      const subtitleText = document.getElementById('subtitleText');
-
-      const playPauseBtn = document.getElementById('playPauseBtn');
-      const playIcon = document.getElementById('playIcon');
-      const pauseIcon = document.getElementById('pauseIcon');
-      const skipBackBtn = document.getElementById('skipBackBtn');
-      const skipForwardBtn = document.getElementById('skipForwardBtn');
-      const speedBtn = document.getElementById('speedBtn');
-      const toggleSubtitlesBtn = document.getElementById('toggleSubtitlesBtn');
-      const seekBar = document.getElementById('seekBar');
-      const currentTimeLabel = document.getElementById('currentTimeLabel');
-      const durationLabel = document.getElementById('durationLabel');
-      const volumeBar = document.getElementById('volumeBar');
-      const muteBtn = document.getElementById('muteBtn');
-      const volHighIcon = document.getElementById('volHighIcon');
-      const volMuteIcon = document.getElementById('volMuteIcon');
-
-      const podcastPicker = document.getElementById('podcastPicker');
-      const choosePodcastBtn = document.getElementById('choosePodcastBtn');
-      const idleChooseBtn = document.getElementById('idleChooseBtn');
-
-      const tabBookmarksBtn = document.getElementById('tabBookmarksBtn');
-      const tabSearchBtn = document.getElementById('tabSearchBtn');
-      const bookmarkActionsRow = document.getElementById('bookmarkActionsRow');
-      const bookmarksPanel = document.getElementById('bookmarksPanel');
-      const searchPanel = document.getElementById('searchPanel');
-      const searchResultCount = document.getElementById('searchResultCount');
-
-      const addBookmarkBtn = document.getElementById('addBookmarkBtn');
-      const bookmarkCount = document.getElementById('bookmarkCount');
-      const bookmarksContainer = document.getElementById('bookmarksContainer');
-      const clearAllBookmarksBtn = document.getElementById('clearAllBookmarksBtn');
-      const exportTxtBtn = document.getElementById('exportTxtBtn');
-      const importTxtBtn = document.getElementById('importTxtBtn');
-      const importTxtInput = document.getElementById('importTxtInput');
-
-      const transcriptSearchInput = document.getElementById('transcriptSearchInput');
-      const clearSearchInputBtn = document.getElementById('clearSearchInputBtn');
-      const searchStatusLabel = document.getElementById('searchStatusLabel');
-      const searchResultsContainer = document.getElementById('searchResultsContainer');
-
-      const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toastMsg');
-
-      // Subtle bookmark audio chime
-      let audioCtx = null;
-      function playBookmarkChime() {
-        try {
-          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-          if (!AudioContextClass) return;
-          if (!audioCtx) audioCtx = new AudioContextClass();
-          if (audioCtx.state === 'suspended') audioCtx.resume();
-
-          const now = audioCtx.currentTime;
-          const osc1 = audioCtx.createOscillator();
-          const gain1 = audioCtx.createGain();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(1318.5, now);
-          gain1.gain.setValueAtTime(0.0001, now);
-          gain1.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
-          gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-          osc1.connect(gain1);
-          gain1.connect(audioCtx.destination);
-          osc1.start(now);
-          osc1.stop(now + 0.23);
-
-          const osc2 = audioCtx.createOscillator();
-          const gain2 = audioCtx.createGain();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1975.5, now + 0.08);
-          gain2.gain.setValueAtTime(0.0001, now + 0.08);
-          gain2.gain.exponentialRampToValueAtTime(0.07, now + 0.1);
-          gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
-          osc2.connect(gain2);
-          gain2.connect(audioCtx.destination);
-          osc2.start(now + 0.08);
-          osc2.stop(now + 0.39);
-        } catch (e) {
-          console.warn('Audio feedback failed or not supported:', e);
-        }
-      }
-
-      function formatTime(seconds) {
-        if (isNaN(seconds) || seconds < 0) return '00:00';
-        const sec = Math.floor(seconds);
-        const h = Math.floor(sec / 3600);
-        const m = Math.floor((sec % 3600) / 60);
-        const s = sec % 60;
-        if (h > 0) {
-          return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-      }
-
-      function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-      }
-
-      let toastTimer = null;
-      function showToast(message) {
-        if (!toast || !toastMsg) return;
-        toastMsg.textContent = message;
-        toast.classList.remove('translate-y-20', 'opacity-0');
-        toast.classList.add('translate-y-0', 'opacity-100');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => {
-          toast.classList.add('translate-y-20', 'opacity-0');
-          toast.classList.remove('translate-y-0', 'opacity-100');
-        }, 2600);
-      }
-
-      function normalizeName(filename) {
-        if (!filename) return '';
-        return filename
-          .replace(/\.(mp4|m4v|webm|mov|mkv|mp3|m4a|wav|ogg|aac|srt|vtt|json)$/i, '')
-          .replace(/\.(en|eng|fr|es|de|cc|forced|default)$/i, '')
-          .toLowerCase()
-          .replace(/[\s\-_.\(\)\[\]]+/g, ' ')
-          .trim();
-      }
-
-      function getDatabase() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return { videos: {} };
-          const parsed = JSON.parse(raw);
-          if (!parsed || typeof parsed !== 'object') return { videos: {} };
-          if (!parsed.videos) parsed.videos = {};
-          return parsed;
-        } catch (e) {
-          console.warn('localStorage read error:', e);
-          return { videos: {} };
-        }
-      }
-
-      function saveDatabase(data) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch (e) {
-          console.warn('localStorage write error:', e);
-        }
-      }
-
-      function saveCurrentVideoToDatabase() {
-        if (!state.currentVideoId) return;
-        try {
-          const db = getDatabase();
-          const existingEntry = db.videos[state.currentVideoId] || {};
-
-          db.videos[state.currentVideoId] = {
-            ...existingEntry,
-            id: state.currentVideoId,
-            title: state.currentVideoTitle,
-            baseName: state.currentVideoBaseName,
-            fileName: state.currentVideoFileName,
-            bookmarks: state.bookmarks,
-            subtitles: state.subtitles,
-            lastSeekTime: media && !isNaN(media.currentTime) ? media.currentTime : 0,
-            updatedAt: Date.now()
-          };
-          saveDatabase(db);
-          badgeSaved.classList.remove('hidden');
-        } catch (e) {
-          console.error('Failed to save to database:', e);
-        }
-      }
-
-      function parseTimestamp(timeStr) {
-        if (!timeStr) return 0;
-        const cleaned = timeStr.trim().replace(',', '.');
-        const parts = cleaned.split(':');
-        if (parts.length === 3) {
-          return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
-        }
-        if (parts.length === 2) {
-          return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
-        }
-        return parseFloat(cleaned) || 0;
-      }
-
-      function parseSRTorVTT(rawText) {
-        if (!rawText) return [];
-        const sanitized = rawText
-          .replace(/^\uFEFF/, '')
-          .replace(/\r\n/g, '\n')
-          .replace(/\r/g, '\n');
-
-        const cues = [];
-        const blocks = sanitized.split(/\n\s*\n/);
-
-        for (const block of blocks) {
-          const lines = block.trim().split('\n');
-          if (lines.length === 0) continue;
-
-          let arrowLineIdx = -1;
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes('-->')) {
-              arrowLineIdx = i;
-              break;
-            }
-          }
-
-          if (arrowLineIdx === -1) continue;
-
-          const timeLine = lines[arrowLineIdx];
-          const sides = timeLine.split('-->');
-          if (sides.length !== 2) continue;
-
-          const startStr = sides[0].trim();
-          const endStr = sides[1].trim().split(/\s+/)[0];
-
-          const start = parseTimestamp(startStr);
-          const end = parseTimestamp(endStr);
-
-          const rawTextLines = lines.slice(arrowLineIdx + 1);
-          const text = rawTextLines
-            .join(' ')
-            .replace(/<[^>]+>/g, '')
-            .replace(/\{[^\}]+\}/g, '')
-            .trim();
-
-          if (text && !isNaN(start) && !isNaN(end) && end >= start) {
-            cues.push({ start, end, text });
-          }
-        }
-
-        return cues;
-      }
-
-      // Sentence Segmenter with Intl.Segmenter & Fallback
-      function getSentenceSegments(text, locale = 'en') {
-        if (!text) return [];
-
-        if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
-          try {
-            const segmenter = new Intl.Segmenter(locale, { granularity: 'sentence' });
-            const iterator = segmenter.segment(text);
-            const sentences = [];
-            for (const item of iterator) {
-              const s = item.segment.trim();
-              if (s) {
-                sentences.push({
-                  text: s,
-                  index: item.index,
-                  length: item.segment.length
-                });
-              }
-            }
-            if (sentences.length > 0) return sentences;
-          } catch (e) {
-            console.debug('Intl.Segmenter fallback to rule-based segmentation:', e);
-          }
-        }
-
-        const abbrevRegex = /\b(Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Fig|Gen|St|U\.S|U\.K|A\.M|P\.M)\./gi;
-        const masked = text.replace(abbrevRegex, (match) => match.replace(/\./g, '__DOT__'));
-        const splits = masked.split(/(?<=[.!?…])\s+(?=[A-Z0-9"“'‘])/);
-        const results = [];
-        let runningIdx = 0;
-
-        for (const part of splits) {
-          const restored = part.replace(/__DOT__/g, '.').trim();
-          if (restored) {
-            results.push({
-              text: restored,
-              index: runningIdx,
-              length: part.length
-            });
-          }
-          runningIdx += part.length + 1;
-        }
-
-        return results;
-      }
-
-      // Rebuild the full episode global sentence stream
-      function buildEpisodeSentencesStream() {
-        if (!state.subtitles || state.subtitles.length === 0) {
-          state.allSentences = [];
-          return;
-        }
-
-        const wordTokens = [];
-        for (let i = 0; i < state.subtitles.length; i++) {
-          const cue = state.subtitles[i];
-          const words = cue.text.replace(/\r?\n+/g, ' ').trim().split(/\s+/).filter(Boolean);
-          if (words.length === 0) continue;
-          const cueDur = Math.max(0.05, (cue.end - cue.start));
-          words.forEach((w, wIdx) => {
-            const wordTime = cue.start + (wIdx / words.length) * cueDur;
-            wordTokens.push({ word: w, time: wordTime, cueIdx: i });
-          });
-        }
-
-        if (wordTokens.length === 0) {
-          state.allSentences = [];
-          return;
-        }
-
-        const fullBlock = wordTokens.map(t => t.word).join(' ');
-        const rawSegments = getSentenceSegments(fullBlock);
-
-        let charCounter = 0;
-        let wordIdx = 0;
-
-        state.allSentences = rawSegments.map((seg, idx) => {
-          while (wordIdx < wordTokens.length && charCounter < seg.index) {
-            charCounter += wordTokens[wordIdx].word.length + 1;
-            wordIdx++;
-          }
-          const startTimestamp = wordTokens[Math.min(wordIdx, wordTokens.length - 1)].time;
-
-          const segEndChar = seg.index + seg.length;
-          while (wordIdx < wordTokens.length && charCounter < segEndChar) {
-            charCounter += wordTokens[wordIdx].word.length + 1;
-            wordIdx++;
-          }
-          const endTimestamp = wordTokens[Math.min(Math.max(0, wordIdx - 1), wordTokens.length - 1)].time;
-          const wordsCount = seg.text.split(/\s+/).filter(Boolean).length;
-
-          let cleanText = seg.text.trim();
-          cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
-          if (!/[.!?…]$/.test(cleanText)) cleanText += '.';
-
-          return {
-            index: idx,
-            text: cleanText,
-            start: startTimestamp,
-            end: endTimestamp,
-            wordCount: wordsCount
-          };
-        });
-      }
-
-      // Finds target sentence for a timestamp, factoring in reaction delay (first 2s of a sentence)
-      function findTargetSentenceIndexForTime(currentTime) {
-        if (!state.allSentences || state.allSentences.length === 0) return -1;
-
-        let targetIdx = state.allSentences.findIndex(s => currentTime >= s.start && currentTime <= s.end);
-        if (targetIdx === -1) {
-          let closestDiff = Infinity;
-          state.allSentences.forEach((s, idx) => {
-            const diff = Math.min(Math.abs(currentTime - s.start), Math.abs(currentTime - s.end));
-            if (diff < closestDiff) {
-              closestDiff = diff;
-              targetIdx = idx;
-            }
-          });
-        }
-
-        if (targetIdx === -1) targetIdx = 0;
-
-        // User Reaction Time Compensation:
-        // If clicked within first 2.0s of sentence start, user was reacting to previous sentence!
-        const matched = state.allSentences[targetIdx];
-        if (matched && (currentTime - matched.start) < 2.0 && targetIdx > 0) {
-          targetIdx = targetIdx - 1;
-        }
-
-        return targetIdx;
-      }
-
-      // Reconstructs rendered HTML and plain text for a bookmark using prefix, target, and suffix
-      function buildBookmarkHtml(bm) {
-        // If no transcript sentences available, fall back to stored fields
-        if (!state.allSentences || state.allSentences.length === 0 || bm.targetIndex === undefined || bm.targetIndex < 0) {
-          if (bm.targetSentence) {
-            const prev = bm.prefixSentences && bm.prefixSentences.length > 0 ? bm.prefixSentences.join(' ') + ' ' : '';
-            const next = bm.suffixSentences && bm.suffixSentences.length > 0 ? ' ' + bm.suffixSentences.join(' ') : '';
-            let html = '';
-            if (prev) html += `<span class="text-slate-400 font-normal">${escapeHtml(prev)}</span>`;
-            html += `<span class="sentence-highlight">${escapeHtml(bm.targetSentence)}</span>`;
-            if (next) html += `<span class="text-slate-400 font-normal">${escapeHtml(next)}</span>`;
-            return {
-              html,
-              plain: [prev.trim(), bm.targetSentence, next.trim()].filter(Boolean).join(' ')
-            };
-          }
-          // Imported with unknown position -> highlight entire text
-          return {
-            html: `<span class="sentence-highlight">${escapeHtml(bm.note || '')}</span>`,
-            plain: bm.note || ''
-          };
-        }
-
-        const total = state.allSentences.length;
-        const targetIdx = Math.max(0, Math.min(total - 1, bm.targetIndex));
-        const prefixCount = Math.max(0, bm.prefixCount !== undefined ? bm.prefixCount : 1);
-        const suffixCount = Math.max(0, bm.suffixCount !== undefined ? bm.suffixCount : 1);
-
-        const startIdx = Math.max(0, targetIdx - prefixCount);
-        const endIdx = Math.min(total - 1, targetIdx + suffixCount);
-
-        const prefixItems = [];
-        for (let i = startIdx; i < targetIdx; i++) {
-          prefixItems.push(state.allSentences[i].text);
-        }
-
-        const targetText = state.allSentences[targetIdx].text;
-
-        const suffixItems = [];
-        for (let i = targetIdx + 1; i <= endIdx; i++) {
-          suffixItems.push(state.allSentences[i].text);
-        }
-
-        let html = '';
-        if (prefixItems.length > 0) {
-          html += `<span class="text-slate-400 font-normal">${escapeHtml(prefixItems.join(' '))} </span>`;
-        }
-        html += `<span class="sentence-highlight">${escapeHtml(targetText)}</span>`;
-        if (suffixItems.length > 0) {
-          html += `<span class="text-slate-400 font-normal"> ${escapeHtml(suffixItems.join(' '))}</span>`;
-        }
-
-        const plain = [prefixItems.join(' '), targetText, suffixItems.join(' ')].filter(Boolean).join(' ');
-
-        return {
-          html,
-          plain,
-          targetText,
-          prefixItems,
-          suffixItems,
-          resolvedIndex: targetIdx
-        };
-      }
-
-      function applySubtitles(srtText, srtFileName) {
-        try {
-          state.subtitles = parseSRTorVTT(srtText);
-          if (state.subtitles.length > 0) {
-            state.subtitlesEnabled = true;
-            badgeSRT.classList.remove('hidden');
-            badgeSRT.textContent = `SRT ON (${state.subtitles.length})`;
-            toggleSubtitlesBtn.classList.add('text-indigo-400');
-            toggleSubtitlesBtn.classList.remove('text-slate-400');
-            
-            buildEpisodeSentencesStream();
-
-            // Re-bind bookmarks to exact sentence indices if not yet resolved
-            state.bookmarks.forEach(bm => {
-              if ((bm.targetIndex === undefined || bm.targetIndex === -1) && state.allSentences.length > 0) {
-                bm.targetIndex = findTargetSentenceIndexForTime(bm.time);
-                if (bm.prefixCount === undefined) bm.prefixCount = 1;
-                if (bm.suffixCount === undefined) bm.suffixCount = 1;
-              }
-            });
-
-            saveCurrentVideoToDatabase();
-            renderBookmarks();
-            showToast(`SRT linked: ${srtFileName || 'subtitles'} (${state.subtitles.length} lines)`);
-            if (state.searchQuery) performTranscriptSearch(state.searchQuery);
-          } else {
-            resetSubtitlesUI();
-          }
-        } catch (err) {
-          console.warn('Failed to parse subtitles:', err);
-          resetSubtitlesUI();
-        }
-      }
-
-      function resetSubtitlesUI() {
-        state.subtitles = [];
-        state.allSentences = [];
-        badgeSRT.classList.add('hidden');
-        subtitleOverlay.classList.add('hidden');
-        subtitleText.textContent = '';
-        toggleSubtitlesBtn.classList.remove('text-indigo-400');
-        toggleSubtitlesBtn.classList.add('text-slate-400');
-        renderSearchResults();
-      }
-
-      function updateLockscreenPositionState() {
-        if (!('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) return;
-        if (media && !isNaN(media.duration) && media.duration > 0 && !isNaN(media.currentTime)) {
-          try {
-            navigator.mediaSession.setPositionState({
-              duration: Math.max(0, media.duration),
-              playbackRate: media.playbackRate || 1.0,
-              position: Math.max(0, Math.min(media.duration, media.currentTime))
-            });
-          } catch (e) {
-            console.warn('setPositionState update skipped:', e);
-          }
-        }
-      }
-
-      function setupAirPodsMediaSession() {
-        if (!('mediaSession' in navigator)) return;
-
-        try {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: state.currentVideoTitle || 'DriveCast Player',
-            artist: 'DriveCast Podcast',
-            album: 'Local Bookmarks'
-          });
-
-          navigator.mediaSession.setActionHandler('nexttrack', () => {
-            triggerBookmarkCreation('AirPods double-tap');
-          });
-
-          navigator.mediaSession.setActionHandler('previoustrack', () => {
-            triggerBookmarkCreation('AirPods remote');
-          });
-
-          navigator.mediaSession.setActionHandler('seekto', (details) => {
-            if (details.seekTime !== undefined && !isNaN(details.seekTime) && media) {
-              media.currentTime = Math.max(0, Math.min(media.duration || Infinity, details.seekTime));
-              updateLockscreenPositionState();
-            }
-          });
-
-          navigator.mediaSession.setActionHandler('play', () => {
-            if (media && media.paused) media.play().catch(() => {});
-          });
-          navigator.mediaSession.setActionHandler('pause', () => {
-            if (media && !media.paused) media.pause();
-          });
-          navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-            const skip = details.seekOffset || 15;
-            media.currentTime = Math.max(0, media.currentTime - skip);
-            updateLockscreenPositionState();
-          });
-          navigator.mediaSession.setActionHandler('seekforward', (details) => {
-            const skip = details.seekOffset || 30;
-            if (media.duration) media.currentTime = Math.min(media.duration, media.currentTime + skip);
-            updateLockscreenPositionState();
-          });
-        } catch (e) {
-          console.warn('MediaSession handler registration warning:', e);
-        }
-      }
-
-      function updatePlayPauseUI() {
-        if (media.paused) {
-          playIcon.classList.remove('hidden');
-          pauseIcon.classList.add('hidden');
-          if (state.currentVideoId) {
-            bigPlayOverlayBtn.classList.remove('hidden');
-          } else {
-            bigPlayOverlayBtn.classList.add('hidden');
-          }
-        } else {
-          playIcon.classList.add('hidden');
-          pauseIcon.classList.remove('hidden');
-          bigPlayOverlayBtn.classList.add('hidden');
-        }
-      }
-
-      async function handleSelectedFiles(filesList) {
-        if (!filesList || filesList.length === 0) return;
-        const files = Array.from(filesList);
-
-        const mediaFile = files.find(f => 
-          f.type.startsWith('video/') || 
-          f.type.startsWith('audio/') || 
-          /\.(mp4|m4a|mp3|wav|webm|ogg|aac|m4v|mov)$/i.test(f.name)
-        );
-
-        if (!mediaFile) {
-          showToast('Please select an MP4, MP3, or M4A podcast file');
-          return;
-        }
-
-        const rawTitle = mediaFile.name.replace(/\.[^/.]+$/, '');
-        const normName = normalizeName(mediaFile.name);
-        const isAudio = mediaFile.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|aac)$/i.test(mediaFile.name);
-
-        const db = getDatabase();
-        const existingKey = Object.keys(db.videos).find(k => {
-          const entry = db.videos[k];
-          return entry.fileName === mediaFile.name || 
-                 normalizeName(entry.title) === normName ||
-                 normalizeName(entry.fileName) === normName;
-        });
-
-        let loadedBookmarks = [];
-        let loadedSubtitles = [];
-
-        if (existingKey && db.videos[existingKey]) {
-          const entry = db.videos[existingKey];
-          state.currentVideoId = entry.id;
-          loadedBookmarks = Array.isArray(entry.bookmarks) ? [...entry.bookmarks] : [];
-          loadedSubtitles = Array.isArray(entry.subtitles) ? [...entry.subtitles] : [];
-          badgeSaved.classList.remove('hidden');
-          showToast(`Loaded "${rawTitle}" (${loadedBookmarks.length} bookmarks found)`);
-        } else {
-          const newId = 'podcast_' + normName.replace(/\s+/g, '_') + '_' + Date.now();
-          state.currentVideoId = newId;
-          loadedBookmarks = [];
-          loadedSubtitles = [];
-          badgeSaved.classList.add('hidden');
-          showToast(`New podcast entry created for "${rawTitle}"`);
-        }
-
-        state.currentVideoTitle = rawTitle;
-        state.currentVideoBaseName = normName;
-        state.currentVideoFileName = mediaFile.name;
-        state.bookmarks = loadedBookmarks;
-        state.subtitles = loadedSubtitles;
-
-        sourceLabel.textContent = isAudio ? 'Audio Podcast' : 'Video Podcast';
-        videoTitleLabel.textContent = rawTitle;
-
-        idlePlaceholder.classList.add('hidden');
-        media.classList.remove('hidden');
-        mediaLoader.classList.remove('hidden');
-        addBookmarkBtn.disabled = false;
-        playPauseBtn.disabled = false;
-        exportTxtBtn.disabled = state.bookmarks.length === 0;
-        importTxtBtn.disabled = false;
-
-        const fileUrl = URL.createObjectURL(mediaFile);
-        media.src = fileUrl;
-        media.playbackRate = state.playbackRates[state.currentRateIndex] || 1.0;
-
-        try {
-          media.volume = state.volume;
-        } catch (e) {
-          console.warn('Volume setting restricted on this device:', e);
-        }
-        volumeBar.value = state.volume;
-
-        // Check if an SRT file is included
-        const srtFiles = files.filter(f => /\.(srt|vtt)$/i.test(f.name));
-        let matchingSrt = null;
-
-        if (srtFiles.length === 1) {
-          matchingSrt = srtFiles[0];
-        } else if (srtFiles.length > 1) {
-          matchingSrt = srtFiles.find(f => normalizeName(f.name) === normName) ||
-                        srtFiles.find(f => normalizeName(f.name).includes(normName) || normName.includes(normalizeName(f.name))) ||
-                        srtFiles[0];
-        }
-
-        if (matchingSrt) {
-          try {
-            const srtText = await matchingSrt.text();
-            applySubtitles(srtText, matchingSrt.name);
-          } catch (err) {
-            console.warn('SRT read error:', err);
-          }
-        } else if (state.subtitles.length > 0) {
-          state.subtitlesEnabled = true;
-          badgeSRT.classList.remove('hidden');
-          badgeSRT.textContent = `SRT ON (${state.subtitles.length})`;
-          toggleSubtitlesBtn.classList.add('text-indigo-400');
-          toggleSubtitlesBtn.classList.remove('text-slate-400');
-          buildEpisodeSentencesStream();
-          if (state.searchQuery) performTranscriptSearch(state.searchQuery);
-        } else {
-          resetSubtitlesUI();
-        }
-
-        // Check if a .txt bookmarks file is included
-        const txtFiles = files.filter(f => /\.txt$/i.test(f.name));
-        if (txtFiles.length > 0) {
-          const matchingTxt = txtFiles.find(f => normalizeName(f.name).includes(normName) || normName.includes(normalizeName(f.name))) || txtFiles[0];
-          if (matchingTxt) {
-            try {
-              const text = await matchingTxt.text();
-              const addedCount = importBookmarksFromText(text);
-              if (addedCount > 0) {
-                showToast(`Imported ${addedCount} bookmark${addedCount === 1 ? '' : 's'} from ${matchingTxt.name}`);
-              }
-            } catch (err) {
-              console.warn('Auto-import TXT error:', err);
-            }
-          }
-        }
-
-        renderBookmarks();
-        setupAirPodsMediaSession();
-        saveCurrentVideoToDatabase();
-        media.load();
-
-        const playPromise = media.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            state.isPlaying = true;
-            updatePlayPauseUI();
-            updateLockscreenPositionState();
-          }).catch(() => {
-            state.isPlaying = false;
-            updatePlayPauseUI();
-          }).finally(() => {
-            mediaLoader.classList.add('hidden');
-          });
-        }
-      }
-
-      function triggerBookmarkCreation(sourceTag) {
-        if (!state.currentVideoId) {
-          showToast('Please choose a podcast first');
-          return;
-        }
-
-        playBookmarkChime();
-
-        const curTime = media && !isNaN(media.currentTime) ? media.currentTime : 0;
-        let targetIdx = -1;
-        let prefixCount = 1;
-        let suffixCount = 1;
-
-        if (state.allSentences && state.allSentences.length > 0) {
-          targetIdx = findTargetSentenceIndexForTime(curTime);
-          const chosen = state.allSentences[targetIdx];
-          // If words >= 50, default prefix/suffix to 0, otherwise 1
-          if (chosen && chosen.wordCount >= 50) {
-            prefixCount = 0;
-            suffixCount = 0;
-          } else {
-            prefixCount = 1;
-            suffixCount = 1;
-          }
-        }
-
-        const newBookmark = {
-          id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-          time: Math.floor(curTime),
-          targetIndex: targetIdx,
-          prefixCount: prefixCount,
-          suffixCount: suffixCount,
-          note: `Bookmark at ${formatTime(curTime)}`
-        };
-
-        const resolved = buildBookmarkHtml(newBookmark);
-        newBookmark.note = resolved.plain;
-
-        state.bookmarks.push(newBookmark);
-        state.bookmarks.sort((a, b) => a.time - b.time);
-        saveCurrentVideoToDatabase();
-        renderBookmarks();
-
-        const tagPrefix = sourceTag ? `[${sourceTag}] ` : '';
-        const previewExcerpt = resolved.targetText || resolved.plain;
-        if (previewExcerpt) {
-          showToast(`${tagPrefix}Bookmarked: "${previewExcerpt.slice(0, 36)}..."`);
-        } else {
-          showToast(`${tagPrefix}Bookmarked at ${formatTime(curTime)}`);
-        }
-      }
-
-      function autoResizeTextarea(el) {
-        if (!el) return;
-        el.style.height = 'auto';
-        el.style.height = (el.scrollHeight) + 'px';
-      }
-
-      function renderBookmarks() {
-        bookmarkCount.textContent = state.bookmarks.length;
-        exportTxtBtn.disabled = state.bookmarks.length === 0;
-        importTxtBtn.disabled = !state.currentVideoId;
+      state.bookmarks.unshift(newBookmark);
+      playChime(true);
+      showToast(`Bookmark added at ${formatTime(newBookmark.time)}`);
+      saveBookmarks();
+      renderBookmarks();
+    }
+
+    function renderBookmarks() {
+      bookmarksCountBadge.textContent = state.bookmarks.length;
+
+      if (state.bookmarks.length === 0) {
+        emptyBookmarksState.classList.remove('hidden');
         bookmarksContainer.innerHTML = '';
-
-        if (!state.currentVideoId) {
-          bookmarksContainer.innerHTML = `
-            <div class="text-center py-10 text-slate-500 text-xs">
-              Choose a podcast to view or add bookmarks.
-            </div>
-          `;
-          return;
-        }
-
-        if (state.bookmarks.length === 0) {
-          bookmarksContainer.innerHTML = `
-            <div class="text-center py-10 text-slate-500 text-xs leading-relaxed">
-              No bookmarks yet.<br>Tap <span class="text-indigo-400 font-semibold">+ Bookmark</span> or double-press your AirPods stem to capture sentences!
-            </div>
-          `;
-          return;
-        }
-
-        state.bookmarks.forEach((bm) => {
-          const item = document.createElement('div');
-          item.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 sm:p-3 flex flex-col gap-2 hover:border-slate-700 transition group min-w-0 w-full overflow-hidden';
-
-          // Ensure default stepper properties exist
-          if (bm.prefixCount === undefined) bm.prefixCount = 1;
-          if (bm.suffixCount === undefined) bm.suffixCount = 1;
-          if (bm.targetIndex === undefined && state.allSentences.length > 0) {
-            bm.targetIndex = findTargetSentenceIndexForTime(bm.time);
-          }
-
-          const resolved = buildBookmarkHtml(bm);
-          const hasStream = state.allSentences && state.allSentences.length > 0 && bm.targetIndex !== undefined && bm.targetIndex >= 0;
-          const currentTargetDisplay = hasStream ? `S${bm.targetIndex + 1}` : 'N/A';
-
-          item.innerHTML = `
-            <div class="flex items-center justify-between gap-2 min-w-0">
-              <button type="button" class="seek-btn font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition flex-shrink-0 cursor-pointer">
-                ${formatTime(bm.time)}
-              </button>
-              
-              <div class="flex items-center gap-1 flex-shrink-0">
-                <button type="button" class="toggle-edit-btn text-slate-400 hover:text-indigo-300 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0 cursor-pointer" title="Edit Note">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                </button>
-                <button type="button" class="delete-btn text-slate-500 hover:text-rose-400 p-1 rounded transition opacity-60 group-hover:opacity-100 flex-shrink-0 cursor-pointer" title="Delete Bookmark">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Triple Double-Stepper Toolbar for Sentence Context & Highlight Shift (Mobile-Safe Grid) -->
-            <div class="flex flex-wrap items-center justify-between gap-1.5 bg-slate-900/90 border border-slate-800/90 rounded-lg p-1.5 w-full min-w-0">
-              
-              <!-- Double Button 1: Prefix Sentences Before Highlight -->
-              <div class="flex items-center gap-1 flex-shrink-0">
-                <span class="text-[9px] font-mono text-slate-400 uppercase font-bold">Pre</span>
-                <div class="inline-flex rounded-md overflow-hidden border border-slate-700/80 shadow-xs">
-                  <button type="button" class="stepper-btn prefix-minus" title="Fewer sentences before" ${!hasStream ? 'disabled' : ''}>-</button>
-                  <span class="prefix-val bg-slate-950 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-200 border-x border-slate-700/80 flex items-center justify-center min-w-[18px]">${bm.prefixCount}</span>
-                  <button type="button" class="stepper-btn prefix-plus" title="More sentences before" ${!hasStream ? 'disabled' : ''}>+</button>
-                </div>
-              </div>
-
-              <!-- Double Button 2: Shift Highlight Left / Right -->
-              <div class="flex items-center gap-1 flex-shrink-0">
-                <span class="text-[9px] font-mono text-amber-400 uppercase font-bold">HL</span>
-                <div class="inline-flex rounded-md overflow-hidden border border-amber-500/40 shadow-xs">
-                  <button type="button" class="stepper-btn shift-left" title="Shift highlight earlier" ${!hasStream ? 'disabled' : ''}>◀</button>
-                  <span class="highlight-val bg-slate-950 px-1.5 py-0.5 text-[10px] font-mono font-bold text-amber-300 border-x border-amber-500/40 flex items-center justify-center min-w-[26px]">${currentTargetDisplay}</span>
-                  <button type="button" class="stepper-btn shift-right" title="Shift highlight later" ${!hasStream ? 'disabled' : ''}>▶</button>
-                </div>
-              </div>
-
-              <!-- Double Button 3: Suffix Sentences After Highlight -->
-              <div class="flex items-center gap-1 flex-shrink-0">
-                <span class="text-[9px] font-mono text-slate-400 uppercase font-bold">Post</span>
-                <div class="inline-flex rounded-md overflow-hidden border border-slate-700/80 shadow-xs">
-                  <button type="button" class="stepper-btn suffix-minus" title="Fewer sentences after" ${!hasStream ? 'disabled' : ''}>-</button>
-                  <span class="suffix-val bg-slate-950 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-200 border-x border-slate-700/80 flex items-center justify-center min-w-[18px]">${bm.suffixCount}</span>
-                  <button type="button" class="stepper-btn suffix-plus" title="More sentences after" ${!hasStream ? 'disabled' : ''}>+</button>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Visual Sentence Preview with Highlighter Effect (Fluid height, NO scrollbar, Wrap-Safe) -->
-            <div class="sentence-box bg-slate-900/60 rounded-lg p-2.5 text-xs text-slate-200 border border-slate-800/80 leading-relaxed break-words overflow-hidden w-full min-w-0">
-              ${resolved.html}
-            </div>
-
-            <!-- Inline Editable Textarea -->
-            <textarea 
-              class="note-editor no-inner-scroll hidden w-full bg-slate-900 rounded-lg p-2 text-xs text-slate-100 border border-indigo-500/50 focus:outline-none leading-relaxed break-words"
-              placeholder="Edit note..."
-            >${escapeHtml(bm.note)}</textarea>
-          `;
-
-          // Seek to exact timestamp
-          item.querySelector('.seek-btn').addEventListener('click', () => {
-            if (media) {
-              media.currentTime = bm.time;
-              if (media.paused) media.play().catch(() => {});
-              updateLockscreenPositionState();
-            }
-          });
-
-          const sentenceBox = item.querySelector('.sentence-box');
-          const noteEditor = item.querySelector('.note-editor');
-          const toggleEditBtn = item.querySelector('.toggle-edit-btn');
-          const prefixVal = item.querySelector('.prefix-val');
-          const highlightVal = item.querySelector('.highlight-val');
-          const suffixVal = item.querySelector('.suffix-val');
-
-          // Stepper 1: Prefix Sentences (- / +)
-          item.querySelector('.prefix-minus').addEventListener('click', () => {
-            if (bm.prefixCount > 0) {
-              bm.prefixCount--;
-              prefixVal.textContent = bm.prefixCount;
-              const res = buildBookmarkHtml(bm);
-              sentenceBox.innerHTML = res.html;
-              bm.note = res.plain;
-              noteEditor.value = res.plain;
-              saveCurrentVideoToDatabase();
-            }
-          });
-
-          item.querySelector('.prefix-plus').addEventListener('click', () => {
-            if (bm.prefixCount < 10) {
-              bm.prefixCount++;
-              prefixVal.textContent = bm.prefixCount;
-              const res = buildBookmarkHtml(bm);
-              sentenceBox.innerHTML = res.html;
-              bm.note = res.plain;
-              noteEditor.value = res.plain;
-              saveCurrentVideoToDatabase();
-            }
-          });
-
-          // Stepper 2: Shift Highlight Left / Right (◀ / ▶)
-          item.querySelector('.shift-left').addEventListener('click', () => {
-            if (hasStream && bm.targetIndex > 0) {
-              bm.targetIndex--;
-              highlightVal.textContent = `S${bm.targetIndex + 1}`;
-              const res = buildBookmarkHtml(bm);
-              sentenceBox.innerHTML = res.html;
-              bm.note = res.plain;
-              noteEditor.value = res.plain;
-              saveCurrentVideoToDatabase();
-            }
-          });
-
-          item.querySelector('.shift-right').addEventListener('click', () => {
-            if (hasStream && bm.targetIndex < state.allSentences.length - 1) {
-              bm.targetIndex++;
-              highlightVal.textContent = `S${bm.targetIndex + 1}`;
-              const res = buildBookmarkHtml(bm);
-              sentenceBox.innerHTML = res.html;
-              bm.note = res.plain;
-              noteEditor.value = res.plain;
-              saveCurrentVideoToDatabase();
-            }
-          });
-
-          // Stepper 3: Suffix Sentences (- / +)
-          item.querySelector('.suffix-minus').addEventListener('click', () => {
-            if (bm.suffixCount > 0) {
-              bm.suffixCount--;
-              suffixVal.textContent = bm.suffixCount;
-              const res = buildBookmarkHtml(bm);
-              sentenceBox.innerHTML = res.html;
-              bm.note = res.plain;
-              noteEditor.value = res.plain;
-              saveCurrentVideoToDatabase();
-            }
-          });
-
-          item.querySelector('.suffix-plus').addEventListener('click', () => {
-            if (bm.suffixCount < 10) {
-              bm.suffixCount++;
-              suffixVal.textContent = bm.suffixCount;
-              const res = buildBookmarkHtml(bm);
-              sentenceBox.innerHTML = res.html;
-              bm.note = res.plain;
-              noteEditor.value = res.plain;
-              saveCurrentVideoToDatabase();
-            }
-          });
-
-          // Inline note editor toggle
-          toggleEditBtn.addEventListener('click', () => {
-            const isEditing = !noteEditor.classList.contains('hidden');
-            if (isEditing) {
-              noteEditor.classList.add('hidden');
-              sentenceBox.classList.remove('hidden');
-            } else {
-              sentenceBox.classList.add('hidden');
-              noteEditor.classList.remove('hidden');
-              autoResizeTextarea(noteEditor);
-              noteEditor.focus();
-            }
-          });
-
-          noteEditor.addEventListener('input', (e) => {
-            bm.note = e.target.value;
-            bm.targetSentence = e.target.value;
-            sentenceBox.innerHTML = `<span class="sentence-highlight">${escapeHtml(e.target.value)}</span>`;
-            autoResizeTextarea(noteEditor);
-            saveCurrentVideoToDatabase();
-          });
-
-          item.querySelector('.delete-btn').addEventListener('click', () => {
-            state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
-            saveCurrentVideoToDatabase();
-            renderBookmarks();
-          });
-
-          bookmarksContainer.appendChild(item);
-        });
+        bookmarksContainer.appendChild(emptyBookmarksState);
+        return;
       }
+      emptyBookmarksState.classList.add('hidden');
+      bookmarksContainer.innerHTML = '';
 
-      // Import bookmarks from text with bracketed highlight tag parsing
-      function importBookmarksFromText(rawText) {
-        if (!rawText || !state.currentVideoId) return 0;
+      state.bookmarks.forEach((bm) => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950/70 border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-3 flex flex-col gap-2.5 transition shadow-sm';
 
-        const lines = rawText.split(/\r?\n/);
-        const parsed = [];
+        // Top Header: Timestamp pill, Retarget Clock Button, Pencil, Trash
+        const topRow = document.createElement('div');
+        topRow.className = 'flex items-center justify-between gap-2';
 
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          const timeMatch = line.match(/^\s*\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*(.*)$/);
-          if (timeMatch) {
-            const timeStr = timeMatch[1];
-            let remainder = timeMatch[2].trim();
-            let explicitPos = null;
-            let prefixCount = null;
-            let suffixCount = null;
+        const leftGroup = document.createElement('div');
+        leftGroup.className = 'flex items-center gap-1.5';
 
-            // 1. Unified tag: [Highlight: S42, Pre: 2, Post: 1] or variants
-            const unifiedRegex = /^\[(?:Highlight:\s*S?|H:|Pos:)\s*(\d+)(?:[,\s]+(?:Pre|Prefix):\s*(\d+))?(?:[,\s]+(?:Post|Suffix):\s*(\d+))?\]\s*/i;
-            const uMatch = remainder.match(unifiedRegex);
-            if (uMatch) {
-              explicitPos = parseInt(uMatch[1], 10);
-              if (uMatch[2] !== undefined) prefixCount = parseInt(uMatch[2], 10);
-              if (uMatch[3] !== undefined) suffixCount = parseInt(uMatch[3], 10);
-              remainder = remainder.replace(unifiedRegex, '').trim();
-            }
+        // Jump to Bookmark Timecode Button
+        const timeBtn = document.createElement('button');
+        timeBtn.className = 'h-6 px-2 rounded bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-mono text-[11px] font-bold border border-indigo-500/30 flex items-center gap-1 transition';
+        timeBtn.innerHTML = `<span>${formatTime(bm.time)}</span>`;
+        timeBtn.onclick = () => {
+          media.currentTime = bm.time;
+          updateMediaSessionPosition();
+          media.play().catch(() => {});
+        };
 
-            // 2. Fallback to individual brackets: [Highlight: S42], [Pre: 2], [Post: 1]
-            if (explicitPos === null) {
-              const posMatch = remainder.match(/^\[(?:Highlight:\s*S?|H:|Pos:)\s*(\d+)\]\s*/i);
-              if (posMatch) {
-                explicitPos = parseInt(posMatch[1], 10);
-                remainder = remainder.replace(posMatch[0], '').trim();
-              }
-            }
-
-            if (prefixCount === null) {
-              const preMatch = remainder.match(/^\[(?:Pre|Prefix):\s*(\d+)\]\s*/i);
-              if (preMatch) {
-                prefixCount = parseInt(preMatch[1], 10);
-                remainder = remainder.replace(preMatch[0], '').trim();
-              }
-            }
-
-            if (suffixCount === null) {
-              const postMatch = remainder.match(/^\[(?:Post|Suffix):\s*(\d+)\]\s*/i);
-              if (postMatch) {
-                suffixCount = parseInt(postMatch[1], 10);
-                remainder = remainder.replace(postMatch[0], '').trim();
-              }
-            }
-
-            let noteText = remainder;
-
-            // Clean any decorative markup from text if present
-            let targetSentence = '';
-            const hlMatch = noteText.match(/<HL>(.*?)<\/HL>/i);
-            if (hlMatch) {
-              targetSentence = hlMatch[1].trim();
-              noteText = noteText.replace(/<HL>(.*?)<\/HL>/gi, '$1');
-            }
-
-            const timeSec = Math.floor(parseTimestamp(timeStr));
-
-            if (!isNaN(timeSec)) {
-              parsed.push({
-                time: timeSec,
-                explicitIndex: explicitPos !== null && !isNaN(explicitPos) ? explicitPos - 1 : null,
-                prefixCount: prefixCount !== null && !isNaN(prefixCount) ? prefixCount : null,
-                suffixCount: suffixCount !== null && !isNaN(suffixCount) ? suffixCount : null,
-                targetSentence: targetSentence,
-                note: noteText || `Bookmark at ${formatTime(timeSec)}`
-              });
-            }
-          }
+        // Retarget Clock Button (Turns Red with '?' when Armed)
+        const retargetBtn = document.createElement('button');
+        retargetBtn.className = 'edit-time-btn h-6 px-2 rounded text-[10px] font-bold flex items-center justify-center transition border ';
+        
+        if (state.armedTimeCorrectionId === bm.id) {
+          // ARMED STATE: Red with '?'
+          retargetBtn.className += 'bg-rose-600 text-white border-rose-500 armed-pulse shadow-md shadow-rose-600/40';
+          retargetBtn.innerHTML = '<span>?</span>';
+          retargetBtn.title = 'Click again to confirm retargeting timestamp to current playhead';
+        } else {
+          // NORMAL STATE: Slate with Clock Icon
+          retargetBtn.className += 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border-slate-700/60';
+          retargetBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 6v6l4 2"/></svg>`;
+          retargetBtn.title = 'Update timestamp to current playhead time';
         }
 
-        if (parsed.length === 0) return 0;
-
-        let addedCount = 0;
-
-        parsed.forEach(incoming => {
-          const exists = state.bookmarks.some(existing => {
-            const sameTime = Math.abs(existing.time - incoming.time) <= 1;
-            const sameNote = existing.note.trim().toLowerCase() === incoming.note.trim().toLowerCase() && Math.abs(existing.time - incoming.time) <= 3;
-            return sameTime || sameNote;
-          });
-
-          if (!exists) {
-            let targetIdx = -1;
-            if (incoming.explicitIndex !== null && incoming.explicitIndex >= 0) {
-              targetIdx = incoming.explicitIndex;
-            } else if (state.allSentences && state.allSentences.length > 0) {
-              targetIdx = findTargetSentenceIndexForTime(incoming.time);
-            }
-
-            state.bookmarks.push({
-              id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-              time: incoming.time,
-              targetIndex: targetIdx,
-              prefixCount: incoming.prefixCount !== null && incoming.prefixCount !== undefined ? incoming.prefixCount : 1,
-              suffixCount: incoming.suffixCount !== null && incoming.suffixCount !== undefined ? incoming.suffixCount : 1,
-              note: incoming.note,
-              targetSentence: incoming.targetSentence || (targetIdx === -1 ? incoming.note : '')
-            });
-            addedCount++;
+        retargetBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (state.armedTimeCorrectionId === bm.id) {
+            // CONFIRM RETARGET:
+            // CRITICAL REQUIREMENT: Update the timecode ONLY.
+            // Do NOT alter targetIndex, span, preCount, postCount, or text!
+            bm.time = media.currentTime;
+            state.armedTimeCorrectionId = null;
+            playChime(true);
+            showToast(`Time updated to ${formatTime(bm.time)} (Text preserved)`);
+            saveBookmarks();
+            renderBookmarks();
+          } else {
+            // ARM RETARGET
+            state.armedTimeCorrectionId = bm.id;
+            renderBookmarks();
           }
-        });
+        };
 
-        if (addedCount > 0) {
-          state.bookmarks.sort((a, b) => a.time - b.time);
-          saveCurrentVideoToDatabase();
+        leftGroup.appendChild(timeBtn);
+        leftGroup.appendChild(retargetBtn);
+
+        // Right Actions: Pencil Edit & Delete
+        const rightGroup = document.createElement('div');
+        rightGroup.className = 'flex items-center gap-1.5';
+
+        const editNoteBtn = document.createElement('button');
+        editNoteBtn.className = 'h-6 w-6 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center transition';
+        editNoteBtn.title = 'Edit Note';
+        editNoteBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
+        editNoteBtn.onclick = () => {
+          bm.isEditing = !bm.isEditing;
+          renderBookmarks();
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'h-6 w-6 rounded bg-slate-800/80 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 flex items-center justify-center transition';
+        deleteBtn.title = 'Delete Bookmark';
+        deleteBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`;
+        deleteBtn.onclick = () => {
+          state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
+          saveBookmarks();
+          renderBookmarks();
+          showToast('Bookmark deleted');
+        };
+
+        rightGroup.appendChild(editNoteBtn);
+        rightGroup.appendChild(deleteBtn);
+        topRow.appendChild(leftGroup);
+        topRow.appendChild(rightGroup);
+        card.appendChild(topRow);
+
+        if (state.sentences.length > 0 && bm.targetIndex >= 0) {
+          const stepperToolbar = document.createElement('div');
+          stepperToolbar.className = 'flex flex-wrap items-center justify-between gap-1.5 py-1 px-1.5 rounded-lg bg-slate-900/90 border border-slate-800/80 text-[10px] font-semibold text-slate-400';
+
+          // PRE Stepper
+          const preGroup = document.createElement('div');
+          preGroup.className = 'flex items-center gap-1';
+          preGroup.innerHTML = `<span>PRE</span>`;
+          const preMinus = document.createElement('button');
+          preMinus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          preMinus.textContent = '-';
+          preMinus.onclick = () => {
+            if (bm.preCount > 0) { bm.preCount--; saveBookmarks(); renderBookmarks(); }
+          };
+          const preVal = document.createElement('span');
+          preVal.className = 'font-mono text-slate-200 min-w-[12px] text-center';
+          preVal.textContent = bm.preCount;
+          const prePlus = document.createElement('button');
+          prePlus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          prePlus.textContent = '+';
+          prePlus.onclick = () => {
+            if (bm.preCount < 6) { bm.preCount++; saveBookmarks(); renderBookmarks(); }
+          };
+          preGroup.appendChild(preMinus);
+          preGroup.appendChild(preVal);
+          preGroup.appendChild(prePlus);
+
+          // HL Shift Stepper
+          const hlGroup = document.createElement('div');
+          hlGroup.className = 'flex items-center gap-1';
+          hlGroup.innerHTML = `<span>HL</span>`;
+          const hlLeft = document.createElement('button');
+          hlLeft.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          hlLeft.textContent = '◀';
+          hlLeft.onclick = () => {
+            if (bm.targetIndex > 0) { bm.targetIndex--; saveBookmarks(); renderBookmarks(); }
+          };
+          const hlLabel = document.createElement('span');
+          hlLabel.className = 'font-mono text-amber-300 px-1';
+          hlLabel.textContent = `S${bm.targetIndex + 1}`;
+          const hlRight = document.createElement('button');
+          hlRight.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          hlRight.textContent = '▶';
+          hlRight.onclick = () => {
+            if (bm.targetIndex < state.sentences.length - 1) { bm.targetIndex++; saveBookmarks(); renderBookmarks(); }
+          };
+          hlGroup.appendChild(hlLeft);
+          hlGroup.appendChild(hlLabel);
+          hlGroup.appendChild(hlRight);
+
+          // SPAN Stepper (Highlight Base Unit)
+          const spanGroup = document.createElement('div');
+          spanGroup.className = 'flex items-center gap-1';
+          spanGroup.innerHTML = `<span>SPAN</span>`;
+          const spanMinus = document.createElement('button');
+          spanMinus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          spanMinus.textContent = '-';
+          spanMinus.onclick = () => {
+            if (bm.span > 1) { bm.span--; saveBookmarks(); renderBookmarks(); }
+          };
+          const spanVal = document.createElement('span');
+          spanVal.className = 'font-mono text-amber-300 min-w-[14px] text-center';
+          spanVal.textContent = `${bm.span}s`;
+          const spanPlus = document.createElement('button');
+          spanPlus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          spanPlus.textContent = '+';
+          spanPlus.onclick = () => {
+            if (bm.span < 10) { bm.span++; saveBookmarks(); renderBookmarks(); }
+          };
+          spanGroup.appendChild(spanMinus);
+          spanGroup.appendChild(spanVal);
+          spanGroup.appendChild(spanPlus);
+
+          // POST Stepper
+          const postGroup = document.createElement('div');
+          postGroup.className = 'flex items-center gap-1';
+          postGroup.innerHTML = `<span>POST</span>`;
+          const postMinus = document.createElement('button');
+          postMinus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          postMinus.textContent = '-';
+          postMinus.onclick = () => {
+            if (bm.postCount > 0) { bm.postCount--; saveBookmarks(); renderBookmarks(); }
+          };
+          const postVal = document.createElement('span');
+          postVal.className = 'font-mono text-slate-200 min-w-[12px] text-center';
+          postVal.textContent = bm.postCount;
+          const postPlus = document.createElement('button');
+          postPlus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
+          postPlus.textContent = '+';
+          postPlus.onclick = () => {
+            if (bm.postCount < 6) { bm.postCount++; saveBookmarks(); renderBookmarks(); }
+          };
+          postGroup.appendChild(postMinus);
+          postGroup.appendChild(postVal);
+          postGroup.appendChild(postPlus);
+
+          stepperToolbar.appendChild(preGroup);
+          stepperToolbar.appendChild(hlGroup);
+          stepperToolbar.appendChild(spanGroup);
+          stepperToolbar.appendChild(postGroup);
+          card.appendChild(stepperToolbar);
+        }
+
+        // Sentence Passage Box (Fluid auto-height, ZERO internal scrollbars)
+        const textContainer = document.createElement('div');
+        textContainer.className = 'sentence-text-card text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/70 select-text';
+
+        if (state.sentences.length > 0 && bm.targetIndex >= 0) {
+          const preSentences = [];
+          for (let i = Math.max(0, bm.targetIndex - bm.preCount); i < bm.targetIndex; i++) {
+            preSentences.push(state.sentences[i].text);
+          }
+
+          const targetSentences = [];
+          for (let i = bm.targetIndex; i < Math.min(state.sentences.length, bm.targetIndex + bm.span); i++) {
+            targetSentences.push(state.sentences[i].text);
+          }
+
+          const postSentences = [];
+          for (let i = bm.targetIndex + bm.span; i < Math.min(state.sentences.length, bm.targetIndex + bm.span + bm.postCount); i++) {
+            postSentences.push(state.sentences[i].text);
+          }
+
+          let html = '';
+          if (preSentences.length > 0) {
+            html += `<span class="text-slate-400 opacity-90">${escapeHtml(preSentences.join(' '))} </span>`;
+          }
+          if (targetSentences.length > 0) {
+            html += `<span class="sentence-highlight">${escapeHtml(targetSentences.join(' '))}</span>`;
+          }
+          if (postSentences.length > 0) {
+            html += `<span class="text-slate-400 opacity-90"> ${escapeHtml(postSentences.join(' '))}</span>`;
+          }
+          textContainer.innerHTML = html;
+        } else {
+          // Fallback if no SRT is loaded
+          textContainer.innerHTML = `<span class="sentence-highlight">${escapeHtml(bm.noteText || 'Bookmark timestamp')}</span>`;
+        }
+        card.appendChild(textContainer);
+
+        // Optional Inline Note Editor
+        if (bm.isEditing) {
+          const noteEditor = document.createElement('textarea');
+          noteEditor.className = 'w-full bg-slate-950 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none overflow-hidden';
+          noteEditor.placeholder = 'Add custom notes for this bookmark...';
+          noteEditor.rows = 2;
+          noteEditor.value = bm.noteText || '';
+          noteEditor.oninput = () => {
+            noteEditor.style.height = 'auto';
+            noteEditor.style.height = noteEditor.scrollHeight + 'px';
+            bm.noteText = noteEditor.value;
+            saveBookmarks();
+          };
+          card.appendChild(noteEditor);
+        }
+
+        bookmarksContainer.appendChild(card);
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (state.armedTimeCorrectionId) {
+        if (!e.target.closest('.edit-time-btn')) {
+          state.armedTimeCorrectionId = null;
           renderBookmarks();
         }
-
-        return addedCount;
       }
+    });
 
-      // Export bookmarks: keeps exact timecode, bracketed sentence number, and pre/post context counts
-      exportTxtBtn.addEventListener('click', () => {
-        if (!state.currentVideoId || state.bookmarks.length === 0) {
-          showToast('No bookmarks to export yet');
-          return;
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Save and load bookmark data from localStorage
+    function saveBookmarks() {
+      if (!state.videoName) return;
+      try {
+        localStorage.setItem(`dc_bookmarks_${state.videoName}`, JSON.stringify(state.bookmarks));
+      } catch (e) {}
+    }
+
+    function loadSavedVideoData(name) {
+      try {
+        const raw = localStorage.getItem(`dc_bookmarks_${name}`);
+        if (raw) {
+          state.bookmarks = JSON.parse(raw);
+          renderBookmarks();
         }
+      } catch (e) {}
+    }
 
-        state.bookmarks.sort((a, b) => a.time - b.time);
-        const title = state.currentVideoTitle || 'DriveCast_Podcast';
-        let content = `DriveCast Bookmarks: ${title}\r\n`;
-        content += `Exported: ${new Date().toLocaleString()}\r\n`;
-        content += `==========================================\r\n\r\n`;
-
-        state.bookmarks.forEach(bm => {
-          const res = buildBookmarkHtml(bm);
-          const hasStream = state.allSentences && state.allSentences.length > 0 && bm.targetIndex !== undefined && bm.targetIndex >= 0;
-          const pre = bm.prefixCount !== undefined ? bm.prefixCount : 1;
-          const post = bm.suffixCount !== undefined ? bm.suffixCount : 1;
-          
-          let posTag = '';
-          if (hasStream) {
-            // Sentence number 1-based, plus pre and post context counts
-            posTag = `[Highlight: S${bm.targetIndex + 1}, Pre: ${pre}, Post: ${post}] `;
-          } else {
-            posTag = `[Pre: ${pre}, Post: ${post}] `;
-          }
-
-          content += `[${formatTime(bm.time)}] ${posTag}${res.plain || bm.note || '(No note)'}\r\n\r\n`;
-        });
-
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-        const downloadUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = `${state.currentVideoBaseName || 'podcast'}_bookmarks.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(downloadUrl);
-
-        showToast('Exported bookmarks as .txt');
-      });
-
-      importTxtBtn.addEventListener('click', () => {
-        if (!state.currentVideoId) {
-          showToast('Choose a podcast first');
-          return;
-        }
-        importTxtInput.click();
-      });
-
-      importTxtInput.addEventListener('change', async (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-
-        try {
-          const content = await file.text();
-          const added = importBookmarksFromText(content);
-          if (added > 0) {
-            showToast(`Imported ${added} bookmark${added === 1 ? '' : 's'}`);
-          } else {
-            showToast('No new bookmarks found or all already exist');
-          }
-        } catch (err) {
-          console.warn('Failed to read TXT file:', err);
-          showToast('Could not read the bookmarks file');
-        } finally {
-          importTxtInput.value = '';
-        }
-      });
-
-      addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
-
-      clearAllBookmarksBtn.addEventListener('click', () => {
-        if (!state.currentVideoId || state.bookmarks.length === 0) return;
-        state.bookmarks = [];
-        saveCurrentVideoToDatabase();
-        renderBookmarks();
-        showToast('Bookmarks cleared for this podcast');
-      });
-
-      function performTranscriptSearch(query) {
-        state.searchQuery = query.trim();
-        clearSearchInputBtn.classList.toggle('hidden', state.searchQuery === '');
-
-        if (!state.searchQuery) {
-          state.searchResults = [];
-          searchResultCount.classList.add('hidden');
-          searchStatusLabel.textContent = 'No search term';
-          renderSearchResults();
-          return;
-        }
-
-        if (!state.subtitles || state.subtitles.length === 0) {
-          state.searchResults = [];
-          searchResultCount.classList.add('hidden');
-          searchStatusLabel.textContent = 'No SRT loaded';
-          renderSearchResults();
-          return;
-        }
-
-        const qLower = state.searchQuery.toLowerCase();
-        state.searchResults = state.subtitles.filter(cue => {
-          return cue.text && cue.text.toLowerCase().includes(qLower);
-        });
-
-        searchResultCount.textContent = state.searchResults.length;
-        searchResultCount.classList.remove('hidden');
-        searchStatusLabel.textContent = `${state.searchResults.length} match${state.searchResults.length === 1 ? '' : 'es'}`;
-        renderSearchResults();
-      }
-
-      function highlightText(fullText, query) {
-        if (!query) return escapeHtml(fullText);
-        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedQuery})`, 'gi');
-        const parts = fullText.split(regex);
-        return parts.map(part => {
-          if (part.toLowerCase() === query.toLowerCase()) {
-            return `<mark class="highlight">${escapeHtml(part)}</mark>`;
-          }
-          return escapeHtml(part);
-        }).join('');
-      }
-
-      function renderSearchResults() {
-        searchResultsContainer.innerHTML = '';
-
-        if (!state.subtitles || state.subtitles.length === 0) {
-          searchResultsContainer.innerHTML = `
-            <div class="text-center py-10 text-slate-500 text-xs">
-              Load an SRT file alongside your podcast to search spoken words.
-            </div>
-          `;
-          return;
-        }
-
-        if (!state.searchQuery) {
-          searchResultsContainer.innerHTML = `
-            <div class="text-center py-10 text-slate-500 text-xs leading-relaxed">
-              Type any word or phrase in the search box above to find exact timestamps in this episode.
-            </div>
-          `;
-          return;
-        }
-
-        if (state.searchResults.length === 0) {
-          searchResultsContainer.innerHTML = `
-            <div class="text-center py-10 text-slate-500 text-xs">
-              No results found for "<span class="text-amber-400 font-medium">${escapeHtml(state.searchQuery)}</span>"
-            </div>
-          `;
-          return;
-        }
-
-        state.searchResults.forEach((cue) => {
-          const leadTime = Math.max(0, cue.start - 5);
-          const item = document.createElement('div');
-          item.className = 'bg-slate-950/70 border border-slate-800/80 rounded-xl p-2.5 flex flex-col gap-1.5 hover:border-indigo-500/50 hover:bg-slate-950 transition cursor-pointer group';
-
-          item.innerHTML = `
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-300 group-hover:bg-indigo-600 group-hover:text-white transition flex items-center gap-1">
-                <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>${formatTime(leadTime)}</span>
-                <span class="text-[9px] opacity-75 font-normal">(-5s)</span>
-              </span>
-              <span class="text-[10px] text-slate-500 font-mono">cue: ${formatTime(cue.start)}</span>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed font-sans mt-0.5">
-              ${highlightText(cue.text, state.searchQuery)}
-            </p>
-          `;
-
-          item.addEventListener('click', () => {
-            if (media) {
-              media.currentTime = leadTime;
-              if (media.paused) media.play().catch(() => {});
-              updateLockscreenPositionState();
-              showToast(`Jumped to ${formatTime(leadTime)} (-5s lead-in)`);
-            }
-          });
-
-          searchResultsContainer.appendChild(item);
-        });
-      }
-
-      function switchTab(tabName) {
-        state.activeTab = tabName;
-        if (tabName === 'bookmarks') {
-          tabBookmarksBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm';
-          tabSearchBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
-          bookmarksPanel.classList.remove('hidden');
-          searchPanel.classList.add('hidden');
-          bookmarkActionsRow.classList.remove('hidden');
-        } else {
-          tabSearchBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm';
-          tabBookmarksBtn.className = 'px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
-          bookmarksPanel.classList.add('hidden');
-          searchPanel.classList.remove('hidden');
-          bookmarkActionsRow.classList.add('hidden');
-          transcriptSearchInput.focus();
-        }
-      }
-
-      tabBookmarksBtn.addEventListener('click', () => switchTab('bookmarks'));
-      tabSearchBtn.addEventListener('click', () => switchTab('search'));
-
-      transcriptSearchInput.addEventListener('input', (e) => {
-        performTranscriptSearch(e.target.value);
-      });
-
-      clearSearchInputBtn.addEventListener('click', () => {
-        transcriptSearchInput.value = '';
-        performTranscriptSearch('');
-        transcriptSearchInput.focus();
-      });
-
-      media.addEventListener('play', () => {
-        state.isPlaying = true;
-        updatePlayPauseUI();
-        updateLockscreenPositionState();
-      });
-
-      media.addEventListener('pause', () => {
-        state.isPlaying = false;
-        updatePlayPauseUI();
-        saveCurrentVideoToDatabase();
-        updateLockscreenPositionState();
-      });
-
-      let lastLockscreenSync = 0;
-      media.addEventListener('timeupdate', () => {
-        if (!isNaN(media.duration) && media.duration > 0) {
-          seekBar.value = (media.currentTime / media.duration) * 100;
-        }
-        currentTimeLabel.textContent = formatTime(media.currentTime);
-
-        const now = Date.now();
-        if (now - lastLockscreenSync > 1500) {
-          updateLockscreenPositionState();
-          lastLockscreenSync = now;
-        }
-
-        if (state.subtitlesEnabled && state.subtitles.length > 0) {
-          const curCue = state.subtitles.find(c => media.currentTime >= c.start && media.currentTime <= c.end);
-          if (curCue && curCue.text) {
-            subtitleText.textContent = curCue.text;
-            subtitleOverlay.classList.remove('hidden');
-          } else {
-            subtitleOverlay.classList.add('hidden');
-          }
-        } else {
-          subtitleOverlay.classList.add('hidden');
-        }
-      });
-
-      media.addEventListener('loadedmetadata', () => {
-        durationLabel.textContent = formatTime(media.duration);
-        mediaLoader.classList.add('hidden');
-        updateLockscreenPositionState();
-      });
-
-      media.addEventListener('durationchange', updateLockscreenPositionState);
-      media.addEventListener('ratechange', updateLockscreenPositionState);
-      media.addEventListener('seeked', updateLockscreenPositionState);
-
-      media.addEventListener('waiting', () => {
-        mediaLoader.classList.remove('hidden');
-      });
-
-      media.addEventListener('canplay', () => {
-        mediaLoader.classList.add('hidden');
-      });
-
-      media.addEventListener('click', () => {
-        if (media.paused) {
-          media.play().catch(() => {});
-        } else {
-          media.pause();
-        }
-      });
-
-      bigPlayOverlayBtn.addEventListener('click', () => {
-        if (media.paused) media.play().catch(() => {});
-      });
-
-      playPauseBtn.addEventListener('click', () => {
-        if (media.paused) {
-          media.play().catch(() => {});
-        } else {
-          media.pause();
-        }
-      });
-
-      skipBackBtn.addEventListener('click', () => {
-        media.currentTime = Math.max(0, media.currentTime - 15);
-        updateLockscreenPositionState();
-      });
-
-      skipForwardBtn.addEventListener('click', () => {
-        if (media.duration) {
-          media.currentTime = Math.min(media.duration, media.currentTime + 30);
-          updateLockscreenPositionState();
-        }
-      });
-
-      seekBar.addEventListener('input', () => {
-        if (!isNaN(media.duration) && media.duration > 0) {
-          media.currentTime = (seekBar.value / 100) * media.duration;
-          updateLockscreenPositionState();
-        }
-      });
-
-      speedBtn.addEventListener('click', () => {
-        state.currentRateIndex = (state.currentRateIndex + 1) % state.playbackRates.length;
-        const newRate = state.playbackRates[state.currentRateIndex];
-        media.playbackRate = newRate;
-        speedBtn.textContent = `${newRate}x`;
-        updateLockscreenPositionState();
-        try {
-          localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
-        } catch (e) {}
-      });
-
-      toggleSubtitlesBtn.addEventListener('click', () => {
-        state.subtitlesEnabled = !state.subtitlesEnabled;
-        if (state.subtitlesEnabled) {
-          toggleSubtitlesBtn.classList.add('text-indigo-400');
-          toggleSubtitlesBtn.classList.remove('text-slate-400');
-        } else {
-          toggleSubtitlesBtn.classList.remove('text-indigo-400');
-          toggleSubtitlesBtn.classList.add('text-slate-400');
-          subtitleOverlay.classList.add('hidden');
-        }
-      });
-
-      volumeBar.addEventListener('input', (e) => {
-        state.volume = parseFloat(e.target.value);
-        try {
-          media.volume = state.volume;
-        } catch (err) {}
-        if (state.volume === 0) {
-          volHighIcon.classList.add('hidden');
-          volMuteIcon.classList.remove('hidden');
-        } else {
-          volHighIcon.classList.remove('hidden');
-          volMuteIcon.classList.add('hidden');
-        }
-        try {
-          localStorage.setItem(PREF_KEY, JSON.stringify({ rateIndex: state.currentRateIndex, volume: state.volume }));
-        } catch (e) {}
-      });
-
-      muteBtn.addEventListener('click', () => {
-        if (media.muted) {
-          media.muted = false;
-          volHighIcon.classList.remove('hidden');
-          volMuteIcon.classList.add('hidden');
-        } else {
-          media.muted = true;
-          volHighIcon.classList.add('hidden');
-          volMuteIcon.classList.remove('hidden');
-        }
-      });
-
-      choosePodcastBtn.addEventListener('click', () => podcastPicker.click());
-      idleChooseBtn.addEventListener('click', () => podcastPicker.click());
-      podcastPicker.addEventListener('change', (e) => handleSelectedFiles(e.target.files));
-
-      ['dragenter', 'dragover'].forEach(name => {
-        playerContainer.addEventListener(name, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          playerContainer.classList.add('drag-target-active');
-        });
-      });
-
-      ['dragleave', 'drop'].forEach(name => {
-        playerContainer.addEventListener(name, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          playerContainer.classList.remove('drag-target-active');
-        });
-      });
-
-      playerContainer.addEventListener('drop', (e) => {
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-          handleSelectedFiles(e.dataTransfer.files);
-        }
-      });
-
-      // Boot Routine
-      function bootApplication() {
-        try {
-          const rawPref = localStorage.getItem(PREF_KEY);
-          if (rawPref) {
-            const pref = JSON.parse(rawPref);
-            if (pref.volume !== undefined) state.volume = pref.volume;
-            if (pref.rateIndex !== undefined) state.currentRateIndex = pref.rateIndex;
-          }
-        } catch (e) {}
-
-        speedBtn.textContent = `${state.playbackRates[state.currentRateIndex]}x`;
-        volumeBar.value = state.volume;
-
-        state.currentVideoId = '';
-        state.currentVideoTitle = '';
-        state.bookmarks = [];
-        state.subtitles = [];
-        state.allSentences = [];
-        videoTitleLabel.textContent = 'Choose a podcast to start';
-        sourceLabel.textContent = 'Ready';
-        idlePlaceholder.classList.remove('hidden');
-        media.classList.add('hidden');
-        addBookmarkBtn.disabled = true;
-        playPauseBtn.disabled = true;
-        exportTxtBtn.disabled = true;
-        importTxtBtn.disabled = true;
-        renderBookmarks();
-        renderSearchResults();
-
-        setupAirPodsMediaSession();
-      }
-
-      window.addEventListener('beforeunload', () => {
-        saveCurrentVideoToDatabase();
-      });
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bootApplication);
+    let lastTapTime = 0;
+    function handleAirPodsTapTrigger() {
+      const now = Date.now();
+      if (now - lastTapTime < 800) {
+        triggerBookmarkCreation();
+        lastTapTime = 0;
       } else {
-        bootApplication();
+        lastTapTime = now;
+      }
+    }
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => {
+        media.play().catch(e => console.warn('iOS MediaSession play error:', e));
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        handleAirPodsTapTrigger();
+        media.pause();
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => handleAirPodsTapTrigger());
+      navigator.mediaSession.setActionHandler('previoustrack', () => handleAirPodsTapTrigger());
+
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const skip = (details && details.seekOffset) || 10;
+        media.currentTime = Math.max(0, media.currentTime - skip);
+        updateMediaSessionPosition();
+      });
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const skip = (details && details.seekOffset) || 10;
+        media.currentTime = Math.min(media.duration || Infinity, media.currentTime + skip);
+        updateMediaSessionPosition();
+      });
+
+      try {
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.fastSeek && 'fastSeek' in media) {
+            media.fastSeek(details.seekTime);
+          } else {
+            media.currentTime = details.seekTime;
+          }
+          updateMediaSessionPosition();
+        });
+      } catch (e) {}
+    }
+
+    function updateMediaSessionPosition() {
+      if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && media.duration) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: media.duration || 0,
+            playbackRate: media.playbackRate || 1.0,
+            position: media.currentTime || 0
+          });
+        } catch (e) {}
+      }
+    }
+
+    // Play/Pause Toggle
+    playPauseBtn.addEventListener('click', () => {
+      if (!state.videoUrl) return;
+      if (media.paused) {
+        media.play().catch(e => console.warn('Play error:', e));
+      } else {
+        media.pause();
+      }
+    });
+
+    media.addEventListener('play', () => {
+      playIcon.classList.add('hidden');
+      pauseIcon.classList.remove('hidden');
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    });
+
+    media.addEventListener('pause', () => {
+      pauseIcon.classList.add('hidden');
+      playIcon.classList.remove('hidden');
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    });
+
+    // Time Scrubber Update
+    media.addEventListener('timeupdate', () => {
+      if (!media.duration) return;
+      const cur = media.currentTime;
+      timeSlider.value = (cur / media.duration) * 100;
+      currentTimeDisplay.textContent = formatTime(cur);
+
+      // On-Screen Subtitle Rendering
+      if (state.ccVisible && state.cues.length > 0) {
+        const activeCue = state.cues.find(c => cur >= c.start && cur <= c.end);
+        if (activeCue) {
+          subtitleText.textContent = activeCue.text;
+          subtitleBox.classList.remove('hidden');
+        } else {
+          subtitleBox.classList.add('hidden');
+        }
+      } else {
+        subtitleBox.classList.add('hidden');
+      }
+      updateMediaSessionPosition();
+    });
+
+    media.addEventListener('loadedmetadata', () => {
+      durationDisplay.textContent = formatTime(media.duration);
+      timeSlider.value = 0;
+      updateMediaSessionPosition();
+    });
+
+    timeSlider.addEventListener('input', () => {
+      if (!media.duration) return;
+      media.currentTime = (timeSlider.value / 100) * media.duration;
+      updateMediaSessionPosition();
+    });
+
+    // Skips and Precision Micro-Steps
+    skipBack10Btn.addEventListener('click', () => {
+      media.currentTime = Math.max(0, media.currentTime - 10);
+      updateMediaSessionPosition();
+    });
+    skipFwd10Btn.addEventListener('click', () => {
+      media.currentTime = Math.min(media.duration || Infinity, media.currentTime + 10);
+      updateMediaSessionPosition();
+    });
+    stepBack1sBtn.addEventListener('click', () => {
+      media.currentTime = Math.max(0, media.currentTime - 1);
+      updateMediaSessionPosition();
+    });
+    stepFwd1sBtn.addEventListener('click', () => {
+      media.currentTime = Math.min(media.duration || Infinity, media.currentTime + 1);
+      updateMediaSessionPosition();
+    });
+
+    // Volume & Mute Controls
+    muteBtn.addEventListener('click', () => {
+      media.muted = !media.muted;
+      if (media.muted) {
+        volumeHighIcon.classList.add('hidden');
+        volumeMutedIcon.classList.remove('hidden');
+      } else {
+        volumeMutedIcon.classList.add('hidden');
+        volumeHighIcon.classList.remove('hidden');
+      }
+    });
+
+    volumeSlider.addEventListener('input', () => {
+      media.volume = parseFloat(volumeSlider.value);
+      media.muted = media.volume === 0;
+      if (media.muted) {
+        volumeHighIcon.classList.add('hidden');
+        volumeMutedIcon.classList.remove('hidden');
+      } else {
+        volumeMutedIcon.classList.add('hidden');
+        volumeHighIcon.classList.remove('hidden');
+      }
+    });
+
+    // Speed Cycle
+    const speeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.75];
+    playbackRateBtn.addEventListener('click', () => {
+      const curIdx = speeds.indexOf(state.playbackRate);
+      state.playbackRate = speeds[(curIdx + 1) % speeds.length];
+      media.playbackRate = state.playbackRate;
+      playbackRateBtn.textContent = `${state.playbackRate}x`;
+      updateMediaSessionPosition();
+    });
+
+    // CC Toggle
+    ccToggleBtn.addEventListener('click', () => {
+      state.ccVisible = !state.ccVisible;
+      if (state.ccVisible) {
+        ccToggleBtn.textContent = 'CC ON';
+        ccToggleBtn.className = 'h-8 px-2 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition';
+      } else {
+        ccToggleBtn.textContent = 'CC OFF';
+        ccToggleBtn.className = 'h-8 px-2 rounded-lg bg-slate-800 text-slate-400 border border-slate-700/80 text-xs font-semibold transition';
+        subtitleBox.classList.add('hidden');
+      }
+    });
+
+    // Add Bookmark Button
+    addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
+
+    mediaFileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      const mediaFile = files.find(f => f.type.startsWith('video/') || f.type.startsWith('audio/') || f.name.match(/\.(mp4|m4v|mov|mp3|m4a|aac|wav)$/i));
+      const srtFile = files.find(f => f.name.toLowerCase().endsWith('.srt'));
+      const txtFile = files.find(f => f.name.toLowerCase().endsWith('.txt'));
+
+      if (mediaFile) {
+        state.videoName = mediaFile.name.replace(/\.[^/.]+$/, '');
+        state.videoUrl = URL.createObjectURL(mediaFile);
+        media.src = state.videoUrl;
+        media.classList.remove('hidden');
+        emptyVideoState.classList.add('hidden');
+        mediaFileName.textContent = mediaFile.name;
+        mediaTypeBadge.textContent = mediaFile.type.startsWith('audio/') ? 'AUDIO' : 'VIDEO';
+
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: state.videoName || 'DriveCast Episode',
+            artist: 'DriveCast Player',
+            album: 'Local Podcast & Subtitles'
+          });
+        }
+
+        loadSavedVideoData(state.videoName);
+        media.play().catch(() => {});
       }
 
-    })();
+      if (srtFile) {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+          state.cues = parseSRT(re.target.result);
+          buildEpisodeSentencesStream();
+          srtStatusBadge.textContent = `SRT ON (${state.cues.length})`;
+          srtStatusBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase';
+          showToast(`Loaded ${state.cues.length} subtitle cues`);
+          renderBookmarks();
+        };
+        reader.readAsText(srtFile);
+      }
+
+      if (txtFile) {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+          importBookmarksFromText(re.target.result);
+        };
+        reader.readAsText(txtFile);
+      }
+    });
+
+    tabBookmarksBtn.addEventListener('click', () => {
+      tabBookmarksBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition';
+      tabSearchBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 transition';
+      bookmarksPanel.classList.remove('hidden');
+      searchPanel.classList.add('hidden');
+    });
+
+    tabSearchBtn.addEventListener('click', () => {
+      tabSearchBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition';
+      tabBookmarksBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 transition';
+      searchPanel.classList.remove('hidden');
+      bookmarksPanel.classList.add('hidden');
+      searchInput.focus();
+    });
+
+    // Transcript Search Engine
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchResultsCount.textContent = '0 results';
+        searchResultsContainer.innerHTML = '<div class="py-10 text-center text-xs text-slate-500">Enter keywords above to search cues with auto -5s jump</div>';
+        return;
+      }
+
+      const matches = [];
+      state.cues.forEach((cue) => {
+        if (cue.text.toLowerCase().includes(query)) {
+          matches.push(cue);
+        }
+      });
+
+      searchResultsCount.textContent = `${matches.length} result${matches.length === 1 ? '' : 's'}`;
+      searchResultsContainer.innerHTML = '';
+
+      if (matches.length === 0) {
+        searchResultsContainer.innerHTML = '<div class="py-10 text-center text-xs text-slate-500">No matching subtitle cues found</div>';
+        return;
+      }
+
+      matches.slice(0, 40).forEach((cue) => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-950/60 border border-slate-800/80 hover:border-indigo-500/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col gap-1';
+
+        const leadInTime = Math.max(0, cue.start - 5);
+        const header = document.createElement('div');
+        header.className = 'flex items-center justify-between text-[11px] font-mono text-indigo-300';
+        header.innerHTML = `<span>${formatTime(cue.start)}</span> <span class="text-[9px] text-slate-500">Jump to ${formatTime(leadInTime)} (-5s)</span>`;
+
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        const highlightedText = escapeHtml(cue.text).replace(regex, '<mark class="bg-amber-400 text-slate-950 rounded px-1 font-bold">$1</mark>');
+
+        const textDiv = document.createElement('div');
+        textDiv.className = 'text-xs text-slate-300 leading-snug';
+        textDiv.innerHTML = highlightedText;
+
+        item.appendChild(header);
+        item.appendChild(textDiv);
+
+        item.onclick = () => {
+          media.currentTime = leadInTime;
+          updateMediaSessionPosition();
+          media.play().catch(() => {});
+          showToast(`Jumped to ${formatTime(leadInTime)} (5s before cue)`);
+        };
+
+        searchResultsContainer.appendChild(item);
+      });
+    });
+
+    // Global Span Cycle Button
+    globalSpanCycleBtn.addEventListener('click', () => {
+      state.globalSpan = (state.globalSpan % 5) + 1;
+      globalSpanCycleBtn.textContent = `HL: ${state.globalSpan} sent`;
+      showToast(`Default highlight set to ${state.globalSpan} sentence(s)`);
+    });
+
+    // Clear All Bookmarks
+    clearBookmarksBtn.addEventListener('click', () => {
+      if (state.bookmarks.length === 0) return;
+      state.bookmarks = [];
+      saveBookmarks();
+      renderBookmarks();
+      showToast('All bookmarks cleared');
+    });
+
+    // Export TXT
+    exportTxtBtn.addEventListener('click', () => {
+      if (state.bookmarks.length === 0) {
+        showToast('No bookmarks to export');
+        return;
+      }
+
+      let content = `DriveCast Bookmarks: ${state.videoName || 'Episode'}\n`;
+      content += `Exported: ${new Date().toLocaleString()}\n`;
+      content += `Total Bookmarks: ${state.bookmarks.length}\n`;
+      content += `--------------------------------------------------------\n\n`;
+
+      state.bookmarks.forEach((bm) => {
+        const timecode = `[${formatTime(bm.time)}]`;
+        let metaTag = '';
+        let passage = '';
+
+        if (state.sentences.length > 0 && bm.targetIndex >= 0) {
+          metaTag = `[Highlight: S${bm.targetIndex + 1}, Span: ${bm.span}, Pre: ${bm.preCount}, Post: ${bm.postCount}]`;
+          
+          const preSentences = [];
+          for (let i = Math.max(0, bm.targetIndex - bm.preCount); i < bm.targetIndex; i++) {
+            preSentences.push(state.sentences[i].text);
+          }
+          const targetSentences = [];
+          for (let i = bm.targetIndex; i < Math.min(state.sentences.length, bm.targetIndex + bm.span); i++) {
+            targetSentences.push(state.sentences[i].text);
+          }
+          const postSentences = [];
+          for (let i = bm.targetIndex + bm.span; i < Math.min(state.sentences.length, bm.targetIndex + bm.span + bm.postCount); i++) {
+            postSentences.push(state.sentences[i].text);
+          }
+
+          passage = [preSentences.join(' '), targetSentences.join(' '), postSentences.join(' ')].filter(Boolean).join(' ');
+        } else {
+          passage = bm.noteText || 'Bookmark timestamp';
+        }
+
+        content += `${timecode} ${metaTag}\n${passage}\n`;
+        if (bm.noteText) {
+          content += `Note: ${bm.noteText}\n`;
+        }
+        content += `\n`;
+      });
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${state.videoName || 'podcast'}_bookmarks.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Exported bookmarks as TXT');
+    });
+
+    function sanitizeForXml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&bull;/g, '&#8226;')
+        .replace(/&mdash;/g, '&#8212;')
+        .replace(/&ndash;/g, '&#8211;')
+        .replace(/&nbsp;/g, '&#160;')
+        .replace(/&hellip;/g, '&#8230;')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    // Export ePub directly in browser via JSZip
+    exportEpubBtn.addEventListener('click', async () => {
+      if (state.bookmarks.length === 0) {
+        showToast('No bookmarks to export');
+        return;
+      }
+      if (typeof JSZip === 'undefined') {
+        showToast('JSZip library loading...');
+        return;
+      }
+
+      try {
+        const zip = new JSZip();
+        const title = sanitizeForXml(state.videoName || 'DriveCast Episode');
+        const uuid = 'urn:uuid:' + 'dc_' + Date.now();
+
+        // 1. mimetype (Must be first, stored without compression)
+        zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+
+        // 2. META-INF/container.xml
+        zip.file('META-INF/container.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`);
+
+        // 3. Build Bookmark Chapter XHTML
+        let entriesHtml = '';
+        state.bookmarks.forEach((bm) => {
+          let preText = '';
+          let hlText = '';
+          let postText = '';
+
+          if (state.sentences.length > 0 && bm.targetIndex >= 0) {
+            const pre = [];
+            for (let i = Math.max(0, bm.targetIndex - bm.preCount); i < bm.targetIndex; i++) {
+              pre.push(state.sentences[i].text);
+            }
+            preText = pre.join(' ');
+
+            const hl = [];
+            for (let i = bm.targetIndex; i < Math.min(state.sentences.length, bm.targetIndex + bm.span); i++) {
+              hl.push(state.sentences[i].text);
+            }
+            hlText = hl.join(' ');
+
+            const post = [];
+            for (let i = bm.targetIndex + bm.span; i < Math.min(state.sentences.length, bm.targetIndex + bm.span + bm.postCount); i++) {
+              post.push(state.sentences[i].text);
+            }
+            postText = post.join(' ');
+          } else {
+            hlText = bm.noteText || 'Bookmark timestamp';
+          }
+
+          entriesHtml += `
+    <div class="bookmark-entry">
+      <div class="timecode-pill">${formatTime(bm.time)}</div>
+      <p class="passage">
+        ${preText ? `<span class="context">${sanitizeForXml(preText)} </span>` : ''}
+        <span class="highlight">${sanitizeForXml(hlText)}</span>
+        ${postText ? `<span class="context"> ${sanitizeForXml(postText)}</span>` : ''}
+      </p>
+      ${bm.noteText ? `<div class="user-note"><strong>Note:</strong> ${sanitizeForXml(bm.noteText)}</div>` : ''}
+    </div>\n`;
+        });
+
+        // 4. OEBPS/chapter.xhtml
+        const chapterXhtml = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+  <title>${title}</title>
+  <style type="text/css">
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif; line-height: 1.65; padding: 5%; color: #1e293b; }
+    h1 { font-size: 1.45em; border-bottom: 2px solid #6366f1; padding-bottom: 0.3em; margin-bottom: 1.2em; color: #0f172a; }
+    .bookmark-entry { margin-bottom: 1.8em; padding: 1em; background-color: #f8fafc; border-left: 3px solid #6366f1; border-radius: 4px; }
+    .timecode-pill { display: inline-block; font-size: 0.8em; font-weight: bold; background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 9999px; margin-bottom: 0.6em; }
+    .passage { margin: 0; font-size: 0.95em; }
+    .context { color: #64748b; }
+    .highlight { background-color: #fef08a; padding: 1px 4px; border-radius: 2px; font-weight: 600; color: #854d0e; }
+    .user-note { margin-top: 0.6em; font-size: 0.85em; color: #475569; border-top: 1px dashed #cbd5e1; padding-top: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>${title}</h1>
+  ${entriesHtml}
+</body>
+</html>`;
+        zip.file('OEBPS/chapter.xhtml', chapterXhtml);
+
+        // 5. OEBPS/nav.xhtml (EPUB 3 Navigation)
+        const navXhtml = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head><title>Table of Contents</title></head>
+<body>
+  <nav epub:type="toc" id="toc">
+    <h1>Table of Contents</h1>
+    <ol><li><a href="chapter.xhtml">Bookmarks</a></li></ol>
+  </nav>
+</body>
+</html>`;
+        zip.file('OEBPS/nav.xhtml', navXhtml);
+
+        // 6. OEBPS/toc.ncx (EPUB 2 Navigation)
+        const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head><meta name="dtb:uid" content="${uuid}"/></head>
+  <docTitle><text>${title}</text></docTitle>
+  <navMap>
+    <navPoint id="navpoint-1" playOrder="1">
+      <navLabel><text>Bookmarks</text></navLabel>
+      <content src="chapter.xhtml"/>
+    </navPoint>
+  </navMap>
+</ncx>`;
+        zip.file('OEBPS/toc.ncx', tocNcx);
+
+        // 7. OEBPS/content.opf Package Document
+        const contentOpf = `<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="BookId">${uuid}</dc:identifier>
+    <dc:title>${title}</dc:title>
+    <dc:language>en</dc:language>
+    <dc:creator>DriveCast</dc:creator>
+    <meta property="dcterms:modified">${new Date().toISOString().replace(/\.[0-9]+Z$/, 'Z')}</meta>
+  </metadata>
+  <manifest>
+    <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="chapter"/>
+  </spine>
+</package>`;
+        zip.file('OEBPS/content.opf', contentOpf);
+
+        // Generate ePub binary blob
+        const epubBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
+        const url = URL.createObjectURL(epubBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${state.videoName || 'podcast'}_bookmarks.epub`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Exported ePub for Apple Books');
+      } catch (err) {
+        console.error('ePub generation error:', err);
+        showToast('Error generating ePub');
+      }
+    });
+
+    importBookmarksFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        importBookmarksFromText(re.target.result);
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    function importBookmarksFromText(text) {
+      if (!text) return;
+      const lines = text.split('\n');
+      let importedCount = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const timeMatch = line.match(/^\[([0-9:]+)\]/);
+        if (!timeMatch) continue;
+
+        const time = parseTimestamp(timeMatch[1]);
+        if (isNaN(time)) continue;
+
+        // Parse bracketed metadata (Highlight, Span, Pre, Post)
+        let targetIndex = -1;
+        let span = 1;
+        let preCount = 1;
+        let postCount = 1;
+
+        const hlMatch = line.match(/Highlight:\s*S?(\d+)/i);
+        if (hlMatch) targetIndex = parseInt(hlMatch[1], 10) - 1;
+
+        const spanMatch = line.match(/Span:\s*(\d+)/i);
+        if (spanMatch) span = parseInt(spanMatch[1], 10);
+
+        const preMatch = line.match(/Pre:\s*(\d+)/i);
+        if (preMatch) preCount = parseInt(preMatch[1], 10);
+
+        const postMatch = line.match(/Post:\s*(\d+)/i);
+        if (postMatch) postCount = parseInt(postMatch[1], 10);
+
+        // Optional user note on subsequent lines
+        let note = '';
+        if (i + 1 < lines.length && lines[i + 1].startsWith('Note:')) {
+          note = lines[i + 1].replace(/^Note:\s*/, '').trim();
+        }
+
+        // Avoid duplicates within 1 second
+        const isDuplicate = state.bookmarks.some(b => Math.abs(b.time - time) < 1.0);
+        if (!isDuplicate) {
+          state.bookmarks.push({
+            id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            time: time,
+            targetIndex: targetIndex >= 0 ? targetIndex : (state.sentences.length > 0 ? findTargetSentenceIndexForTime(time) : -1),
+            span: span,
+            preCount: preCount,
+            postCount: postCount,
+            noteText: note,
+            isEditing: false
+          });
+          importedCount++;
+        }
+      }
+
+      state.bookmarks.sort((a, b) => a.time - b.time);
+      saveBookmarks();
+      renderBookmarks();
+      showToast(`Imported ${importedCount} new bookmark(s)`);
+    }
+
+    settingsBtn.addEventListener('click', () => {
+      interpCheckbox.checked = state.interpolationEnabled;
+      wordCapValDisplay.textContent = `${state.wordCap}w`;
+      interpTargetValDisplay.textContent = `${state.interpTargetWords}w`;
+      reactionOffsetValDisplay.textContent = `${state.reactionOffset}s`;
+      settingsModal.classList.remove('hidden');
+    });
+
+    closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+    doneSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) settingsModal.classList.add('hidden');
+    });
+
+    interpCheckbox.addEventListener('change', () => {
+      state.interpolationEnabled = interpCheckbox.checked;
+      localStorage.setItem('dc_interp_enabled', state.interpolationEnabled);
+      buildEpisodeSentencesStream();
+      renderBookmarks();
+    });
+
+    // Word Cap Stepper (Max Upper Bound)
+    wordCapMinusBtn.addEventListener('click', () => {
+      if (state.wordCap > 20) {
+        state.wordCap -= 5;
+        wordCapValDisplay.textContent = `${state.wordCap}w`;
+        localStorage.setItem('dc_word_cap', state.wordCap);
+        buildEpisodeSentencesStream();
+        renderBookmarks();
+      }
+    });
+
+    wordCapPlusBtn.addEventListener('click', () => {
+      if (state.wordCap < 200) {
+        state.wordCap += 5;
+        wordCapValDisplay.textContent = `${state.wordCap}w`;
+        localStorage.setItem('dc_word_cap', state.wordCap);
+        buildEpisodeSentencesStream();
+        renderBookmarks();
+      }
+    });
+
+    // Interpolation Target Stepper (Min Words for Interpolated Cues)
+    interpTargetMinusBtn.addEventListener('click', () => {
+      if (state.interpTargetWords > 20) {
+        state.interpTargetWords -= 5;
+        interpTargetValDisplay.textContent = `${state.interpTargetWords}w`;
+        localStorage.setItem('dc_interp_target_words', state.interpTargetWords);
+      }
+    });
+
+    interpTargetPlusBtn.addEventListener('click', () => {
+      if (state.interpTargetWords < 150) {
+        state.interpTargetWords += 5;
+        interpTargetValDisplay.textContent = `${state.interpTargetWords}w`;
+        localStorage.setItem('dc_interp_target_words', state.interpTargetWords);
+      }
+    });
+
+    // Reaction Delay Offset Stepper
+    reactionOffsetMinusBtn.addEventListener('click', () => {
+      if (state.reactionOffset > -30) {
+        state.reactionOffset -= 1;
+        reactionOffsetValDisplay.textContent = `${state.reactionOffset}s`;
+        localStorage.setItem('dc_reaction_offset', state.reactionOffset);
+      }
+    });
+
+    reactionOffsetPlusBtn.addEventListener('click', () => {
+      if (state.reactionOffset < 0) {
+        state.reactionOffset += 1;
+        reactionOffsetValDisplay.textContent = `${state.reactionOffset}s`;
+        localStorage.setItem('dc_reaction_offset', state.reactionOffset);
+      }
+    });
+
+    // Initialize application render
+    renderBookmarks();
   </script>
 </body>
 </html>
