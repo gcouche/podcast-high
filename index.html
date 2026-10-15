@@ -3,31 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>DriveCast v6.8 • Local MP4 Player &amp; Bookmarks</title>
+  <title>DriveCast v6.9 • Local MP4 Player &amp; Bookmarks</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- JSZip CDN for direct client-side ePub generation -->
+  <!-- JSZip for client-side valid EPUB export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
-    /* Prevent unwanted rubber-band scrolling and horizontal overflow */
-    html, body {
-      height: 100%;
-      max-width: 100vw;
-      overflow-x: hidden;
-      margin: 0;
-      padding: 0;
+    * {
       box-sizing: border-box;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    *, *:before, *:after {
-      box-sizing: inherit;
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      max-width: 100vw;
     }
-
-    /* Custom Scrollbars */
+    /* iOS Safari 1pt typography increase for readability */
+    @supports (-webkit-touch-callout: none) {
+      .sentence-preview-text,
+      .sentence-highlight,
+      .inline-note-editor {
+        font-size: calc(0.75rem + 1pt) !important;
+        line-height: 1.65 !important;
+      }
+      .srt-overlay-text {
+        font-size: calc(0.875rem + 1pt) !important;
+      }
+    }
+    /* Custom sleek scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -36,61 +46,52 @@
       background: rgba(15, 23, 42, 0.6);
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(51, 65, 85, 0.6);
+      background: rgba(51, 65, 85, 0.8);
       border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(71, 85, 105, 0.8);
+      background: rgba(99, 102, 241, 0.8);
     }
-
-    /* Glowing Amber Sentence Highlighter */
+    /* Highlight gradient style */
     .sentence-highlight {
-      background: linear-gradient(120deg, rgba(245, 158, 11, 0.35) 0%, rgba(251, 191, 36, 0.42) 100%);
-      border-bottom: 2px solid rgba(245, 158, 11, 0.95);
+      background: linear-gradient(120deg, rgba(234, 179, 8, 0.28) 0%, rgba(245, 158, 11, 0.38) 100%);
+      color: #fef08a;
+      border-bottom: 2px solid rgba(234, 179, 8, 0.85);
       border-radius: 3px;
-      padding: 1px 4px;
-      color: #fef3c7;
+      padding: 1px 3px;
       font-weight: 600;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.22);
       display: inline;
     }
-
-    /* iOS 1pt Typography Scaling for Enhanced On-The-Go Reading */
-    @supports (-webkit-touch-callout: none) {
-      .sentence-text-card {
-        font-size: calc(0.75rem + 1pt) !important;
-        line-height: 1.65 !important;
-      }
-      .sentence-highlight {
-        font-size: calc(0.75rem + 1pt) !important;
-      }
-      .card-stepper-btn {
-        padding-top: 0.35rem !important;
-        padding-bottom: 0.35rem !important;
-      }
+    .sentence-context {
+      color: #94a3b8;
+      display: inline;
     }
-
-    /* Pulse animation for armed timecode retarget trigger */
-    @keyframes armedPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.82; transform: scale(1.08); }
+    /* Slider thumb styling */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 14px;
+      width: 14px;
+      border-radius: 9999px;
+      background: #818cf8;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(129, 140, 248, 0.8);
+      transition: transform 0.1s ease;
     }
-    .armed-pulse {
-      animation: armedPulse 1.2s infinite ease-in-out;
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
     }
   </style>
 </head>
-<body class="flex flex-col h-full bg-slate-950 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased select-none">
 
-  <!-- Top Navigation Header -->
-  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md px-3 sm:px-4 py-2.5 flex items-center justify-between shrink-0 z-30">
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 shrink-0 z-20">
     <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
       <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 text-white font-black text-sm shrink-0">
         DC
       </div>
       <div class="flex items-center gap-1.5 min-w-0">
         <h1 class="font-bold text-sm sm:text-base tracking-tight text-white truncate">DriveCast</h1>
-        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v6.8</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v6.9</span>
       </div>
     </div>
 
@@ -104,40 +105,44 @@
         </svg>
       </button>
 
-      <!-- Choose Media / SRT File Input -->
+      <!-- Choose Media / SRT File Input (Unrestricted for iOS Safari) -->
       <label class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-md shadow-indigo-600/30 transition">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
         </svg>
         <span class="truncate">Choose Podcast</span>
-        <input type="file" id="mediaFileInput" accept="video/mp4,audio/mp3,audio/m4a,audio/aac,audio/*,video/*,.srt,.txt" multiple class="hidden">
+        <input type="file" id="mediaFileInput" multiple class="hidden">
       </label>
     </div>
   </header>
 
-  <!-- Main Grid Workspace -->
-  <main class="flex-1 min-h-0 w-full max-w-7xl mx-auto p-2 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 overflow-hidden">
+  <main class="flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 md:p-5 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-4">
     
-    <!-- LEFT COLUMN: Video/Audio Player Stage -->
-    <div class="lg:col-span-7 flex flex-col gap-2 min-h-0 w-full overflow-hidden">
-      <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-2.5 sm:p-3 flex flex-col gap-2 shadow-xl shrink-0">
+    <!-- Left Column: Video/Audio Player & Episode Controls -->
+    <section class="lg:col-span-7 flex flex-col gap-3 min-w-0">
+      
+      <!-- Video Container Card -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3.5 shadow-xl flex flex-col gap-2.5">
         
         <!-- Media Canvas & Dynamic Subtitle Overlay Box -->
         <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center group shadow-inner">
-          <video id="mediaPlayer" playsinline class="w-full h-full object-contain hidden"></video>
+          <video id="mediaPlayer" playsinline webkit-playsinline x-webkit-airplay="allow" preload="auto" class="w-full h-full object-contain hidden"></video>
           
           <!-- Empty Player Placeholder State -->
-          <div id="emptyVideoState" class="flex flex-col items-center justify-center p-6 text-center text-slate-500">
-            <svg class="w-12 h-12 mb-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-            </svg>
-            <p class="text-sm font-semibold text-slate-400">No media loaded</p>
-            <p class="text-xs text-slate-500 mt-0.5">Select an MP4/Audio file and an SRT subtitle file</p>
+          <div id="emptyVideoState" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 gap-2 p-4 text-center">
+            <div class="w-12 h-12 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <p class="text-xs sm:text-sm font-medium text-slate-400">No media loaded</p>
+            <p class="text-[11px] text-slate-500 max-w-xs">Tap "Choose Podcast" above to load an MP4 video or audio file. You can select an SRT subtitle file too.</p>
           </div>
 
-          <!-- Dynamic On-Screen Subtitle Box -->
-          <div id="subtitleBox" class="absolute bottom-3 left-3 right-3 text-center pointer-events-none transition duration-200 hidden">
-            <span id="subtitleText" class="inline-block bg-black/85 text-amber-200 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-sm max-w-[95%] leading-relaxed border border-amber-500/20"></span>
+          <!-- Dynamic Subtitle Overlay -->
+          <div id="subtitleBox" class="absolute bottom-3 inset-x-3 pointer-events-none flex justify-center hidden">
+            <span id="subtitleText" class="srt-overlay-text bg-black/85 text-white font-medium text-xs sm:text-sm px-3 py-1.5 rounded-lg max-w-xl text-center leading-relaxed shadow-lg border border-white/10 backdrop-blur-sm"></span>
           </div>
         </div>
 
@@ -145,12 +150,18 @@
         <div class="flex items-center justify-between gap-2 px-1 pt-1">
           <div class="flex items-center gap-1.5 min-w-0">
             <span id="mediaTypeBadge" class="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-slate-800 text-slate-400 border border-slate-700/60 uppercase">PODCAST</span>
-            <span id="srtStatusBadge" class="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-slate-800 text-slate-500 border border-slate-700/60 uppercase">NO SRT</span>
+            
+            <!-- Direct SRT File Picker Badge for iOS -->
+            <label id="srtStatusBadge" class="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-slate-800 text-slate-500 border border-slate-700/60 uppercase cursor-pointer hover:bg-slate-700/80 active:scale-95 transition" title="Tap to select or change SRT subtitle file">
+              <span>NO SRT</span>
+              <input type="file" id="srtFileInput" class="hidden">
+            </label>
+            
             <span id="mediaFileName" class="text-xs font-semibold text-slate-300 truncate max-w-[200px] sm:max-w-xs">No episode loaded</span>
           </div>
 
           <!-- Primary Bookmark Creator Button -->
-          <button id="addBookmarkBtn" class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30 shrink-0 transition">
+          <button id="addBookmarkBtn" class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition shrink-0">
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path>
             </svg>
@@ -158,45 +169,42 @@
           </button>
         </div>
 
-        <!-- Scrubber Timeline -->
-        <div class="flex items-center gap-2 pt-1 px-1">
-          <span id="currentTimeDisplay" class="font-mono text-[11px] text-slate-400 w-11 shrink-0 text-left">00:00</span>
-          <input type="range" id="timeSlider" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
-          <span id="durationDisplay" class="font-mono text-[11px] text-slate-400 w-11 shrink-0 text-right">00:00</span>
+        <!-- Timeline Slider Bar -->
+        <div class="flex flex-col gap-1 px-1">
+          <input type="range" id="timeSlider" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+          <div class="flex justify-between text-[11px] font-mono text-slate-400">
+            <span id="currentTimeDisplay">00:00</span>
+            <span id="durationDisplay">00:00</span>
+          </div>
         </div>
 
-        <!-- Transport Controls -->
-        <div class="flex items-center justify-between gap-2 pt-1 px-1">
+        <!-- Podcast Transport Controls Row -->
+        <div class="flex items-center justify-between pt-1 border-t border-slate-800/80">
+          
+          <!-- Speed and Subtitle Toggles -->
           <div class="flex items-center gap-1.5">
-            <!-- Playback Speed Button -->
-            <button id="playbackRateBtn" class="h-8 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/80 transition">
-              1.0x
-            </button>
-            <!-- Closed Captions (CC) Toggle Button -->
-            <button id="ccToggleBtn" class="h-8 px-2 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition">
-              CC ON
-            </button>
+            <button id="speedBtn" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-300 border border-slate-700/60 active:scale-95 transition">1.0x</button>
+            <button id="toggleCcBtn" class="px-2 py-1 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-bold active:scale-95 transition">CC</button>
           </div>
 
-          <!-- Central Transport Cluster: -10s, -1s, Play/Pause, +1s, +10s -->
-          <div class="flex items-center gap-1 sm:gap-1.5">
-            <!-- -10s Podcast Replay Button -->
-            <button id="skipBack10Btn" title="Rewind 10 seconds" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/60">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-                <text x="12" y="15.2" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" stroke="none" font-family="system-ui, sans-serif">10</text>
+          <!-- Center Transport: -10s, -1s, Play/Pause, +1s, +10s -->
+          <div class="flex items-center gap-1 sm:gap-2">
+            
+            <!-- Podcast -10s Skip Button -->
+            <button id="skipBack10Btn" title="Rewind 10 seconds" class="w-8 h-8 rounded-full bg-slate-800/90 hover:bg-slate-700 active:scale-90 text-slate-200 flex items-center justify-center transition border border-slate-700/60">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path>
               </svg>
             </button>
 
-            <!-- -1s Micro Step Button -->
-            <button id="stepBack1sBtn" title="Rewind 1 second" class="h-8 px-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center font-mono text-[10px] sm:text-[11px] font-semibold border border-slate-700/60 transition">
+            <!-- Micro -1s Step Button -->
+            <button id="stepBack1Btn" title="Step back 1 second" class="px-2 h-7 rounded-md bg-slate-800/80 hover:bg-slate-700 active:scale-90 text-[11px] font-bold font-mono text-slate-300 border border-slate-700/50 flex items-center justify-center transition">
               -1s
             </button>
 
-            <!-- Play / Pause Button -->
-            <button id="playPauseBtn" class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-indigo-600/40 transition">
-              <svg id="playIcon" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <!-- Play / Pause Primary Button -->
+            <button id="playPauseBtn" class="w-11 h-11 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-90 text-white flex items-center justify-center shadow-lg shadow-indigo-600/40 transition">
+              <svg id="playIcon" class="w-5 h-5 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"></path>
               </svg>
               <svg id="pauseIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
@@ -204,17 +212,15 @@
               </svg>
             </button>
 
-            <!-- +1s Micro Step Button -->
-            <button id="stepFwd1sBtn" title="Forward 1 second" class="h-8 px-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center font-mono text-[10px] sm:text-[11px] font-semibold border border-slate-700/60 transition">
+            <!-- Micro +1s Step Button -->
+            <button id="stepForward1Btn" title="Step forward 1 second" class="px-2 h-7 rounded-md bg-slate-800/80 hover:bg-slate-700 active:scale-90 text-[11px] font-bold font-mono text-slate-300 border border-slate-700/50 flex items-center justify-center transition">
               +1s
             </button>
 
-            <!-- +10s Podcast Skip Button -->
-            <button id="skipFwd10Btn" title="Forward 10 seconds" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/60">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <text x="12" y="15.2" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" stroke="none" font-family="system-ui, sans-serif">10</text>
+            <!-- Podcast +10s Skip Button -->
+            <button id="skipForward10Btn" title="Forward 10 seconds" class="w-8 h-8 rounded-full bg-slate-800/90 hover:bg-slate-700 active:scale-90 text-slate-200 flex items-center justify-center transition border border-slate-700/60">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"></path>
               </svg>
             </button>
           </div>
@@ -222,183 +228,167 @@
           <!-- Volume Controls -->
           <div class="flex items-center gap-1.5">
             <button id="muteBtn" class="text-slate-400 hover:text-white transition">
-              <svg id="volumeHighIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <svg id="volumeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
               </svg>
-              <svg id="volumeMutedIcon" class="w-4 h-4 hidden text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+            </button>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" class="w-14 sm:w-16 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer hidden sm:block">
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Right Column: Bookmarks, Transcript Search & Export Suite -->
+    <section class="lg:col-span-5 flex flex-col min-h-0 h-full">
+      
+      <!-- Panel Card Container -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3.5 shadow-xl flex flex-col flex-1 min-h-0">
+        
+        <!-- Panel Tabs and Action Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-1.5 pb-2.5 border-b border-slate-800 shrink-0">
+          
+          <!-- View Switcher -->
+          <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+            <button id="tabBookmarksBtn" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white shadow transition flex items-center gap-1">
+              <span>Bookmarks</span>
+              <span id="bookmarksCountBadge" class="bg-indigo-900/80 text-indigo-200 text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+            <button id="tabSearchBtn" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <span>Search SRT</span>
+            </button>
+          </div>
+
+          <!-- Utility Export / Import Controls -->
+          <div class="flex items-center gap-1">
+            <button id="globalSpanBtn" title="Click to cycle default highlight sentence count" class="px-1.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-amber-300 border border-amber-500/30 active:scale-95 transition">
+              HL: 1 sent
+            </button>
+            
+            <label class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-medium text-slate-300 border border-slate-700/60 cursor-pointer active:scale-95 transition">
+              Import
+              <input type="file" id="importTxtInput" accept=".txt" class="hidden">
+            </label>
+
+            <button id="exportTxtBtn" title="Export as plain text" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-medium text-slate-300 border border-slate-700/60 active:scale-95 transition">
+              TXT
+            </button>
+
+            <button id="exportEpubBtn" title="Export as Apple Books EPUB" class="px-2 py-1 rounded bg-indigo-950/60 hover:bg-indigo-900/80 text-[10px] font-bold text-indigo-300 border border-indigo-700/60 active:scale-95 transition">
+              ePub
+            </button>
+
+            <button id="clearAllBtn" title="Clear all bookmarks" class="p-1 rounded bg-slate-800/60 hover:bg-rose-950/60 text-slate-400 hover:text-rose-300 border border-slate-700/50 active:scale-95 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
             </button>
-            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" class="w-14 sm:w-16 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- RIGHT COLUMN: Bookmarks Stream & Transcript Search -->
-    <div class="lg:col-span-5 flex flex-col min-h-0 w-full overflow-hidden bg-slate-900 border border-slate-800/80 rounded-2xl shadow-xl">
-      
-      <!-- Panel Header: Tabs and Action Buttons -->
-      <div class="p-2 sm:p-2.5 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-1.5 shrink-0 bg-slate-900/60">
-        <!-- Tabs -->
-        <div class="flex items-center gap-1">
-          <button id="tabBookmarksBtn" class="h-7 px-2.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path>
-            </svg>
-            <span>Bookmarks</span>
-            <span id="bookmarksCountBadge" class="bg-indigo-800 text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
-          </button>
-          
-          <button id="tabSearchBtn" class="h-7 px-2.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 transition">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <span>Search SRT</span>
-          </button>
-        </div>
-
-        <!-- Action Toolbar -->
-        <div class="flex items-center gap-1 flex-wrap">
-          <!-- Global Base Unit Cycle Button -->
-          <button id="globalSpanCycleBtn" title="Default highlight base unit (sentences)" class="h-7 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold transition">
-            HL: 1 sent
-          </button>
-
-          <!-- Import TXT Bookmarks Button -->
-          <label class="h-7 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition">
-            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-            </svg>
-            <span>Import</span>
-            <input type="file" id="importBookmarksFileInput" accept=".txt" class="hidden">
-          </label>
-
-          <!-- Export TXT Bookmarks Button -->
-          <button id="exportTxtBtn" class="h-7 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 text-[10px] font-semibold flex items-center gap-1 transition">
-            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
-            <span>TXT</span>
-          </button>
-
-          <!-- Export ePub Bookmarks Button -->
-          <button id="exportEpubBtn" class="h-7 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-[10px] font-semibold flex items-center gap-1 transition">
-            <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-            </svg>
-            <span>ePub</span>
-          </button>
-
-          <!-- Clear All Bookmarks Button -->
-          <button id="clearBookmarksBtn" title="Clear All Bookmarks" class="h-7 w-7 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 border border-slate-700/60 flex items-center justify-center transition">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Panel Body 1: Bookmarks List Stream -->
-      <div id="bookmarksPanel" class="flex-1 min-h-0 overflow-y-auto p-2 sm:p-3 flex flex-col gap-2.5">
-        <div id="bookmarksContainer" class="flex flex-col gap-2.5">
-          <!-- Empty State -->
-          <div id="emptyBookmarksState" class="py-12 flex flex-col items-center justify-center text-center text-slate-500">
-            <svg class="w-10 h-10 mb-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-            </svg>
-            <p class="text-xs font-semibold text-slate-400">No bookmarks yet</p>
-            <p class="text-[11px] text-slate-500 mt-0.5">Click <span class="text-indigo-400 font-medium">+ Bookmark</span> or double-tap your AirPods</p>
+        <!-- Bookmarks Tab Content Area -->
+        <div id="bookmarksPanel" class="flex-1 min-h-0 flex flex-col pt-2">
+          <div id="bookmarksContainer" class="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-0.5">
+            <!-- Empty Bookmarks Placeholder -->
+            <div id="emptyBookmarksState" class="h-48 flex flex-col items-center justify-center text-slate-500 gap-1.5 text-center p-4">
+              <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"></path>
+              </svg>
+              <span class="text-xs font-semibold text-slate-400">No bookmarks yet</span>
+              <p class="text-[11px] text-slate-500 max-w-xs">Tap <strong class="text-indigo-400">+ Bookmark</strong> while listening, or <strong class="text-indigo-400">double-tap your AirPods stem</strong>.</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Panel Body 2: Transcript Search View -->
-      <div id="searchPanel" class="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-3 flex flex-col gap-2.5 hidden">
-        <!-- Search Input Bar -->
-        <div class="relative shrink-0">
-          <input type="text" id="searchInput" placeholder="Search transcript keywords..." class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 pl-8 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
+        <!-- Search SRT Tab Content Area (Hidden by default) -->
+        <div id="searchPanel" class="flex-1 min-h-0 flex flex-col pt-2 hidden">
+          <div class="relative shrink-0 mb-2">
+            <input type="text" id="searchInput" placeholder="Search spoken transcript..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+            <span id="searchStats" class="absolute right-2.5 top-2 text-[10px] text-slate-500 font-mono">0 hits</span>
+          </div>
+
+          <div id="searchResultsContainer" class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5">
+            <div id="emptySearchState" class="h-40 flex flex-col items-center justify-center text-slate-500 text-center p-4">
+              <span class="text-xs text-slate-400">Type a keyword to search</span>
+              <p class="text-[10px] text-slate-500 mt-1">Tapping any result jumps 5 seconds before the spoken phrase begins.</p>
+            </div>
+          </div>
         </div>
-        <div id="searchResultsCount" class="text-[11px] font-semibold text-slate-400 px-1">0 results</div>
-        <div id="searchResultsContainer" class="flex flex-col gap-2 overflow-y-auto min-h-0">
-          <div class="py-10 text-center text-xs text-slate-500">Enter keywords above to search cues with auto -5s jump</div>
-        </div>
+
       </div>
-    </div>
+    </section>
   </main>
 
-  <!-- Settings Drawer Modal -->
-  <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl flex flex-col gap-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded bg-indigo-600/30 text-indigo-400 flex items-center justify-center font-bold text-xs">⚙</div>
-          <h2 class="text-sm font-bold text-white">Playback &amp; Parsing Settings</h2>
-        </div>
-        <button id="closeSettingsBtn" class="text-slate-400 hover:text-white text-sm font-bold p-1">✕</button>
+  <!-- Settings Drawer Modal Dialog -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-4 shadow-2xl flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          </svg>
+          DriveCast Settings
+        </h3>
+        <button id="closeSettingsBtn" class="text-slate-400 hover:text-white p-1 rounded-md transition">✕</button>
       </div>
 
-      <!-- Settings Controls List -->
-      <div class="flex flex-col gap-4 text-xs">
-        
-        <!-- Setting 1: Linear Interpolation Toggle -->
-        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
-          <div>
-            <div class="font-semibold text-slate-200">Linear Interpolation</div>
-            <div class="text-[10px] text-slate-400">Proportional timing for multi-sentence cues</div>
-          </div>
-          <input type="checkbox" id="interpCheckbox" checked class="w-4 h-4 rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 cursor-pointer">
+      <!-- Linear Interpolation Option -->
+      <div class="flex items-center justify-between py-1">
+        <div>
+          <span class="text-xs font-semibold text-slate-200 block">Linear Interpolation</span>
+          <span class="text-[10px] text-slate-400">Character-weighted sentence timing for long SRT cues</span>
         </div>
-
-        <!-- Setting 2: Sentence Word Cap (Max Upper Bound) -->
-        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
-          <div>
-            <div class="font-semibold text-slate-200">Sentence Word Cap (Max)</div>
-            <div class="text-[10px] text-slate-400">Max length for run-ons or unpunctuated cues</div>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button id="wordCapMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
-            <span id="wordCapValDisplay" class="font-mono text-xs font-semibold text-indigo-300 w-9 text-center">70w</span>
-            <button id="wordCapPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
-          </div>
-        </div>
-
-        <!-- Setting 3: Interpolation Target (Min Word Count) -->
-        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
-          <div>
-            <div class="font-semibold text-slate-200">Interpolation Target (Min)</div>
-            <div class="text-[10px] text-slate-400">Min target words when interpolating long cues</div>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button id="interpTargetMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
-            <span id="interpTargetValDisplay" class="font-mono text-xs font-semibold text-indigo-300 w-9 text-center">50w</span>
-            <button id="interpTargetPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
-          </div>
-        </div>
-
-        <!-- Setting 4: Bookmark Reaction Time Offset -->
-        <div class="flex items-center justify-between bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60">
-          <div>
-            <div class="font-semibold text-slate-200">Reaction Time Delay Offset</div>
-            <div class="text-[10px] text-slate-400">Offset applied when creating new bookmarks</div>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button id="reactionOffsetMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
-            <span id="reactionOffsetValDisplay" class="font-mono text-xs font-semibold text-indigo-300 w-9 text-center">-10s</span>
-            <button id="reactionOffsetPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
-          </div>
-        </div>
-
+        <input type="checkbox" id="interpCheckbox" checked class="w-4 h-4 accent-indigo-600 rounded cursor-pointer">
       </div>
 
-      <div class="pt-2 flex justify-end">
-        <button id="doneSettingsBtn" class="h-8 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs text-white transition">
-          Done
-        </button>
+      <!-- Sentence Word Cap Stepper (Max Upper Bound) -->
+      <div class="flex items-center justify-between py-1 border-t border-slate-800/80">
+        <div>
+          <span class="text-xs font-semibold text-slate-200 block">Sentence Word Cap (Max)</span>
+          <span class="text-[10px] text-slate-400">Limits run-on or unpunctuated chunks</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button id="wordCapMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">-</button>
+          <span id="wordCapValDisplay" class="text-xs font-mono font-bold text-indigo-300 w-10 text-center">70w</span>
+          <button id="wordCapPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">+</button>
+        </div>
       </div>
+
+      <!-- Interpolation Target Min Words Stepper (Lower Bound) -->
+      <div class="flex items-center justify-between py-1 border-t border-slate-800/80">
+        <div>
+          <span class="text-xs font-semibold text-slate-200 block">Interp. Target (Min Words)</span>
+          <span class="text-[10px] text-slate-400">Expands initial highlight span in long cues</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button id="minWordsMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">-</button>
+          <span id="minWordsValDisplay" class="text-xs font-mono font-bold text-amber-300 w-10 text-center">50w</span>
+          <button id="minWordsPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">+</button>
+        </div>
+      </div>
+
+      <!-- Bookmark Reaction Offset Stepper -->
+      <div class="flex items-center justify-between py-1 border-t border-slate-800/80">
+        <div>
+          <span class="text-xs font-semibold text-slate-200 block">Reaction Delay Offset</span>
+          <span class="text-[10px] text-slate-400">Lead time compensation when pressing bookmark</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button id="offsetMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">-</button>
+          <span id="offsetValDisplay" class="text-xs font-mono font-bold text-emerald-300 w-10 text-center">-10s</span>
+          <button id="offsetPlusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">+</button>
+        </div>
+      </div>
+
+      <!-- Done Button -->
+      <button id="doneSettingsBtn" class="w-full mt-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs text-white shadow-md shadow-indigo-600/30 transition">
+        Done
+      </button>
     </div>
   </div>
 
@@ -408,48 +398,50 @@
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
       <span id="airpodsStatus">AirPods Double-Tap Ready</span>
     </div>
-    <span class="text-slate-500">DriveCast v6.8 &bull; Independent Time Sync</span>
+    <span class="text-slate-500">DriveCast v6.9 &bull; Lock Screen &amp; Audio Fix</span>
   </footer>
 
   <!-- Toast Notification Box -->
-  <div id="toast" class="fixed bottom-12 right-4 z-50 bg-slate-800/95 text-slate-100 text-xs px-3 py-2 rounded-xl border border-slate-700 shadow-2xl transition-all duration-300 pointer-events-none opacity-0 translate-y-2"></div>
+  <div id="toastNotification" class="fixed bottom-12 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-slate-800/95 border border-indigo-500/50 text-indigo-200 text-xs font-medium shadow-2xl backdrop-blur-md transition-all duration-200 opacity-0 pointer-events-none z-50">
+    Notification
+  </div>
 
   <script>
-    // Global Application State
+    // State Store
     const state = {
       videoUrl: null,
-      videoName: '',
-      cues: [],               // Parsed raw SRT cues
-      sentences: [],          // Continuous sentence stream with character-accurate timings
-      bookmarks: [],          // Active bookmarks collection
-      armedTimeCorrectionId: null, // Holds ID of bookmark armed for timecode retarget
+      currentFileName: '',
+      cues: [],
+      sentences: [],
+      bookmarks: [],
       ccVisible: true,
-      playbackRate: 1.0,
-      globalSpan: 1,          // Default highlight base unit span (sentences)
+      globalBaseSpan: 1,
       interpolationEnabled: true,
-      wordCap: 70,            // Upper-bound sentence word cap
-      interpTargetWords: 50,  // Target minimum words for interpolated cues
-      reactionOffset: -10     // Reaction offset applied on button click / AirPods tap (-10s)
+      sentenceWordCap: 70,
+      interpMinWords: 50,
+      reactionOffsetSeconds: -10,
+      activeRetargetId: null
     };
 
-    // Load persisted preferences
+    // Load persisted settings
     try {
+      const savedCap = localStorage.getItem('dc_word_cap');
+      if (savedCap) state.sentenceWordCap = parseInt(savedCap, 10);
+      const savedMin = localStorage.getItem('dc_min_words');
+      if (savedMin) state.interpMinWords = parseInt(savedMin, 10);
+      const savedOffset = localStorage.getItem('dc_reaction_offset');
+      if (savedOffset) state.reactionOffsetSeconds = parseInt(savedOffset, 10);
       const savedInterp = localStorage.getItem('dc_interp_enabled');
-      if (savedInterp !== null) state.interpolationEnabled = savedInterp === 'true';
-
-      const savedWordCap = localStorage.getItem('dc_word_cap');
-      if (savedWordCap) state.wordCap = parseInt(savedWordCap, 10);
-
-      const savedInterpTarget = localStorage.getItem('dc_interp_target_words');
-      if (savedInterpTarget) state.interpTargetWords = parseInt(savedInterpTarget, 10);
-
-      const savedReaction = localStorage.getItem('dc_reaction_offset');
-      if (savedReaction !== null) state.reactionOffset = parseInt(savedReaction, 10);
+      if (savedInterp !== null) state.interpolationEnabled = (savedInterp === 'true');
     } catch (e) {}
 
     // Web Audio API Synthesized Two-Note Feedback Chime (No External Audio Files)
     let audioCtx = null;
     function playChime(success = true) {
+      // CRITICAL iOS FIX: Never initialize or resume AudioContext while the screen is locked
+      // Doing so causes iOS CoreAudio to interrupt and silence the media element's audio output!
+      if (document.hidden) return;
+
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
@@ -486,49 +478,41 @@
     const subtitleBox = document.getElementById('subtitleBox');
     const subtitleText = document.getElementById('subtitleText');
     const mediaFileInput = document.getElementById('mediaFileInput');
+    const srtFileInput = document.getElementById('srtFileInput');
     const mediaFileName = document.getElementById('mediaFileName');
     const mediaTypeBadge = document.getElementById('mediaTypeBadge');
     const srtStatusBadge = document.getElementById('srtStatusBadge');
-
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const playIcon = document.getElementById('playIcon');
-    const pauseIcon = document.getElementById('pauseIcon');
+    const addBookmarkBtn = document.getElementById('addBookmarkBtn');
     const timeSlider = document.getElementById('timeSlider');
     const currentTimeDisplay = document.getElementById('currentTimeDisplay');
     const durationDisplay = document.getElementById('durationDisplay');
-    const playbackRateBtn = document.getElementById('playbackRateBtn');
-    const ccToggleBtn = document.getElementById('ccToggleBtn');
-    
-    // Transport Buttons
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const speedBtn = document.getElementById('speedBtn');
+    const toggleCcBtn = document.getElementById('toggleCcBtn');
     const skipBack10Btn = document.getElementById('skipBack10Btn');
-    const skipFwd10Btn = document.getElementById('skipFwd10Btn');
-    const stepBack1sBtn = document.getElementById('stepBack1sBtn');
-    const stepFwd1sBtn = document.getElementById('stepFwd1sBtn');
-    
+    const skipForward10Btn = document.getElementById('skipForward10Btn');
+    const stepBack1Btn = document.getElementById('stepBack1Btn');
+    const stepForward1Btn = document.getElementById('stepForward1Btn');
     const muteBtn = document.getElementById('muteBtn');
     const volumeSlider = document.getElementById('volumeSlider');
-    const volumeHighIcon = document.getElementById('volumeHighIcon');
-    const volumeMutedIcon = document.getElementById('volumeMutedIcon');
-
-    // Bookmarks and Search DOM
-    const addBookmarkBtn = document.getElementById('addBookmarkBtn');
-    const bookmarksContainer = document.getElementById('bookmarksContainer');
-    const emptyBookmarksState = document.getElementById('emptyBookmarksState');
-    const bookmarksCountBadge = document.getElementById('bookmarksCountBadge');
     const tabBookmarksBtn = document.getElementById('tabBookmarksBtn');
     const tabSearchBtn = document.getElementById('tabSearchBtn');
     const bookmarksPanel = document.getElementById('bookmarksPanel');
     const searchPanel = document.getElementById('searchPanel');
+    const bookmarksContainer = document.getElementById('bookmarksContainer');
+    const emptyBookmarksState = document.getElementById('emptyBookmarksState');
+    const bookmarksCountBadge = document.getElementById('bookmarksCountBadge');
     const searchInput = document.getElementById('searchInput');
     const searchResultsContainer = document.getElementById('searchResultsContainer');
-    const searchResultsCount = document.getElementById('searchResultsCount');
-    const globalSpanCycleBtn = document.getElementById('globalSpanCycleBtn');
-    const importBookmarksFileInput = document.getElementById('importBookmarksFileInput');
+    const emptySearchState = document.getElementById('emptySearchState');
+    const searchStats = document.getElementById('searchStats');
+    const globalSpanBtn = document.getElementById('globalSpanBtn');
+    const importTxtInput = document.getElementById('importTxtInput');
     const exportTxtBtn = document.getElementById('exportTxtBtn');
     const exportEpubBtn = document.getElementById('exportEpubBtn');
-    const clearBookmarksBtn = document.getElementById('clearBookmarksBtn');
-
-    // Settings Modal DOM
+    const clearAllBtn = document.getElementById('clearAllBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModal = document.getElementById('settingsModal');
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
@@ -537,45 +521,29 @@
     const wordCapMinusBtn = document.getElementById('wordCapMinusBtn');
     const wordCapPlusBtn = document.getElementById('wordCapPlusBtn');
     const wordCapValDisplay = document.getElementById('wordCapValDisplay');
-    const interpTargetMinusBtn = document.getElementById('interpTargetMinusBtn');
-    const interpTargetPlusBtn = document.getElementById('interpTargetPlusBtn');
-    const interpTargetValDisplay = document.getElementById('interpTargetValDisplay');
-    const reactionOffsetMinusBtn = document.getElementById('reactionOffsetMinusBtn');
-    const reactionOffsetPlusBtn = document.getElementById('reactionOffsetPlusBtn');
-    const reactionOffsetValDisplay = document.getElementById('reactionOffsetValDisplay');
-    const toast = document.getElementById('toast');
-
-    function showToast(msg) {
-      toast.textContent = msg;
-      toast.classList.remove('opacity-0', 'translate-y-2');
-      toast.classList.add('opacity-100', 'translate-y-0');
-      setTimeout(() => {
-        toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', 'translate-y-2');
-      }, 2600);
-    }
+    const minWordsMinusBtn = document.getElementById('minWordsMinusBtn');
+    const minWordsPlusBtn = document.getElementById('minWordsPlusBtn');
+    const minWordsValDisplay = document.getElementById('minWordsValDisplay');
+    const offsetMinusBtn = document.getElementById('offsetMinusBtn');
+    const offsetPlusBtn = document.getElementById('offsetPlusBtn');
+    const offsetValDisplay = document.getElementById('offsetValDisplay');
+    const toastNotification = document.getElementById('toastNotification');
 
     function formatTime(seconds) {
       if (isNaN(seconds) || seconds < 0) return '00:00';
-      const sec = Math.floor(seconds);
-      const h = Math.floor(sec / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = sec % 60;
-      if (h > 0) {
-        return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+      const s = Math.floor(seconds);
+      const hrs = Math.floor(s / 3600);
+      const mins = Math.floor((s % 3600) / 60);
+      const secs = s % 60;
+      if (hrs > 0) {
+        return `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
       }
-      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+      return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
-    function countWords(str) {
-      if (!str) return 0;
-      return str.trim().split(/\s+/).filter(Boolean).length;
-    }
-
-    // Parse standard SRT timecode (00:01:23,456) to seconds
-    function parseTimestamp(timeStr) {
-      if (!timeStr) return NaN;
-      const clean = timeStr.trim().replace(',', '.');
+    function parseTimestamp(timestampStr) {
+      if (!timestampStr) return NaN;
+      const clean = timestampStr.trim().replace(',', '.');
       const parts = clean.split(':');
       if (parts.length === 3) {
         return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
@@ -585,10 +553,24 @@
       return NaN;
     }
 
+    let toastTimer = null;
+    function showToast(message) {
+      if (!toastNotification) return;
+      toastNotification.textContent = message;
+      toastNotification.classList.remove('opacity-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastNotification.classList.add('opacity-0');
+      }, 2400);
+    }
+
     // Robust SRT subtitle parser
     function parseSRT(data) {
+      if (!data) return [];
+      // Strip UTF-8 Byte Order Mark (BOM) if present from iOS file exports
+      const cleanData = data.replace(/^\uFEFF/, '');
       const cues = [];
-      const blocks = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\n\s*\n/);
+      const blocks = cleanData.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split(/\n\s*\n/);
       
       for (const block of blocks) {
         const lines = block.trim().split('\n').filter(Boolean);
@@ -622,497 +604,218 @@
       return cues;
     }
 
-    // Abbreviation-aware sentence boundary segmenter
-    function tokenizeSentences(text) {
+    // Abbreviation-aware sentence boundary tokenizer
+    function splitTextIntoSentences(text, wordCap = 70) {
       if (!text || !text.trim()) return [];
 
-      // Protect known abbreviations and decimal numbers
-      const abbreviations = [
-        'Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'Sr', 'Jr', 'vs', 'etc', 'eg', 'ie', 'al',
-        'M', 'Mme', 'Mlle', 'cf'
-      ];
-      let masked = text;
-      abbreviations.forEach(abbr => {
-        const regex = new RegExp(`\\b${abbr}\\.`, 'gi');
-        masked = masked.replace(regex, `${abbr}__DOT__`);
-      });
-      // Protect decimals (e.g. 3.14)
-      masked = masked.replace(/(\d)\.(\d)/g, '$1__DECIMAL__$2');
+      const abbrevs = /\b(Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec|M|Mme|Mlle|cf|vol|dept|univ)\.$/i;
+      
+      // Tokenize by sentence end punctuation followed by whitespace or bracketed audio annotations
+      // Example: '...jamais. [souffle coupé] précisément...' -> splits after 'jamais.'
+      const rawSentences = [];
+      const regex = /([^.!?…]+[.!?…]+(?:\s*\[[^\]]+\])*)(?:\s+|$)|([^.!?…]+$)/g;
+      let match;
+      let buffer = '';
 
-      // Split at sentence boundaries: punctuation (. ! ? …) followed by whitespace, closing brackets, or quotes
-      const pattern = /([^.!?…]+[.!?…]+(?:["'”»\]\)]|\s+|$)|[^.!?…]+$)/g;
-      const rawSentences = masked.match(pattern) || [masked];
+      while ((match = regex.exec(text)) !== null) {
+        const part = (match[1] || match[2] || '').trim();
+        if (!part) continue;
 
-      const results = [];
-      for (let s of rawSentences) {
-        // Restore masked dots
-        s = s.replace(/__DOT__/g, '.').replace(/__DECIMAL__/g, '.').trim();
-        if (s.length > 0) results.push(s);
-      }
-      return results;
-    }
-
-    function buildEpisodeSentencesStream() {
-      state.sentences = [];
-      if (!state.cues || state.cues.length === 0) return;
-
-      // Group cues into continuous segments
-      for (let cIdx = 0; cIdx < state.cues.length; cIdx++) {
-        const cue = state.cues[cIdx];
-        const cueDuration = Math.max(0.1, cue.end - cue.start);
-        const cueSentences = tokenizeSentences(cue.text);
-
-        if (cueSentences.length <= 1 || !state.interpolationEnabled) {
-          // Single sentence or interpolation disabled
-          cueSentences.forEach((rawSent) => {
-            const chunks = chunkSentenceByCap(rawSent, state.wordCap);
-            chunks.forEach((chunk) => {
-              state.sentences.push({
-                index: state.sentences.length,
-                text: chunk,
-                start: cue.start,
-                end: cue.end,
-                cueIndex: cIdx,
-                isInterpolated: false
-              });
-            });
-          });
+        if (buffer) {
+          buffer += ' ' + part;
         } else {
-          // Multi-sentence cue with character-proportional linear interpolation
-          const totalChars = cueSentences.reduce((acc, s) => acc + s.length, 0);
-          let accumulatedChars = 0;
-
-          cueSentences.forEach((sent) => {
-            const sentStartPct = accumulatedChars / totalChars;
-            accumulatedChars += sent.length;
-            const sentEndPct = accumulatedChars / totalChars;
-
-            const sentStart = cue.start + (sentStartPct * cueDuration);
-            const sentEnd = cue.start + (sentEndPct * cueDuration);
-
-            const chunks = chunkSentenceByCap(sent, state.wordCap);
-            chunks.forEach((chunk) => {
-              state.sentences.push({
-                index: state.sentences.length,
-                text: chunk,
-                start: sentStart,
-                end: sentEnd,
-                cueIndex: cIdx,
-                isInterpolated: true
-              });
-            });
-          });
+          buffer = part;
         }
+
+        // If ends with abbreviation like "Dr." or "M.", keep buffering
+        const words = buffer.split(/\s+/);
+        const lastWord = words[words.length - 1];
+        if (abbrevs.test(lastWord)) {
+          continue;
+        }
+
+        rawSentences.push(buffer);
+        buffer = '';
       }
-    }
 
-    // Split long sentence chunks according to the configured sentence word cap
-    function chunkSentenceByCap(text, cap) {
-      const words = text.trim().split(/\s+/).filter(Boolean);
-      if (words.length <= cap) return [text];
-
-      const chunks = [];
-      for (let i = 0; i < words.length; i += cap) {
-        chunks.push(words.slice(i, i + cap).join(' '));
+      if (buffer.trim()) {
+        rawSentences.push(buffer.trim());
       }
-      return chunks;
-    }
 
-    function findTargetSentenceIndexForTime(time) {
-      if (!state.sentences || state.sentences.length === 0) return -1;
-
-      // Find sentence overlapping the timecode
-      for (let i = 0; i < state.sentences.length; i++) {
-        const s = state.sentences[i];
-        if (time >= s.start && time <= s.end) {
-          // If in first 2 seconds, account for human reaction delay
-          if ((time - s.start < 2.0) && i > 0) {
-            return i - 1;
+      // Enforce the sentence word cap for run-on or unpunctuated subtitle tracks
+      const finalSentences = [];
+      for (const s of rawSentences) {
+        const words = s.split(/\s+/).filter(Boolean);
+        if (words.length <= wordCap) {
+          finalSentences.push(s);
+        } else {
+          for (let i = 0; i < words.length; i += wordCap) {
+            const chunk = words.slice(i, i + wordCap).join(' ');
+            if (chunk) finalSentences.push(chunk);
           }
-          return i;
         }
       }
 
-      // If time is before first sentence
-      if (time < state.sentences[0].start) return 0;
-
-      // Find closest preceding sentence
-      for (let i = state.sentences.length - 1; i >= 0; i--) {
-        if (time >= state.sentences[i].start) return i;
-      }
-      return state.sentences.length - 1;
+      return finalSentences;
     }
 
-    // Symmetrical sentence expansion for interpolated cues to meet minimum word count
-    function calculateInterpolatedSpanAndStart(targetIdx, minWords) {
-      if (!state.sentences || state.sentences.length === 0 || targetIdx < 0) {
-        return { startIdx: targetIdx, span: 1 };
+    // Stitch subtitle cues into a continuous transcript stream with millisecond timecode anchors
+    function buildEpisodeSentencesStream() {
+      if (!state.cues || state.cues.length === 0) {
+        state.sentences = [];
+        return;
       }
 
-      let startIdx = targetIdx;
-      let endIdx = targetIdx;
-      let totalWords = countWords(state.sentences[targetIdx].text);
+      const sentences = [];
+      let globalIndex = 0;
 
-      let expandBefore = true;
-      while (totalWords < minWords && (startIdx > 0 || endIdx < state.sentences.length - 1)) {
-        if (expandBefore && startIdx > 0) {
-          startIdx--;
-          totalWords += countWords(state.sentences[startIdx].text);
-          if (endIdx < state.sentences.length - 1) expandBefore = false;
-        } else if (endIdx < state.sentences.length - 1) {
-          endIdx++;
-          totalWords += countWords(state.sentences[endIdx].text);
-          if (startIdx > 0) expandBefore = true;
-        } else if (startIdx > 0) {
-          startIdx--;
-          totalWords += countWords(state.sentences[startIdx].text);
+      for (let cueIdx = 0; cueIdx < state.cues.length; cueIdx++) {
+        const cue = state.cues[cueIdx];
+        const cueDuration = Math.max(0.2, cue.end - cue.start);
+        const rawSplit = splitTextIntoSentences(cue.text, state.sentenceWordCap);
+
+        if (rawSplit.length === 0) continue;
+
+        if (!state.interpolationEnabled || rawSplit.length === 1) {
+          // No interpolation or single sentence: allocate cue timeframe
+          for (const sText of rawSplit) {
+            sentences.push({
+              index: globalIndex++,
+              cueIndex: cueIdx,
+              start: cue.start,
+              end: cue.end,
+              text: sText,
+              wordsCount: sText.split(/\s+/).filter(Boolean).length,
+              isInterpolated: false
+            });
+          }
         } else {
-          break;
+          // Linear interpolation: distribute timestamps proportionally based on character length
+          const totalChars = rawSplit.reduce((acc, s) => acc + s.length, 0);
+          let currentCharOffset = 0;
+
+          for (const sText of rawSplit) {
+            const charRatioStart = currentCharOffset / totalChars;
+            const charRatioEnd = (currentCharOffset + sText.length) / totalChars;
+
+            const sStart = cue.start + (charRatioStart * cueDuration);
+            const sEnd = cue.start + (charRatioEnd * cueDuration);
+
+            sentences.push({
+              index: globalIndex++,
+              cueIndex: cueIdx,
+              start: sStart,
+              end: sEnd,
+              text: sText,
+              wordsCount: sText.split(/\s+/).filter(Boolean).length,
+              isInterpolated: true
+            });
+
+            currentCharOffset += sText.length;
+          }
         }
+      }
+
+      state.sentences = sentences;
+    }
+
+    function findTargetSentenceIndexForTime(targetTime) {
+      if (state.sentences.length === 0) return -1;
+      
+      const exactIndex = state.sentences.findIndex(s => targetTime >= s.start && targetTime <= s.end);
+      if (exactIndex !== -1) return exactIndex;
+
+      // Nearest fallback
+      let closestIdx = 0;
+      let minDiff = Infinity;
+      for (let i = 0; i < state.sentences.length; i++) {
+        const diff = Math.abs(state.sentences[i].start - targetTime);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIdx = i;
+        }
+      }
+      return closestIdx;
+    }
+
+    // Two-sided symmetrical sentence expansion to guarantee minimum words on interpolated cues
+    function calculateInterpolatedSpanAndStart(centerIdx, minWords) {
+      let startIndex = centerIdx;
+      let endIndex = centerIdx;
+      let totalWords = state.sentences[centerIdx] ? state.sentences[centerIdx].wordsCount : 0;
+
+      let expandLeft = true;
+      while (totalWords < minWords) {
+        let expanded = false;
+        if (expandLeft) {
+          if (startIndex > 0) {
+            startIndex--;
+            totalWords += state.sentences[startIndex].wordsCount;
+            expanded = true;
+          }
+          expandLeft = false;
+        } else {
+          if (endIndex < state.sentences.length - 1) {
+            endIndex++;
+            totalWords += state.sentences[endIndex].wordsCount;
+            expanded = true;
+          }
+          expandLeft = true;
+        }
+        if (!expanded) break; // Reached boundaries of transcript
       }
 
       return {
-        startIdx: startIdx,
-        span: Math.max(1, (endIdx - startIdx) + 1)
+        startIndex: startIndex,
+        span: (endIndex - startIndex) + 1
       };
     }
 
     function triggerBookmarkCreation() {
       if (!state.videoUrl) {
-        showToast('Load an episode first');
+        showToast('Load a podcast first');
         return;
       }
 
       const pressTime = media.currentTime;
-      // Reaction delay offset only applies on user click creation
-      const offsetTime = Math.max(0, pressTime + state.reactionOffset);
+      // Reaction delay offset compensation applied at moment of click
+      const bookmarkedTime = Math.max(0, pressTime + state.reactionOffsetSeconds);
 
-      let targetIndex = -1;
-      let span = state.globalSpan;
+      let targetIdx = -1;
+      let spanCount = state.globalBaseSpan || 1;
 
       if (state.sentences.length > 0) {
-        targetIndex = findTargetSentenceIndexForTime(offsetTime);
-        if (targetIndex >= 0) {
-          const sent = state.sentences[targetIndex];
+        targetIdx = findTargetSentenceIndexForTime(bookmarkedTime);
+        if (targetIdx !== -1) {
+          const sent = state.sentences[targetIdx];
           if (sent && sent.isInterpolated) {
-            const spanInfo = calculateInterpolatedSpanAndStart(targetIndex, state.interpTargetWords);
-            targetIndex = spanInfo.startIdx;
-            span = spanInfo.span;
+            // Apply two-sided symmetrical expansion for minimum words
+            const spanResult = calculateInterpolatedSpanAndStart(targetIdx, state.interpMinWords);
+            targetIdx = spanResult.startIndex;
+            spanCount = spanResult.span;
           }
         }
       }
 
       const newBookmark = {
         id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        time: offsetTime,      // Permanent audio timecode
-        targetIndex: targetIndex,
-        span: span,            // Number of highlighted sentences
-        preCount: 1,           // Preceding context sentences
-        postCount: 1,          // Following context sentences
-        noteText: '',          // Optional user note
-        isEditing: false
+        time: bookmarkedTime,
+        targetSentenceIndex: targetIdx,
+        shiftOffset: 0,
+        span: spanCount,
+        preCount: 1,
+        postCount: 1,
+        userCustomNote: null
       };
 
       state.bookmarks.unshift(newBookmark);
-      playChime(true);
-      showToast(`Bookmark added at ${formatTime(newBookmark.time)}`);
-      saveBookmarks();
+      saveBookmarksToStorage();
       renderBookmarks();
+      playChime(true);
+      showToast(`Bookmarked at ${formatTime(bookmarkedTime)}`);
     }
 
-    function renderBookmarks() {
-      bookmarksCountBadge.textContent = state.bookmarks.length;
-
-      if (state.bookmarks.length === 0) {
-        emptyBookmarksState.classList.remove('hidden');
-        bookmarksContainer.innerHTML = '';
-        bookmarksContainer.appendChild(emptyBookmarksState);
-        return;
-      }
-      emptyBookmarksState.classList.add('hidden');
-      bookmarksContainer.innerHTML = '';
-
-      state.bookmarks.forEach((bm) => {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-950/70 border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-3 flex flex-col gap-2.5 transition shadow-sm';
-
-        // Top Header: Timestamp pill, Retarget Clock Button, Pencil, Trash
-        const topRow = document.createElement('div');
-        topRow.className = 'flex items-center justify-between gap-2';
-
-        const leftGroup = document.createElement('div');
-        leftGroup.className = 'flex items-center gap-1.5';
-
-        // Jump to Bookmark Timecode Button
-        const timeBtn = document.createElement('button');
-        timeBtn.className = 'h-6 px-2 rounded bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-mono text-[11px] font-bold border border-indigo-500/30 flex items-center gap-1 transition';
-        timeBtn.innerHTML = `<span>${formatTime(bm.time)}</span>`;
-        timeBtn.onclick = () => {
-          media.currentTime = bm.time;
-          updateMediaSessionPosition();
-          media.play().catch(() => {});
-        };
-
-        // Retarget Clock Button (Turns Red with '?' when Armed)
-        const retargetBtn = document.createElement('button');
-        retargetBtn.className = 'edit-time-btn h-6 px-2 rounded text-[10px] font-bold flex items-center justify-center transition border ';
-        
-        if (state.armedTimeCorrectionId === bm.id) {
-          // ARMED STATE: Red with '?'
-          retargetBtn.className += 'bg-rose-600 text-white border-rose-500 armed-pulse shadow-md shadow-rose-600/40';
-          retargetBtn.innerHTML = '<span>?</span>';
-          retargetBtn.title = 'Click again to confirm retargeting timestamp to current playhead';
-        } else {
-          // NORMAL STATE: Slate with Clock Icon
-          retargetBtn.className += 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border-slate-700/60';
-          retargetBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 6v6l4 2"/></svg>`;
-          retargetBtn.title = 'Update timestamp to current playhead time';
-        }
-
-        retargetBtn.onclick = (e) => {
-          e.stopPropagation();
-          if (state.armedTimeCorrectionId === bm.id) {
-            // CONFIRM RETARGET:
-            // CRITICAL REQUIREMENT: Update the timecode ONLY.
-            // Do NOT alter targetIndex, span, preCount, postCount, or text!
-            bm.time = media.currentTime;
-            state.armedTimeCorrectionId = null;
-            playChime(true);
-            showToast(`Time updated to ${formatTime(bm.time)} (Text preserved)`);
-            saveBookmarks();
-            renderBookmarks();
-          } else {
-            // ARM RETARGET
-            state.armedTimeCorrectionId = bm.id;
-            renderBookmarks();
-          }
-        };
-
-        leftGroup.appendChild(timeBtn);
-        leftGroup.appendChild(retargetBtn);
-
-        // Right Actions: Pencil Edit & Delete
-        const rightGroup = document.createElement('div');
-        rightGroup.className = 'flex items-center gap-1.5';
-
-        const editNoteBtn = document.createElement('button');
-        editNoteBtn.className = 'h-6 w-6 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center transition';
-        editNoteBtn.title = 'Edit Note';
-        editNoteBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
-        editNoteBtn.onclick = () => {
-          bm.isEditing = !bm.isEditing;
-          renderBookmarks();
-        };
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'h-6 w-6 rounded bg-slate-800/80 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 flex items-center justify-center transition';
-        deleteBtn.title = 'Delete Bookmark';
-        deleteBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`;
-        deleteBtn.onclick = () => {
-          state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
-          saveBookmarks();
-          renderBookmarks();
-          showToast('Bookmark deleted');
-        };
-
-        rightGroup.appendChild(editNoteBtn);
-        rightGroup.appendChild(deleteBtn);
-        topRow.appendChild(leftGroup);
-        topRow.appendChild(rightGroup);
-        card.appendChild(topRow);
-
-        if (state.sentences.length > 0 && bm.targetIndex >= 0) {
-          const stepperToolbar = document.createElement('div');
-          stepperToolbar.className = 'flex flex-wrap items-center justify-between gap-1.5 py-1 px-1.5 rounded-lg bg-slate-900/90 border border-slate-800/80 text-[10px] font-semibold text-slate-400';
-
-          // PRE Stepper
-          const preGroup = document.createElement('div');
-          preGroup.className = 'flex items-center gap-1';
-          preGroup.innerHTML = `<span>PRE</span>`;
-          const preMinus = document.createElement('button');
-          preMinus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          preMinus.textContent = '-';
-          preMinus.onclick = () => {
-            if (bm.preCount > 0) { bm.preCount--; saveBookmarks(); renderBookmarks(); }
-          };
-          const preVal = document.createElement('span');
-          preVal.className = 'font-mono text-slate-200 min-w-[12px] text-center';
-          preVal.textContent = bm.preCount;
-          const prePlus = document.createElement('button');
-          prePlus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          prePlus.textContent = '+';
-          prePlus.onclick = () => {
-            if (bm.preCount < 6) { bm.preCount++; saveBookmarks(); renderBookmarks(); }
-          };
-          preGroup.appendChild(preMinus);
-          preGroup.appendChild(preVal);
-          preGroup.appendChild(prePlus);
-
-          // HL Shift Stepper
-          const hlGroup = document.createElement('div');
-          hlGroup.className = 'flex items-center gap-1';
-          hlGroup.innerHTML = `<span>HL</span>`;
-          const hlLeft = document.createElement('button');
-          hlLeft.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          hlLeft.textContent = '◀';
-          hlLeft.onclick = () => {
-            if (bm.targetIndex > 0) { bm.targetIndex--; saveBookmarks(); renderBookmarks(); }
-          };
-          const hlLabel = document.createElement('span');
-          hlLabel.className = 'font-mono text-amber-300 px-1';
-          hlLabel.textContent = `S${bm.targetIndex + 1}`;
-          const hlRight = document.createElement('button');
-          hlRight.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          hlRight.textContent = '▶';
-          hlRight.onclick = () => {
-            if (bm.targetIndex < state.sentences.length - 1) { bm.targetIndex++; saveBookmarks(); renderBookmarks(); }
-          };
-          hlGroup.appendChild(hlLeft);
-          hlGroup.appendChild(hlLabel);
-          hlGroup.appendChild(hlRight);
-
-          // SPAN Stepper (Highlight Base Unit)
-          const spanGroup = document.createElement('div');
-          spanGroup.className = 'flex items-center gap-1';
-          spanGroup.innerHTML = `<span>SPAN</span>`;
-          const spanMinus = document.createElement('button');
-          spanMinus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          spanMinus.textContent = '-';
-          spanMinus.onclick = () => {
-            if (bm.span > 1) { bm.span--; saveBookmarks(); renderBookmarks(); }
-          };
-          const spanVal = document.createElement('span');
-          spanVal.className = 'font-mono text-amber-300 min-w-[14px] text-center';
-          spanVal.textContent = `${bm.span}s`;
-          const spanPlus = document.createElement('button');
-          spanPlus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          spanPlus.textContent = '+';
-          spanPlus.onclick = () => {
-            if (bm.span < 10) { bm.span++; saveBookmarks(); renderBookmarks(); }
-          };
-          spanGroup.appendChild(spanMinus);
-          spanGroup.appendChild(spanVal);
-          spanGroup.appendChild(spanPlus);
-
-          // POST Stepper
-          const postGroup = document.createElement('div');
-          postGroup.className = 'flex items-center gap-1';
-          postGroup.innerHTML = `<span>POST</span>`;
-          const postMinus = document.createElement('button');
-          postMinus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          postMinus.textContent = '-';
-          postMinus.onclick = () => {
-            if (bm.postCount > 0) { bm.postCount--; saveBookmarks(); renderBookmarks(); }
-          };
-          const postVal = document.createElement('span');
-          postVal.className = 'font-mono text-slate-200 min-w-[12px] text-center';
-          postVal.textContent = bm.postCount;
-          const postPlus = document.createElement('button');
-          postPlus.className = 'card-stepper-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold';
-          postPlus.textContent = '+';
-          postPlus.onclick = () => {
-            if (bm.postCount < 6) { bm.postCount++; saveBookmarks(); renderBookmarks(); }
-          };
-          postGroup.appendChild(postMinus);
-          postGroup.appendChild(postVal);
-          postGroup.appendChild(postPlus);
-
-          stepperToolbar.appendChild(preGroup);
-          stepperToolbar.appendChild(hlGroup);
-          stepperToolbar.appendChild(spanGroup);
-          stepperToolbar.appendChild(postGroup);
-          card.appendChild(stepperToolbar);
-        }
-
-        // Sentence Passage Box (Fluid auto-height, ZERO internal scrollbars)
-        const textContainer = document.createElement('div');
-        textContainer.className = 'sentence-text-card text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/70 select-text';
-
-        if (state.sentences.length > 0 && bm.targetIndex >= 0) {
-          const preSentences = [];
-          for (let i = Math.max(0, bm.targetIndex - bm.preCount); i < bm.targetIndex; i++) {
-            preSentences.push(state.sentences[i].text);
-          }
-
-          const targetSentences = [];
-          for (let i = bm.targetIndex; i < Math.min(state.sentences.length, bm.targetIndex + bm.span); i++) {
-            targetSentences.push(state.sentences[i].text);
-          }
-
-          const postSentences = [];
-          for (let i = bm.targetIndex + bm.span; i < Math.min(state.sentences.length, bm.targetIndex + bm.span + bm.postCount); i++) {
-            postSentences.push(state.sentences[i].text);
-          }
-
-          let html = '';
-          if (preSentences.length > 0) {
-            html += `<span class="text-slate-400 opacity-90">${escapeHtml(preSentences.join(' '))} </span>`;
-          }
-          if (targetSentences.length > 0) {
-            html += `<span class="sentence-highlight">${escapeHtml(targetSentences.join(' '))}</span>`;
-          }
-          if (postSentences.length > 0) {
-            html += `<span class="text-slate-400 opacity-90"> ${escapeHtml(postSentences.join(' '))}</span>`;
-          }
-          textContainer.innerHTML = html;
-        } else {
-          // Fallback if no SRT is loaded
-          textContainer.innerHTML = `<span class="sentence-highlight">${escapeHtml(bm.noteText || 'Bookmark timestamp')}</span>`;
-        }
-        card.appendChild(textContainer);
-
-        // Optional Inline Note Editor
-        if (bm.isEditing) {
-          const noteEditor = document.createElement('textarea');
-          noteEditor.className = 'w-full bg-slate-950 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none overflow-hidden';
-          noteEditor.placeholder = 'Add custom notes for this bookmark...';
-          noteEditor.rows = 2;
-          noteEditor.value = bm.noteText || '';
-          noteEditor.oninput = () => {
-            noteEditor.style.height = 'auto';
-            noteEditor.style.height = noteEditor.scrollHeight + 'px';
-            bm.noteText = noteEditor.value;
-            saveBookmarks();
-          };
-          card.appendChild(noteEditor);
-        }
-
-        bookmarksContainer.appendChild(card);
-      });
-    }
-
-    document.addEventListener('click', (e) => {
-      if (state.armedTimeCorrectionId) {
-        if (!e.target.closest('.edit-time-btn')) {
-          state.armedTimeCorrectionId = null;
-          renderBookmarks();
-        }
-      }
-    });
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    // Save and load bookmark data from localStorage
-    function saveBookmarks() {
-      if (!state.videoName) return;
-      try {
-        localStorage.setItem(`dc_bookmarks_${state.videoName}`, JSON.stringify(state.bookmarks));
-      } catch (e) {}
-    }
-
-    function loadSavedVideoData(name) {
-      try {
-        const raw = localStorage.getItem(`dc_bookmarks_${name}`);
-        if (raw) {
-          state.bookmarks = JSON.parse(raw);
-          renderBookmarks();
-        }
-      } catch (e) {}
-    }
-
+    // AirPods Remote Double-Tap Trigger & MediaSession API Integration
     let lastTapTime = 0;
     function handleAirPodsTapTrigger() {
       const now = Date.now();
@@ -1125,15 +828,22 @@
     }
 
     if ('mediaSession' in navigator) {
-      navigator.mediaSession.setActionHandler('play', () => {
-        media.play().catch(e => console.warn('iOS MediaSession play error:', e));
+      navigator.mediaSession.setActionHandler('play', async () => {
+        try {
+          await media.play();
+          navigator.mediaSession.playbackState = 'playing';
+          updateMediaSessionPosition();
+        } catch (e) {
+          console.warn('iOS MediaSession play error:', e);
+        }
       });
       navigator.mediaSession.setActionHandler('pause', () => {
-        handleAirPodsTapTrigger();
         media.pause();
+        navigator.mediaSession.playbackState = 'paused';
+        updateMediaSessionPosition();
       });
-      navigator.mediaSession.setActionHandler('nexttrack', () => handleAirPodsTapTrigger());
-      navigator.mediaSession.setActionHandler('previoustrack', () => handleAirPodsTapTrigger());
+      navigator.mediaSession.setActionHandler('nexttrack', () => triggerBookmarkCreation());
+      navigator.mediaSession.setActionHandler('previoustrack', () => triggerBookmarkCreation());
 
       navigator.mediaSession.setActionHandler('seekbackward', (details) => {
         const skip = (details && details.seekOffset) || 10;
@@ -1185,6 +895,7 @@
       pauseIcon.classList.remove('hidden');
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'playing';
+        updateMediaSessionPosition();
       }
     });
 
@@ -1193,10 +904,19 @@
       playIcon.classList.remove('hidden');
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
+        updateMediaSessionPosition();
       }
     });
 
-    // Time Scrubber Update
+    media.addEventListener('seeked', () => {
+      updateMediaSessionPosition();
+    });
+
+    media.addEventListener('ratechange', () => {
+      updateMediaSessionPosition();
+    });
+
+    // Time Scrubber Update: Update UI only; DO NOT call setPositionState here (prevents iOS audio stutter/freeze)
     media.addEventListener('timeupdate', () => {
       if (!media.duration) return;
       const cur = media.currentTime;
@@ -1215,7 +935,6 @@
       } else {
         subtitleBox.classList.add('hidden');
       }
-      updateMediaSessionPosition();
     });
 
     media.addEventListener('loadedmetadata', () => {
@@ -1227,117 +946,449 @@
     timeSlider.addEventListener('input', () => {
       if (!media.duration) return;
       media.currentTime = (timeSlider.value / 100) * media.duration;
+    });
+
+    timeSlider.addEventListener('change', () => {
       updateMediaSessionPosition();
     });
 
-    // Skips and Precision Micro-Steps
     skipBack10Btn.addEventListener('click', () => {
       media.currentTime = Math.max(0, media.currentTime - 10);
       updateMediaSessionPosition();
     });
-    skipFwd10Btn.addEventListener('click', () => {
+
+    skipForward10Btn.addEventListener('click', () => {
       media.currentTime = Math.min(media.duration || Infinity, media.currentTime + 10);
       updateMediaSessionPosition();
     });
-    stepBack1sBtn.addEventListener('click', () => {
+
+    stepBack1Btn.addEventListener('click', () => {
       media.currentTime = Math.max(0, media.currentTime - 1);
       updateMediaSessionPosition();
     });
-    stepFwd1sBtn.addEventListener('click', () => {
+
+    stepForward1Btn.addEventListener('click', () => {
       media.currentTime = Math.min(media.duration || Infinity, media.currentTime + 1);
       updateMediaSessionPosition();
     });
 
-    // Volume & Mute Controls
-    muteBtn.addEventListener('click', () => {
-      media.muted = !media.muted;
-      if (media.muted) {
-        volumeHighIcon.classList.add('hidden');
-        volumeMutedIcon.classList.remove('hidden');
-      } else {
-        volumeMutedIcon.classList.add('hidden');
-        volumeHighIcon.classList.remove('hidden');
-      }
+    // Playback Speed Selector (0.75x -> 1.0x -> 1.25x -> 1.5x -> 1.75x -> 2.0x)
+    const speeds = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+    speedBtn.addEventListener('click', () => {
+      let currentIdx = speeds.indexOf(media.playbackRate);
+      if (currentIdx === -1) currentIdx = 1;
+      const nextIdx = (currentIdx + 1) % speeds.length;
+      const newSpeed = speeds[nextIdx];
+      media.playbackRate = newSpeed;
+      speedBtn.textContent = `${newSpeed}x`;
+      showToast(`Speed: ${newSpeed}x`);
     });
 
-    volumeSlider.addEventListener('input', () => {
-      media.volume = parseFloat(volumeSlider.value);
-      media.muted = media.volume === 0;
-      if (media.muted) {
-        volumeHighIcon.classList.add('hidden');
-        volumeMutedIcon.classList.remove('hidden');
-      } else {
-        volumeMutedIcon.classList.add('hidden');
-        volumeHighIcon.classList.remove('hidden');
-      }
-    });
-
-    // Speed Cycle
-    const speeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.75];
-    playbackRateBtn.addEventListener('click', () => {
-      const curIdx = speeds.indexOf(state.playbackRate);
-      state.playbackRate = speeds[(curIdx + 1) % speeds.length];
-      media.playbackRate = state.playbackRate;
-      playbackRateBtn.textContent = `${state.playbackRate}x`;
-      updateMediaSessionPosition();
-    });
-
-    // CC Toggle
-    ccToggleBtn.addEventListener('click', () => {
+    // Closed Caption Display Toggle
+    toggleCcBtn.addEventListener('click', () => {
       state.ccVisible = !state.ccVisible;
       if (state.ccVisible) {
-        ccToggleBtn.textContent = 'CC ON';
-        ccToggleBtn.className = 'h-8 px-2 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition';
+        toggleCcBtn.className = 'px-2 py-1 rounded bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-bold active:scale-95 transition';
       } else {
-        ccToggleBtn.textContent = 'CC OFF';
-        ccToggleBtn.className = 'h-8 px-2 rounded-lg bg-slate-800 text-slate-400 border border-slate-700/80 text-xs font-semibold transition';
+        toggleCcBtn.className = 'px-2 py-1 rounded bg-slate-800 text-slate-500 border border-slate-700/60 text-[11px] font-bold active:scale-95 transition';
         subtitleBox.classList.add('hidden');
       }
     });
 
-    // Add Bookmark Button
+    // Global Highlight Base Unit Button (HL: 1 sent -> 2 sent -> 3 sent...)
+    globalSpanBtn.addEventListener('click', () => {
+      state.globalBaseSpan = (state.globalBaseSpan % 5) + 1;
+      globalSpanBtn.textContent = `HL: ${state.globalBaseSpan} sent`;
+      showToast(`Default highlight span: ${state.globalBaseSpan} sentence(s)`);
+    });
+
+    // Audio Volume & Mute Controls
+    muteBtn.addEventListener('click', () => {
+      media.muted = !media.muted;
+      if (media.muted) {
+        volumeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>`;
+      } else {
+        volumeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>`;
+      }
+    });
+
+    volumeSlider.addEventListener('input', () => {
+      media.volume = volumeSlider.value;
+      media.muted = false;
+    });
+
     addBookmarkBtn.addEventListener('click', () => triggerBookmarkCreation());
 
+    function saveBookmarksToStorage() {
+      if (!state.currentFileName) return;
+      try {
+        localStorage.setItem(`dc_bm_${state.currentFileName}`, JSON.stringify(state.bookmarks));
+      } catch (e) {}
+    }
+
+    function loadBookmarksFromStorage() {
+      if (!state.currentFileName) return;
+      try {
+        const data = localStorage.getItem(`dc_bm_${state.currentFileName}`);
+        if (data) {
+          state.bookmarks = JSON.parse(data);
+        } else {
+          state.bookmarks = [];
+        }
+      } catch (e) {
+        state.bookmarks = [];
+      }
+    }
+
+    // Re-synchronize bookmark indices when word cap changes without drifting
+    function resyncBookmarkIndices() {
+      if (!state.sentences || state.sentences.length === 0) return;
+      for (const bm of state.bookmarks) {
+        const effectiveTime = bm.time;
+        const newIdx = findTargetSentenceIndexForTime(effectiveTime);
+        if (newIdx !== -1) {
+          bm.targetSentenceIndex = newIdx + (bm.shiftOffset || 0);
+        }
+      }
+      renderBookmarks();
+    }
+
+    function renderBookmarks() {
+      bookmarksContainer.innerHTML = '';
+      bookmarksCountBadge.textContent = state.bookmarks.length;
+
+      if (state.bookmarks.length === 0) {
+        bookmarksContainer.appendChild(emptyBookmarksState);
+        emptyBookmarksState.classList.remove('hidden');
+        return;
+      }
+      emptyBookmarksState.classList.add('hidden');
+
+      state.bookmarks.forEach((bm) => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950/70 border border-slate-800/90 rounded-xl p-3 flex flex-col gap-2 hover:border-slate-700 transition shadow-sm';
+
+        // Row 1: Timecode, Retarget Trigger, Edit & Delete
+        const topRow = document.createElement('div');
+        topRow.className = 'flex items-center justify-between gap-2';
+
+        const leftMeta = document.createElement('div');
+        leftMeta.className = 'flex items-center gap-1.5';
+
+        // Clickable Timecode Badge (Jumps to exact audio timestamp)
+        const timeBadge = document.createElement('button');
+        timeBadge.className = 'px-2 py-0.5 rounded bg-indigo-900/60 hover:bg-indigo-800/80 active:scale-95 text-indigo-300 font-mono font-bold text-xs border border-indigo-700/50 transition';
+        timeBadge.textContent = formatTime(bm.time);
+        timeBadge.title = 'Jump to exact bookmark timestamp';
+        timeBadge.onclick = () => {
+          media.currentTime = bm.time;
+          media.play().catch(() => {});
+          updateMediaSessionPosition();
+        };
+        leftMeta.appendChild(timeBadge);
+
+        // Interactive Two-Step Timecode Retarget Button
+        const retargetBtn = document.createElement('button');
+        retargetBtn.title = 'Retarget timestamp to current audio playhead position';
+        retargetBtn.dataset.bookmarkId = bm.id;
+
+        if (state.activeRetargetId === bm.id) {
+          retargetBtn.className = 'w-6 h-6 rounded bg-rose-600 text-white font-black text-xs flex items-center justify-center animate-pulse border border-rose-400 shadow-md transition';
+          retargetBtn.textContent = '?';
+        } else {
+          retargetBtn.className = 'w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs flex items-center justify-center border border-slate-700 transition';
+          retargetBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        }
+
+        retargetBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (state.activeRetargetId === bm.id) {
+            // STEP 2: Confirm retarget. Sets audio timestamp directly WITHOUT altering text/sentence selection!
+            bm.time = media.currentTime;
+            state.activeRetargetId = null;
+            saveBookmarksToStorage();
+            renderBookmarks();
+            playChime(true);
+            showToast(`Timecode synced to ${formatTime(bm.time)}`);
+          } else {
+            // STEP 1: Arm retarget
+            state.activeRetargetId = bm.id;
+            renderBookmarks();
+          }
+        };
+        leftMeta.appendChild(retargetBtn);
+        topRow.appendChild(leftMeta);
+
+        // Edit & Delete Action Buttons
+        const rightActions = document.createElement('div');
+        rightActions.className = 'flex items-center gap-1';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'p-1 rounded text-slate-400 hover:text-white transition';
+        editBtn.title = 'Edit note manually';
+        editBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`;
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'p-1 rounded text-slate-400 hover:text-rose-400 transition';
+        deleteBtn.title = 'Delete bookmark';
+        deleteBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+        deleteBtn.onclick = () => {
+          state.bookmarks = state.bookmarks.filter(b => b.id !== bm.id);
+          saveBookmarksToStorage();
+          renderBookmarks();
+          showToast('Bookmark deleted');
+        };
+
+        rightActions.appendChild(editBtn);
+        rightActions.appendChild(deleteBtn);
+        topRow.appendChild(rightActions);
+        card.appendChild(topRow);
+
+        // Row 2: Steppers Toolbar (Pre, HL, Span, Post)
+        if (state.sentences.length > 0 && bm.targetSentenceIndex !== -1) {
+          const steppersBar = document.createElement('div');
+          steppersBar.className = 'bg-slate-900 border border-slate-800 rounded-lg p-1.5 flex flex-wrap items-center justify-between gap-1 text-[11px] font-mono';
+
+          // Pre Context Stepper
+          const preBox = document.createElement('div');
+          preBox.className = 'flex items-center gap-1';
+          preBox.innerHTML = `
+            <span class="text-slate-400 text-[10px] font-bold">PRE</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center">-</button>
+            <span class="w-4 text-center font-bold text-slate-300">${bm.preCount || 0}</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center">+</button>
+          `;
+          const [preMinus, prePlus] = preBox.querySelectorAll('button');
+          preMinus.onclick = () => {
+            bm.preCount = Math.max(0, (bm.preCount || 0) - 1);
+            saveBookmarksToStorage();
+            renderBookmarks();
+          };
+          prePlus.onclick = () => {
+            bm.preCount = Math.min(10, (bm.preCount || 0) + 1);
+            saveBookmarksToStorage();
+            renderBookmarks();
+          };
+          steppersBar.appendChild(preBox);
+
+          // Highlight Shift Stepper (HL)
+          const hlBox = document.createElement('div');
+          hlBox.className = 'flex items-center gap-1';
+          hlBox.innerHTML = `
+            <span class="text-amber-400 text-[10px] font-bold">HL</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold flex items-center justify-center">&#9664;</button>
+            <span class="text-[10px] font-bold text-amber-300 px-1">S${(bm.targetSentenceIndex || 0) + 1}</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold flex items-center justify-center">&#9654;</button>
+          `;
+          const [hlLeft, hlRight] = hlBox.querySelectorAll('button');
+          hlLeft.onclick = () => {
+            if (bm.targetSentenceIndex > 0) {
+              bm.targetSentenceIndex--;
+              bm.shiftOffset = (bm.shiftOffset || 0) - 1;
+              saveBookmarksToStorage();
+              renderBookmarks();
+            }
+          };
+          hlRight.onclick = () => {
+            if (bm.targetSentenceIndex < state.sentences.length - 1) {
+              bm.targetSentenceIndex++;
+              bm.shiftOffset = (bm.shiftOffset || 0) + 1;
+              saveBookmarksToStorage();
+              renderBookmarks();
+            }
+          };
+          steppersBar.appendChild(hlBox);
+
+          // Highlight Base Unit Span Stepper (Span: 1s, 2s...)
+          const spanBox = document.createElement('div');
+          spanBox.className = 'flex items-center gap-1';
+          spanBox.innerHTML = `
+            <span class="text-amber-400 text-[10px] font-bold">SPAN</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold flex items-center justify-center">-</button>
+            <span class="text-center font-bold text-amber-300 text-[10px]">${bm.span || 1}s</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold flex items-center justify-center">+</button>
+          `;
+          const [spanMinus, spanPlus] = spanBox.querySelectorAll('button');
+          spanMinus.onclick = () => {
+            bm.span = Math.max(1, (bm.span || 1) - 1);
+            saveBookmarksToStorage();
+            renderBookmarks();
+          };
+          spanPlus.onclick = () => {
+            bm.span = Math.min(10, (bm.span || 1) + 1);
+            saveBookmarksToStorage();
+            renderBookmarks();
+          };
+          steppersBar.appendChild(spanBox);
+
+          // Post Context Stepper
+          const postBox = document.createElement('div');
+          postBox.className = 'flex items-center gap-1';
+          postBox.innerHTML = `
+            <span class="text-slate-400 text-[10px] font-bold">POST</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center">-</button>
+            <span class="w-4 text-center font-bold text-slate-300">${bm.postCount || 0}</span>
+            <button class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center">+</button>
+          `;
+          const [postMinus, postPlus] = postBox.querySelectorAll('button');
+          postMinus.onclick = () => {
+            bm.postCount = Math.max(0, (bm.postCount || 0) - 1);
+            saveBookmarksToStorage();
+            renderBookmarks();
+          };
+          postPlus.onclick = () => {
+            bm.postCount = Math.min(10, (bm.postCount || 0) + 1);
+            saveBookmarksToStorage();
+            renderBookmarks();
+          };
+          steppersBar.appendChild(postBox);
+
+          card.appendChild(steppersBar);
+        }
+
+        // Row 3: Sentence Preview (Pre, Target with Highlighter, Post)
+        const textWrapper = document.createElement('div');
+        textWrapper.className = 'text-xs text-slate-300 leading-relaxed break-words';
+
+        if (bm.userCustomNote !== null) {
+          // Display custom edited note
+          textWrapper.textContent = bm.userCustomNote;
+        } else if (state.sentences.length > 0 && bm.targetSentenceIndex !== -1) {
+          const preSentences = [];
+          for (let p = Math.max(0, bm.targetSentenceIndex - (bm.preCount || 0)); p < bm.targetSentenceIndex; p++) {
+            preSentences.push(state.sentences[p].text);
+          }
+
+          const targetSentences = [];
+          const spanLen = bm.span || 1;
+          for (let s = bm.targetSentenceIndex; s < Math.min(state.sentences.length, bm.targetSentenceIndex + spanLen); s++) {
+            targetSentences.push(state.sentences[s].text);
+          }
+
+          const postSentences = [];
+          const postStart = bm.targetSentenceIndex + spanLen;
+          for (let q = postStart; q < Math.min(state.sentences.length, postStart + (bm.postCount || 0)); q++) {
+            postSentences.push(state.sentences[q].text);
+          }
+
+          if (preSentences.length > 0) {
+            const preSpan = document.createElement('span');
+            preSpan.className = 'sentence-context';
+            preSpan.textContent = preSentences.join(' ') + ' ';
+            textWrapper.appendChild(preSpan);
+          }
+
+          const hlSpan = document.createElement('span');
+          hlSpan.className = 'sentence-highlight';
+          hlSpan.textContent = targetSentences.join(' ');
+          textWrapper.appendChild(hlSpan);
+
+          if (postSentences.length > 0) {
+            const postSpan = document.createElement('span');
+            postSpan.className = 'sentence-context';
+            postSpan.textContent = ' ' + postSentences.join(' ');
+            textWrapper.appendChild(postSpan);
+          }
+        } else {
+          textWrapper.className = 'text-xs text-slate-500 italic';
+          textWrapper.textContent = 'Bookmark recorded (No transcript loaded).';
+        }
+
+        // Inline Text Note Editor Container (Hidden by default)
+        const editorContainer = document.createElement('div');
+        editorContainer.className = 'flex flex-col gap-1.5 hidden pt-1';
+        const editorArea = document.createElement('textarea');
+        editorArea.className = 'w-full bg-slate-900 border border-indigo-500/50 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-400 font-sans leading-relaxed resize-none overflow-hidden';
+        
+        const editorBtns = document.createElement('div');
+        editorBtns.className = 'flex justify-end gap-1.5';
+        const cancelEditBtn = document.createElement('button');
+        cancelEditBtn.className = 'px-2 py-1 rounded bg-slate-800 text-[10px] font-medium text-slate-300';
+        cancelEditBtn.textContent = 'Cancel';
+        const saveEditBtn = document.createElement('button');
+        saveEditBtn.className = 'px-2.5 py-1 rounded bg-indigo-600 text-[10px] font-semibold text-white';
+        saveEditBtn.textContent = 'Save Note';
+
+        editorBtns.appendChild(cancelEditBtn);
+        editorBtns.appendChild(saveEditBtn);
+        editorContainer.appendChild(editorArea);
+        editorContainer.appendChild(editorBtns);
+
+        editBtn.onclick = () => {
+          editorArea.value = bm.userCustomNote !== null ? bm.userCustomNote : textWrapper.innerText;
+          textWrapper.classList.add('hidden');
+          editorContainer.classList.remove('hidden');
+          editorArea.style.height = 'auto';
+          editorArea.style.height = `${editorArea.scrollHeight + 6}px`;
+          editorArea.focus();
+        };
+
+        cancelEditBtn.onclick = () => {
+          editorContainer.classList.add('hidden');
+          textWrapper.classList.remove('hidden');
+        };
+
+        saveEditBtn.onclick = () => {
+          bm.userCustomNote = editorArea.value.trim();
+          saveBookmarksToStorage();
+          renderBookmarks();
+        };
+
+        card.appendChild(textWrapper);
+        card.appendChild(editorContainer);
+        bookmarksContainer.appendChild(card);
+      });
+    }
+
+    // Cancel any armed retarget trigger when clicking anywhere outside
+    document.addEventListener('click', (e) => {
+      if (state.activeRetargetId && !e.target.closest('[data-bookmark-id]')) {
+        state.activeRetargetId = null;
+        renderBookmarks();
+      }
+    });
+
     mediaFileInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
+      const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
 
-      const mediaFile = files.find(f => f.type.startsWith('video/') || f.type.startsWith('audio/') || f.name.match(/\.(mp4|m4v|mov|mp3|m4a|aac|wav)$/i));
-      const srtFile = files.find(f => f.name.toLowerCase().endsWith('.srt'));
-      const txtFile = files.find(f => f.name.toLowerCase().endsWith('.txt'));
+      let mediaFile = files.find(f => f.type.startsWith('video/') || f.type.startsWith('audio/') || /\.(mp4|m4a|mp3|mov|webm)$/i.test(f.name));
+      let srtFile = files.find(f => /\.srt$/i.test(f.name));
+      let txtFile = files.find(f => /\.txt$/i.test(f.name));
+
+      // If user selected only one file and it's an SRT, pair it with current podcast
+      if (!mediaFile && files.length === 1 && srtFile) {
+        loadSrtFile(srtFile);
+        mediaFileInput.value = '';
+        return;
+      }
 
       if (mediaFile) {
-        state.videoName = mediaFile.name.replace(/\.[^/.]+$/, '');
+        if (state.videoUrl) URL.revokeObjectURL(state.videoUrl);
         state.videoUrl = URL.createObjectURL(mediaFile);
+        state.currentFileName = mediaFile.name;
         media.src = state.videoUrl;
         media.classList.remove('hidden');
         emptyVideoState.classList.add('hidden');
         mediaFileName.textContent = mediaFile.name;
-        mediaTypeBadge.textContent = mediaFile.type.startsWith('audio/') ? 'AUDIO' : 'VIDEO';
+        mediaTypeBadge.textContent = mediaFile.type.startsWith('audio/') ? 'AUDIO' : 'PODCAST';
+
+        loadBookmarksFromStorage();
 
         if ('mediaSession' in navigator) {
           navigator.mediaSession.metadata = new MediaMetadata({
-            title: state.videoName || 'DriveCast Episode',
-            artist: 'DriveCast Player',
-            album: 'Local Podcast & Subtitles'
+            title: mediaFile.name.replace(/\.[^/.]+$/, ''),
+            artist: 'DriveCast Podcast',
+            album: 'DriveCast Bookmarks'
           });
         }
 
-        loadSavedVideoData(state.videoName);
         media.play().catch(() => {});
+        showToast(`Loaded: ${mediaFile.name}`);
       }
 
       if (srtFile) {
-        const reader = new FileReader();
-        reader.onload = (re) => {
-          state.cues = parseSRT(re.target.result);
-          buildEpisodeSentencesStream();
-          srtStatusBadge.textContent = `SRT ON (${state.cues.length})`;
-          srtStatusBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase';
-          showToast(`Loaded ${state.cues.length} subtitle cues`);
-          renderBookmarks();
-        };
-        reader.readAsText(srtFile);
+        loadSrtFile(srtFile);
       }
 
       if (txtFile) {
@@ -1347,156 +1398,326 @@
         };
         reader.readAsText(txtFile);
       }
+      // Reset input value so re-selecting files triggers change reliably on iOS
+      mediaFileInput.value = '';
     });
 
+    // Handle dedicated SRT subtitle file loading
+    function loadSrtFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        state.cues = parseSRT(re.target.result);
+        buildEpisodeSentencesStream();
+        srtStatusBadge.querySelector('span').textContent = `SRT ON (${state.cues.length})`;
+        srtStatusBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase cursor-pointer hover:bg-emerald-500/30 transition';
+        showToast(`Loaded ${state.cues.length} subtitle cues`);
+        renderBookmarks();
+      };
+      reader.readAsText(file);
+    }
+
+    if (srtFileInput) {
+      srtFileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          loadSrtFile(file);
+        }
+        srtFileInput.value = '';
+      });
+    }
+
     tabBookmarksBtn.addEventListener('click', () => {
-      tabBookmarksBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition';
-      tabSearchBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 transition';
+      tabBookmarksBtn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white shadow transition flex items-center gap-1';
+      tabSearchBtn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition flex items-center gap-1';
       bookmarksPanel.classList.remove('hidden');
       searchPanel.classList.add('hidden');
     });
 
     tabSearchBtn.addEventListener('click', () => {
-      tabSearchBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition';
-      tabBookmarksBtn.className = 'h-7 px-2.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 transition';
-      searchPanel.classList.remove('hidden');
+      tabSearchBtn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white shadow transition flex items-center gap-1';
+      tabBookmarksBtn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition flex items-center gap-1';
       bookmarksPanel.classList.add('hidden');
+      searchPanel.classList.remove('hidden');
       searchInput.focus();
     });
 
-    // Transcript Search Engine
     searchInput.addEventListener('input', () => {
       const query = searchInput.value.trim().toLowerCase();
-      if (!query) {
-        searchResultsCount.textContent = '0 results';
-        searchResultsContainer.innerHTML = '<div class="py-10 text-center text-xs text-slate-500">Enter keywords above to search cues with auto -5s jump</div>';
-        return;
-      }
-
-      const matches = [];
-      state.cues.forEach((cue) => {
-        if (cue.text.toLowerCase().includes(query)) {
-          matches.push(cue);
-        }
-      });
-
-      searchResultsCount.textContent = `${matches.length} result${matches.length === 1 ? '' : 's'}`;
       searchResultsContainer.innerHTML = '';
 
-      if (matches.length === 0) {
-        searchResultsContainer.innerHTML = '<div class="py-10 text-center text-xs text-slate-500">No matching subtitle cues found</div>';
+      if (!query) {
+        searchResultsContainer.appendChild(emptySearchState);
+        emptySearchState.classList.remove('hidden');
+        searchStats.textContent = '0 hits';
         return;
       }
 
-      matches.slice(0, 40).forEach((cue) => {
+      if (state.sentences.length === 0) {
+        searchResultsContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">No SRT transcript loaded to search.</div>`;
+        searchStats.textContent = '0 hits';
+        return;
+      }
+
+      const matches = state.sentences.filter(s => s.text.toLowerCase().includes(query));
+      searchStats.textContent = `${matches.length} hits`;
+
+      if (matches.length === 0) {
+        searchResultsContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">No spoken sentences match "${query}".</div>`;
+        return;
+      }
+
+      matches.slice(0, 50).forEach((match) => {
         const item = document.createElement('div');
-        item.className = 'bg-slate-950/60 border border-slate-800/80 hover:border-indigo-500/50 p-2.5 rounded-xl cursor-pointer transition flex flex-col gap-1';
-
-        const leadInTime = Math.max(0, cue.start - 5);
-        const header = document.createElement('div');
-        header.className = 'flex items-center justify-between text-[11px] font-mono text-indigo-300';
-        header.innerHTML = `<span>${formatTime(cue.start)}</span> <span class="text-[9px] text-slate-500">Jump to ${formatTime(leadInTime)} (-5s)</span>`;
-
-        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        const highlightedText = escapeHtml(cue.text).replace(regex, '<mark class="bg-amber-400 text-slate-950 rounded px-1 font-bold">$1</mark>');
-
-        const textDiv = document.createElement('div');
-        textDiv.className = 'text-xs text-slate-300 leading-snug';
-        textDiv.innerHTML = highlightedText;
-
-        item.appendChild(header);
-        item.appendChild(textDiv);
+        item.className = 'bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 hover:border-indigo-500/60 cursor-pointer active:scale-[0.99] transition flex flex-col gap-1.5';
+        
+        const jumpTime = Math.max(0, match.start - 5.0);
+        
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="px-1.5 py-0.5 rounded bg-indigo-900/50 text-indigo-300 font-mono font-bold text-[10px] border border-indigo-700/40">${formatTime(match.start)}</span>
+            <span class="text-[10px] text-indigo-400 font-medium">Jumps -5s to ${formatTime(jumpTime)}</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">${highlightQueryInText(match.text, query)}</p>
+        `;
 
         item.onclick = () => {
-          media.currentTime = leadInTime;
-          updateMediaSessionPosition();
+          media.currentTime = jumpTime;
           media.play().catch(() => {});
-          showToast(`Jumped to ${formatTime(leadInTime)} (5s before cue)`);
+          updateMediaSessionPosition();
+          showToast(`Jumped to ${formatTime(jumpTime)} (-5s)`);
         };
 
         searchResultsContainer.appendChild(item);
       });
     });
 
-    // Global Span Cycle Button
-    globalSpanCycleBtn.addEventListener('click', () => {
-      state.globalSpan = (state.globalSpan % 5) + 1;
-      globalSpanCycleBtn.textContent = `HL: ${state.globalSpan} sent`;
-      showToast(`Default highlight set to ${state.globalSpan} sentence(s)`);
+    function highlightQueryInText(text, query) {
+      if (!query) return text;
+      const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      return text.replace(regex, '<mark class="bg-amber-400/30 text-amber-200 px-0.5 rounded">$1</mark>');
+    }
+
+    settingsBtn.addEventListener('click', () => {
+      interpCheckbox.checked = state.interpolationEnabled;
+      wordCapValDisplay.textContent = `${state.sentenceWordCap}w`;
+      minWordsValDisplay.textContent = `${state.interpMinWords}w`;
+      offsetValDisplay.textContent = `${state.reactionOffsetSeconds}s`;
+      settingsModal.classList.remove('hidden');
     });
 
-    // Clear All Bookmarks
-    clearBookmarksBtn.addEventListener('click', () => {
+    const closeSettings = () => settingsModal.classList.add('hidden');
+    closeSettingsBtn.addEventListener('click', closeSettings);
+    doneSettingsBtn.addEventListener('click', closeSettings);
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) closeSettings();
+    });
+
+    // Linear Interpolation Toggle
+    interpCheckbox.addEventListener('change', () => {
+      state.interpolationEnabled = interpCheckbox.checked;
+      try { localStorage.setItem('dc_interp_enabled', state.interpolationEnabled.toString()); } catch (e) {}
+      buildEpisodeSentencesStream();
+      resyncBookmarkIndices();
+      showToast(`Linear Interpolation: ${state.interpolationEnabled ? 'ON' : 'OFF'}`);
+    });
+
+    // Sentence Word Cap Steppers (±5w)
+    wordCapMinusBtn.addEventListener('click', () => {
+      state.sentenceWordCap = Math.max(20, state.sentenceWordCap - 5);
+      wordCapValDisplay.textContent = `${state.sentenceWordCap}w`;
+      try { localStorage.setItem('dc_word_cap', state.sentenceWordCap.toString()); } catch (e) {}
+      buildEpisodeSentencesStream();
+      resyncBookmarkIndices();
+    });
+
+    wordCapPlusBtn.addEventListener('click', () => {
+      state.sentenceWordCap = Math.min(200, state.sentenceWordCap + 5);
+      wordCapValDisplay.textContent = `${state.sentenceWordCap}w`;
+      try { localStorage.setItem('dc_word_cap', state.sentenceWordCap.toString()); } catch (e) {}
+      buildEpisodeSentencesStream();
+      resyncBookmarkIndices();
+    });
+
+    // Interpolation Min Words Steppers (±5w)
+    minWordsMinusBtn.addEventListener('click', () => {
+      state.interpMinWords = Math.max(10, state.interpMinWords - 5);
+      minWordsValDisplay.textContent = `${state.interpMinWords}w`;
+      try { localStorage.setItem('dc_min_words', state.interpMinWords.toString()); } catch (e) {}
+    });
+
+    minWordsPlusBtn.addEventListener('click', () => {
+      state.interpMinWords = Math.min(150, state.interpMinWords + 5);
+      minWordsValDisplay.textContent = `${state.interpMinWords}w`;
+      try { localStorage.setItem('dc_min_words', state.interpMinWords.toString()); } catch (e) {}
+    });
+
+    // Reaction Offset Steppers (±1s)
+    offsetMinusBtn.addEventListener('click', () => {
+      state.reactionOffsetSeconds = Math.max(-30, state.reactionOffsetSeconds - 1);
+      offsetValDisplay.textContent = `${state.reactionOffsetSeconds}s`;
+      try { localStorage.setItem('dc_reaction_offset', state.reactionOffsetSeconds.toString()); } catch (e) {}
+    });
+
+    offsetPlusBtn.addEventListener('click', () => {
+      state.reactionOffsetSeconds = Math.min(0, state.reactionOffsetSeconds + 1);
+      offsetValDisplay.textContent = `${state.reactionOffsetSeconds}s`;
+      try { localStorage.setItem('dc_reaction_offset', state.reactionOffsetSeconds.toString()); } catch (e) {}
+    });
+
+    // Clear all bookmarks confirmation
+    clearAllBtn.addEventListener('click', () => {
       if (state.bookmarks.length === 0) return;
       state.bookmarks = [];
-      saveBookmarks();
+      saveBookmarksToStorage();
       renderBookmarks();
       showToast('All bookmarks cleared');
     });
 
-    // Export TXT
     exportTxtBtn.addEventListener('click', () => {
       if (state.bookmarks.length === 0) {
         showToast('No bookmarks to export');
         return;
       }
 
-      let content = `DriveCast Bookmarks: ${state.videoName || 'Episode'}\n`;
-      content += `Exported: ${new Date().toLocaleString()}\n`;
-      content += `Total Bookmarks: ${state.bookmarks.length}\n`;
-      content += `--------------------------------------------------------\n\n`;
+      let exportContent = `DRIVECAST BOOKMARKS EXPORT\nEpisode: ${state.currentFileName || 'Untitled'}\nExported: ${new Date().toLocaleString()}\n\n`;
 
       state.bookmarks.forEach((bm) => {
-        const timecode = `[${formatTime(bm.time)}]`;
-        let metaTag = '';
-        let passage = '';
+        const timecode = formatTime(bm.time);
+        let noteText = '';
 
-        if (state.sentences.length > 0 && bm.targetIndex >= 0) {
-          metaTag = `[Highlight: S${bm.targetIndex + 1}, Span: ${bm.span}, Pre: ${bm.preCount}, Post: ${bm.postCount}]`;
-          
+        if (bm.userCustomNote !== null) {
+          noteText = bm.userCustomNote;
+        } else if (state.sentences.length > 0 && bm.targetSentenceIndex !== -1) {
           const preSentences = [];
-          for (let i = Math.max(0, bm.targetIndex - bm.preCount); i < bm.targetIndex; i++) {
-            preSentences.push(state.sentences[i].text);
+          for (let p = Math.max(0, bm.targetSentenceIndex - (bm.preCount || 0)); p < bm.targetSentenceIndex; p++) {
+            preSentences.push(state.sentences[p].text);
           }
           const targetSentences = [];
-          for (let i = bm.targetIndex; i < Math.min(state.sentences.length, bm.targetIndex + bm.span); i++) {
-            targetSentences.push(state.sentences[i].text);
+          const spanLen = bm.span || 1;
+          for (let s = bm.targetSentenceIndex; s < Math.min(state.sentences.length, bm.targetSentenceIndex + spanLen); s++) {
+            targetSentences.push(state.sentences[s].text);
           }
           const postSentences = [];
-          for (let i = bm.targetIndex + bm.span; i < Math.min(state.sentences.length, bm.targetIndex + bm.span + bm.postCount); i++) {
-            postSentences.push(state.sentences[i].text);
+          const postStart = bm.targetSentenceIndex + spanLen;
+          for (let q = postStart; q < Math.min(state.sentences.length, postStart + (bm.postCount || 0)); q++) {
+            postSentences.push(state.sentences[q].text);
           }
 
-          passage = [preSentences.join(' '), targetSentences.join(' '), postSentences.join(' ')].filter(Boolean).join(' ');
+          const parts = [];
+          if (preSentences.length) parts.push(preSentences.join(' '));
+          parts.push(targetSentences.join(' '));
+          if (postSentences.length) parts.push(postSentences.join(' '));
+          noteText = parts.join(' ');
         } else {
-          passage = bm.noteText || 'Bookmark timestamp';
+          noteText = 'Bookmark timestamp marker';
         }
 
-        content += `${timecode} ${metaTag}\n${passage}\n`;
-        if (bm.noteText) {
-          content += `Note: ${bm.noteText}\n`;
-        }
-        content += `\n`;
+        const tag = `[Highlight: S${(bm.targetSentenceIndex || 0) + 1}, Span: ${bm.span || 1}, Pre: ${bm.preCount || 0}, Post: ${bm.postCount || 0}]`;
+        exportContent += `[${timecode}] ${tag}\n${noteText}\n\n`;
       });
 
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const blob = new Blob([exportContent], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${state.videoName || 'podcast'}_bookmarks.txt`;
+      a.download = `${(state.currentFileName || 'podcast').replace(/\.[^/.]+$/, '')}_bookmarks.txt`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('Exported bookmarks as TXT');
+      showToast('Exported TXT');
     });
 
+    // Import Bookmarks from TXT with smart de-duplication
+    importTxtInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        importBookmarksFromText(re.target.result);
+        importTxtInput.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    function importBookmarksFromText(rawText) {
+      if (!rawText) return;
+      const lines = rawText.split('\n');
+      let importedCount = 0;
+      let i = 0;
+
+      while (i < lines.length) {
+        const line = lines[i].trim();
+        const timeMatch = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]/);
+        if (timeMatch) {
+          const timestampSec = parseTimestamp(timeMatch[1]);
+          
+          let hlIndex = -1;
+          let spanCount = 1;
+          let preCount = 1;
+          let postCount = 1;
+
+          const hlMatch = line.match(/Highlight:\s*S?(\d+)/i);
+          if (hlMatch) hlIndex = parseInt(hlMatch[1], 10) - 1;
+
+          const spanMatch = line.match(/Span:\s*(\d+)/i);
+          if (spanMatch) spanCount = parseInt(spanMatch[1], 10);
+
+          const preMatch = line.match(/Pre:\s*(\d+)/i);
+          if (preMatch) preCount = parseInt(preMatch[1], 10);
+
+          const postMatch = line.match(/Post:\s*(\d+)/i);
+          if (postMatch) postCount = parseInt(postMatch[1], 10);
+
+          let noteLines = [];
+          i++;
+          while (i < lines.length && !lines[i].trim().match(/^\[\d{1,2}:\d{2}/)) {
+            if (lines[i].trim()) noteLines.push(lines[i].trim());
+            i++;
+          }
+          const importedNote = noteLines.join(' ');
+
+          // De-duplication test: match within 1.0 second
+          const isDuplicate = state.bookmarks.some(existing => Math.abs(existing.time - timestampSec) < 1.0);
+
+          if (!isDuplicate) {
+            let targetIdx = hlIndex;
+            if (targetIdx === -1 && state.sentences.length > 0) {
+              targetIdx = findTargetSentenceIndexForTime(timestampSec);
+            }
+
+            state.bookmarks.push({
+              id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+              time: timestampSec,
+              targetSentenceIndex: targetIdx,
+              shiftOffset: 0,
+              span: spanCount,
+              preCount: preCount,
+              postCount: postCount,
+              userCustomNote: importedNote || null
+            });
+            importedCount++;
+          }
+          continue;
+        }
+        i++;
+      }
+
+      state.bookmarks.sort((a, b) => a.time - b.time);
+      saveBookmarksToStorage();
+      renderBookmarks();
+      showToast(`Imported ${importedCount} new bookmark(s)`);
+    }
+
+    // XML Entity Sanitizer (Replaces named entities with numeric or literal XML entities)
     function sanitizeForXml(str) {
       if (!str) return '';
       return str
         .replace(/&bull;/g, '&#8226;')
+        .replace(/&nbsp;/g, '&#160;')
         .replace(/&mdash;/g, '&#8212;')
         .replace(/&ndash;/g, '&#8211;')
-        .replace(/&nbsp;/g, '&#160;')
-        .replace(/&hellip;/g, '&#8230;')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -1504,7 +1725,6 @@
         .replace(/'/g, '&apos;');
     }
 
-    // Export ePub directly in browser via JSZip
     exportEpubBtn.addEventListener('click', async () => {
       if (state.bookmarks.length === 0) {
         showToast('No bookmarks to export');
@@ -1515,300 +1735,144 @@
         return;
       }
 
-      try {
-        const zip = new JSZip();
-        const title = sanitizeForXml(state.videoName || 'DriveCast Episode');
-        const uuid = 'urn:uuid:' + 'dc_' + Date.now();
+      const zip = new JSZip();
+      const title = sanitizeForXml((state.currentFileName || 'Podcast').replace(/\.[^/.]+$/, ''));
+      const dateStr = new Date().toISOString().split('T')[0];
 
-        // 1. mimetype (Must be first, stored without compression)
-        zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+      // 1. mimetype (Uncompressed)
+      zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 
-        // 2. META-INF/container.xml
-        zip.file('META-INF/container.xml', `<?xml version="1.0" encoding="UTF-8"?>
+      // 2. META-INF/container.xml
+      zip.folder('META-INF').file('container.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
     <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
   </rootfiles>
 </container>`);
 
-        // 3. Build Bookmark Chapter XHTML
-        let entriesHtml = '';
-        state.bookmarks.forEach((bm) => {
-          let preText = '';
-          let hlText = '';
-          let postText = '';
-
-          if (state.sentences.length > 0 && bm.targetIndex >= 0) {
-            const pre = [];
-            for (let i = Math.max(0, bm.targetIndex - bm.preCount); i < bm.targetIndex; i++) {
-              pre.push(state.sentences[i].text);
-            }
-            preText = pre.join(' ');
-
-            const hl = [];
-            for (let i = bm.targetIndex; i < Math.min(state.sentences.length, bm.targetIndex + bm.span); i++) {
-              hl.push(state.sentences[i].text);
-            }
-            hlText = hl.join(' ');
-
-            const post = [];
-            for (let i = bm.targetIndex + bm.span; i < Math.min(state.sentences.length, bm.targetIndex + bm.span + bm.postCount); i++) {
-              post.push(state.sentences[i].text);
-            }
-            postText = post.join(' ');
-          } else {
-            hlText = bm.noteText || 'Bookmark timestamp';
-          }
-
-          entriesHtml += `
-    <div class="bookmark-entry">
-      <div class="timecode-pill">${formatTime(bm.time)}</div>
-      <p class="passage">
-        ${preText ? `<span class="context">${sanitizeForXml(preText)} </span>` : ''}
-        <span class="highlight">${sanitizeForXml(hlText)}</span>
-        ${postText ? `<span class="context"> ${sanitizeForXml(postText)}</span>` : ''}
-      </p>
-      ${bm.noteText ? `<div class="user-note"><strong>Note:</strong> ${sanitizeForXml(bm.noteText)}</div>` : ''}
-    </div>\n`;
-        });
-
-        // 4. OEBPS/chapter.xhtml
-        const chapterXhtml = `<?xml version="1.0" encoding="utf-8"?>
+      // 3. Build Bookmark XHTML Content
+      let chapterHtml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en">
 <head>
-  <title>${title}</title>
-  <style type="text/css">
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif; line-height: 1.65; padding: 5%; color: #1e293b; }
-    h1 { font-size: 1.45em; border-bottom: 2px solid #6366f1; padding-bottom: 0.3em; margin-bottom: 1.2em; color: #0f172a; }
-    .bookmark-entry { margin-bottom: 1.8em; padding: 1em; background-color: #f8fafc; border-left: 3px solid #6366f1; border-radius: 4px; }
-    .timecode-pill { display: inline-block; font-size: 0.8em; font-weight: bold; background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 9999px; margin-bottom: 0.6em; }
-    .passage { margin: 0; font-size: 0.95em; }
-    .context { color: #64748b; }
-    .highlight { background-color: #fef08a; padding: 1px 4px; border-radius: 2px; font-weight: 600; color: #854d0e; }
-    .user-note { margin-top: 0.6em; font-size: 0.85em; color: #475569; border-top: 1px dashed #cbd5e1; padding-top: 0.5em; }
+  <meta charset="utf-8" />
+  <title>${title} - Highlights</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif; line-height: 1.6; margin: 5%; color: #1e293b; }
+    h1 { font-size: 1.5em; border-bottom: 2px solid #6366f1; padding-bottom: 0.3em; margin-bottom: 1em; color: #0f172a; }
+    .bookmark-entry { margin-bottom: 1.8em; padding-bottom: 1.2em; border-bottom: 1px solid #e2e8f0; }
+    .timestamp { display: inline-block; background-color: #e0e7ff; color: #3730a3; font-weight: bold; font-family: monospace; font-size: 0.85em; padding: 2px 6px; border-radius: 4px; margin-bottom: 0.5em; }
+    .passage { font-size: 1em; color: #475569; }
+    .highlight { background-color: #fef08a; color: #854d0e; font-weight: 600; padding: 1px 3px; border-radius: 2px; }
   </style>
 </head>
 <body>
-  <h1>${title}</h1>
-  ${entriesHtml}
-</body>
-</html>`;
-        zip.file('OEBPS/chapter.xhtml', chapterXhtml);
+  <h1>${title} &#8226; Highlights</h1>
+`;
 
-        // 5. OEBPS/nav.xhtml (EPUB 3 Navigation)
-        const navXhtml = `<?xml version="1.0" encoding="utf-8"?>
+      state.bookmarks.forEach((bm) => {
+        const timecode = formatTime(bm.time);
+        chapterHtml += `  <div class="bookmark-entry">\n`;
+        chapterHtml += `    <div class="timestamp">${timecode}</div>\n`;
+        chapterHtml += `    <div class="passage">\n`;
+
+        if (bm.userCustomNote !== null) {
+          chapterHtml += `      <span>${sanitizeForXml(bm.userCustomNote)}</span>\n`;
+        } else if (state.sentences.length > 0 && bm.targetSentenceIndex !== -1) {
+          const preSentences = [];
+          for (let p = Math.max(0, bm.targetSentenceIndex - (bm.preCount || 0)); p < bm.targetSentenceIndex; p++) {
+            preSentences.push(state.sentences[p].text);
+          }
+          const targetSentences = [];
+          const spanLen = bm.span || 1;
+          for (let s = bm.targetSentenceIndex; s < Math.min(state.sentences.length, bm.targetSentenceIndex + spanLen); s++) {
+            targetSentences.push(state.sentences[s].text);
+          }
+          const postSentences = [];
+          const postStart = bm.targetSentenceIndex + spanLen;
+          for (let q = postStart; q < Math.min(state.sentences.length, postStart + (bm.postCount || 0)); q++) {
+            postSentences.push(state.sentences[q].text);
+          }
+
+          if (preSentences.length) {
+            chapterHtml += `      <span>${sanitizeForXml(preSentences.join(' '))} </span>`;
+          }
+          chapterHtml += `<span class="highlight">${sanitizeForXml(targetSentences.join(' '))}</span>`;
+          if (postSentences.length) {
+            chapterHtml += `<span> ${sanitizeForXml(postSentences.join(' '))}</span>`;
+          }
+          chapterHtml += `\n`;
+        } else {
+          chapterHtml += `      <span>Bookmark marker at ${timecode}</span>\n`;
+        }
+
+        chapterHtml += `    </div>\n  </div>\n`;
+      });
+
+      chapterHtml += `</body>\n</html>`;
+
+      // 4. OEBPS Folder Structure
+      const oebps = zip.folder('OEBPS');
+      oebps.file('chapter.xhtml', chapterHtml);
+
+      // EPUB 3 Navigation Document
+      oebps.file('nav.xhtml', `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
-<head><title>Table of Contents</title></head>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en">
+<head><meta charset="utf-8" /><title>Table of Contents</title></head>
 <body>
   <nav epub:type="toc" id="toc">
     <h1>Table of Contents</h1>
-    <ol><li><a href="chapter.xhtml">Bookmarks</a></li></ol>
+    <ol><li><a href="chapter.xhtml">${title} - Highlights</a></li></ol>
   </nav>
 </body>
-</html>`;
-        zip.file('OEBPS/nav.xhtml', navXhtml);
+</html>`);
 
-        // 6. OEBPS/toc.ncx (EPUB 2 Navigation)
-        const tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
+      // EPUB 2 NCX Document
+      oebps.file('toc.ncx', `<?xml version="1.0" encoding="UTF-8"?>
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
-  <head><meta name="dtb:uid" content="${uuid}"/></head>
-  <docTitle><text>${title}</text></docTitle>
+  <head><meta name="dtb:uid" content="urn:uuid:drivecast-${Date.now()}"/></head>
+  <docTitle><text>${title} - Highlights</text></docTitle>
   <navMap>
     <navPoint id="navpoint-1" playOrder="1">
-      <navLabel><text>Bookmarks</text></navLabel>
+      <navLabel><text>${title}</text></navLabel>
       <content src="chapter.xhtml"/>
     </navPoint>
   </navMap>
-</ncx>`;
-        zip.file('OEBPS/toc.ncx', tocNcx);
+</ncx>`);
 
-        // 7. OEBPS/content.opf Package Document
-        const contentOpf = `<?xml version="1.0" encoding="utf-8"?>
+      // content.opf Manifest
+      oebps.file('content.opf', `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <dc:identifier id="BookId">${uuid}</dc:identifier>
-    <dc:title>${title}</dc:title>
+    <dc:identifier id="BookId">urn:uuid:drivecast-${Date.now()}</dc:identifier>
+    <dc:title>${title} - Highlights</dc:title>
     <dc:language>en</dc:language>
-    <dc:creator>DriveCast</dc:creator>
+    <dc:date>${dateStr}</dc:date>
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.[0-9]+Z$/, 'Z')}</meta>
   </metadata>
   <manifest>
-    <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
   </manifest>
   <spine toc="ncx">
     <itemref idref="chapter"/>
   </spine>
-</package>`;
-        zip.file('OEBPS/content.opf', contentOpf);
+</package>`);
 
-        // Generate ePub binary blob
-        const epubBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
-        const url = URL.createObjectURL(epubBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${state.videoName || 'podcast'}_bookmarks.epub`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Exported ePub for Apple Books');
-      } catch (err) {
-        console.error('ePub generation error:', err);
-        showToast('Error generating ePub');
-      }
+      // Generate EPUB Blob and trigger download
+      const epubBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
+      const dlUrl = URL.createObjectURL(epubBlob);
+      const dlLink = document.createElement('a');
+      dlLink.href = dlUrl;
+      dlLink.download = `${(state.currentFileName || 'podcast').replace(/\.[^/.]+$/, '')}_highlights.epub`;
+      document.body.appendChild(dlLink);
+      dlLink.click();
+      document.body.removeChild(dlLink);
+      URL.revokeObjectURL(dlUrl);
+      showToast('Exported ePub');
     });
-
-    importBookmarksFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (re) => {
-        importBookmarksFromText(re.target.result);
-      };
-      reader.readAsText(file);
-      e.target.value = '';
-    });
-
-    function importBookmarksFromText(text) {
-      if (!text) return;
-      const lines = text.split('\n');
-      let importedCount = 0;
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        const timeMatch = line.match(/^\[([0-9:]+)\]/);
-        if (!timeMatch) continue;
-
-        const time = parseTimestamp(timeMatch[1]);
-        if (isNaN(time)) continue;
-
-        // Parse bracketed metadata (Highlight, Span, Pre, Post)
-        let targetIndex = -1;
-        let span = 1;
-        let preCount = 1;
-        let postCount = 1;
-
-        const hlMatch = line.match(/Highlight:\s*S?(\d+)/i);
-        if (hlMatch) targetIndex = parseInt(hlMatch[1], 10) - 1;
-
-        const spanMatch = line.match(/Span:\s*(\d+)/i);
-        if (spanMatch) span = parseInt(spanMatch[1], 10);
-
-        const preMatch = line.match(/Pre:\s*(\d+)/i);
-        if (preMatch) preCount = parseInt(preMatch[1], 10);
-
-        const postMatch = line.match(/Post:\s*(\d+)/i);
-        if (postMatch) postCount = parseInt(postMatch[1], 10);
-
-        // Optional user note on subsequent lines
-        let note = '';
-        if (i + 1 < lines.length && lines[i + 1].startsWith('Note:')) {
-          note = lines[i + 1].replace(/^Note:\s*/, '').trim();
-        }
-
-        // Avoid duplicates within 1 second
-        const isDuplicate = state.bookmarks.some(b => Math.abs(b.time - time) < 1.0);
-        if (!isDuplicate) {
-          state.bookmarks.push({
-            id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-            time: time,
-            targetIndex: targetIndex >= 0 ? targetIndex : (state.sentences.length > 0 ? findTargetSentenceIndexForTime(time) : -1),
-            span: span,
-            preCount: preCount,
-            postCount: postCount,
-            noteText: note,
-            isEditing: false
-          });
-          importedCount++;
-        }
-      }
-
-      state.bookmarks.sort((a, b) => a.time - b.time);
-      saveBookmarks();
-      renderBookmarks();
-      showToast(`Imported ${importedCount} new bookmark(s)`);
-    }
-
-    settingsBtn.addEventListener('click', () => {
-      interpCheckbox.checked = state.interpolationEnabled;
-      wordCapValDisplay.textContent = `${state.wordCap}w`;
-      interpTargetValDisplay.textContent = `${state.interpTargetWords}w`;
-      reactionOffsetValDisplay.textContent = `${state.reactionOffset}s`;
-      settingsModal.classList.remove('hidden');
-    });
-
-    closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-    doneSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-    settingsModal.addEventListener('click', (e) => {
-      if (e.target === settingsModal) settingsModal.classList.add('hidden');
-    });
-
-    interpCheckbox.addEventListener('change', () => {
-      state.interpolationEnabled = interpCheckbox.checked;
-      localStorage.setItem('dc_interp_enabled', state.interpolationEnabled);
-      buildEpisodeSentencesStream();
-      renderBookmarks();
-    });
-
-    // Word Cap Stepper (Max Upper Bound)
-    wordCapMinusBtn.addEventListener('click', () => {
-      if (state.wordCap > 20) {
-        state.wordCap -= 5;
-        wordCapValDisplay.textContent = `${state.wordCap}w`;
-        localStorage.setItem('dc_word_cap', state.wordCap);
-        buildEpisodeSentencesStream();
-        renderBookmarks();
-      }
-    });
-
-    wordCapPlusBtn.addEventListener('click', () => {
-      if (state.wordCap < 200) {
-        state.wordCap += 5;
-        wordCapValDisplay.textContent = `${state.wordCap}w`;
-        localStorage.setItem('dc_word_cap', state.wordCap);
-        buildEpisodeSentencesStream();
-        renderBookmarks();
-      }
-    });
-
-    // Interpolation Target Stepper (Min Words for Interpolated Cues)
-    interpTargetMinusBtn.addEventListener('click', () => {
-      if (state.interpTargetWords > 20) {
-        state.interpTargetWords -= 5;
-        interpTargetValDisplay.textContent = `${state.interpTargetWords}w`;
-        localStorage.setItem('dc_interp_target_words', state.interpTargetWords);
-      }
-    });
-
-    interpTargetPlusBtn.addEventListener('click', () => {
-      if (state.interpTargetWords < 150) {
-        state.interpTargetWords += 5;
-        interpTargetValDisplay.textContent = `${state.interpTargetWords}w`;
-        localStorage.setItem('dc_interp_target_words', state.interpTargetWords);
-      }
-    });
-
-    // Reaction Delay Offset Stepper
-    reactionOffsetMinusBtn.addEventListener('click', () => {
-      if (state.reactionOffset > -30) {
-        state.reactionOffset -= 1;
-        reactionOffsetValDisplay.textContent = `${state.reactionOffset}s`;
-        localStorage.setItem('dc_reaction_offset', state.reactionOffset);
-      }
-    });
-
-    reactionOffsetPlusBtn.addEventListener('click', () => {
-      if (state.reactionOffset < 0) {
-        state.reactionOffset += 1;
-        reactionOffsetValDisplay.textContent = `${state.reactionOffset}s`;
-        localStorage.setItem('dc_reaction_offset', state.reactionOffset);
-      }
-    });
-
-    // Initialize application render
-    renderBookmarks();
   </script>
 </body>
 </html>
