@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>DriveCast v7.5 • Local MP4 Player &amp; Bookmarks</title>
+  <title>DriveCast v7.6 • Local MP4 Player &amp; Bookmarks</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -72,7 +72,7 @@
       </div>
       <div class="flex items-center gap-1.5 min-w-0">
         <h1 class="font-bold text-sm sm:text-base tracking-tight text-white truncate">DriveCast</h1>
-        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v7.5</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v7.6</span>
       </div>
     </div>
 
@@ -393,7 +393,7 @@
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
       <span id="airpodsStatus">AirPods Double-Tap Ready</span>
     </div>
-    <span class="text-slate-500">DriveCast v7.5 &bull; Independent Time Retarget &amp; Precise Bookmarks</span>
+    <span class="text-slate-500">DriveCast v7.6 &bull; Real-Time SRT Sync &amp; Locked Retargeting</span>
   </footer>
 
   <!-- Toast Notification Pill -->
@@ -662,108 +662,68 @@
     function buildEpisodeSentencesStream(cues, wordCap = 70) {
       if (!cues || cues.length === 0) return [];
 
-      // Step 1: Stitch all cues into a continuous character stream with timestamp anchors
-      let fullText = '';
-      const charAnchors = [];
+      // Sort cues chronologically
+      const sortedCues = [...cues].sort((a, b) => a.start - b.start);
 
-      for (let i = 0; i < cues.length; i++) {
-        const cue = cues[i];
-        if (fullText.length > 0) {
-          fullText += ' ';
-          charAnchors.push(cue.start);
-        }
-        const cueStartChar = fullText.length;
-        fullText += cue.text;
-        const cueEndChar = fullText.length;
-        const cueChars = cueEndChar - cueStartChar;
+      // Step 1: Extract every word with its direct source cue timestamp
+      const allWords = [];
+      for (let i = 0; i < sortedCues.length; i++) {
+        const cue = sortedCues[i];
+        const cueWords = cue.text.trim().split(/\s+/).filter(w => w.length > 0);
+        if (cueWords.length === 0) continue;
 
-        for (let c = 0; c < cueChars; c++) {
-          const ratio = cueChars > 1 ? c / (cueChars - 1) : 0;
-          charAnchors.push(cue.start + ratio * cue.duration);
-        }
-      }
-
-      function getTimeAtChar(charIndex) {
-        if (charIndex <= 0) return charAnchors[0] || 0;
-        if (charIndex >= charAnchors.length) return charAnchors[charAnchors.length - 1] || 0;
-        return charAnchors[charIndex];
-      }
-
-      // Step 2: Transcription-aware sentence boundary regex
-      const sentenceRegex = /([.?!…]+)(?=\s|$)/g;
-      const rawUnits = [];
-      let lastIndex = 0;
-      let match;
-
-      while ((match = sentenceRegex.exec(fullText)) !== null) {
-        const punctuation = match[1];
-        const punctEnd = match.index + punctuation.length;
-        const candidate = fullText.slice(lastIndex, punctEnd).trim();
-
-        // Check if abbreviation or decimal (e.g. Mr., Dr., M., 3.14)
-        const isAbbrev = /(?:^|\s)(?:[A-Z]\.|Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.|M\.|Mme\.|Mlle\.|cf\.|vs\.|etc\.|\d+\.)$/i.test(candidate);
-        if (!isAbbrev && candidate.length > 0) {
-          const startChar = lastIndex;
-          const endChar = punctEnd;
-          rawUnits.push({
-            text: candidate,
-            startChar,
-            endChar,
-            start: getTimeAtChar(startChar),
-            end: getTimeAtChar(endChar)
-          });
-          lastIndex = punctEnd;
-          // Skip whitespace
-          while (lastIndex < fullText.length && /\s/.test(fullText[lastIndex])) {
-            lastIndex++;
-          }
-        }
-      }
-
-      // Trailing text fragment
-      if (lastIndex < fullText.length) {
-        const remainder = fullText.slice(lastIndex).trim();
-        if (remainder.length > 0) {
-          rawUnits.push({
-            text: remainder,
-            startChar: lastIndex,
-            endChar: fullText.length,
-            start: getTimeAtChar(lastIndex),
-            end: getTimeAtChar(fullText.length - 1)
+        const dur = Math.max(0.1, cue.duration);
+        for (let j = 0; j < cueWords.length; j++) {
+          const rStart = j / cueWords.length;
+          const rEnd = (j + 1) / cueWords.length;
+          allWords.push({
+            text: cueWords[j],
+            start: cue.start + rStart * dur,
+            end: cue.start + rEnd * dur,
+            cueId: cue.id,
+            cueDuration: cue.duration
           });
         }
       }
 
-      // Step 3: Enforce Sentence Word Cap (Max) on unpunctuated or long run-ons
+      if (allWords.length === 0) return [];
+
+      // Step 2: Segment words into sentences
+      // Boundary is marked by true punctuation (. ! ? …) unless it is an abbreviation/decimal,
+      // or when the word count reaches the configured wordCap.
       const sentences = [];
-      for (let i = 0; i < rawUnits.length; i++) {
-        const unit = rawUnits[i];
-        const words = unit.text.split(/\s+/);
-        if (words.length <= wordCap) {
+      let currentWords = [];
+
+      for (let i = 0; i < allWords.length; i++) {
+        const w = allWords[i];
+        currentWords.push(w);
+
+        const text = w.text;
+        // Punctuation check: ends with period, exclamation, question mark, or ellipsis
+        const hasPunctuation = /[.?!…]+['"»”]?$/.test(text);
+
+        // Protect abbreviations (e.g. Mr., Dr., M., Mme., cf., etc., decimals like 3.14)
+        const isAbbrev = /(?:^|\s)(?:[A-Z]\.|Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.|M\.|Mme\.|Mlle\.|cf\.|vs\.|etc\.|\d+\.)$/i.test(text);
+
+        const isTrueSentenceEnd = hasPunctuation && !isAbbrev;
+        const reachedWordCap = currentWords.length >= wordCap;
+
+        if (isTrueSentenceEnd || reachedWordCap || i === allWords.length - 1) {
+          const sText = currentWords.map(item => item.text).join(' ');
+          const sStart = currentWords[0].start;
+          const sEnd = currentWords[currentWords.length - 1].end;
+          const isLongCue = currentWords.some(item => item.cueDuration >= 30);
+
           sentences.push({
             id: sentences.length + 1,
-            text: unit.text,
-            start: unit.start,
-            end: unit.end,
-            duration: Math.max(0.2, unit.end - unit.start)
+            text: sText,
+            start: sStart,
+            end: sEnd,
+            duration: Math.max(0.2, sEnd - sStart),
+            isLongCue: isLongCue
           });
-        } else {
-          // Chunk long run-on unit by word cap
-          for (let w = 0; w < words.length; w += wordCap) {
-            const chunkWords = words.slice(w, w + wordCap);
-            const chunkText = chunkWords.join(' ');
-            const ratioStart = w / words.length;
-            const ratioEnd = Math.min(1, (w + wordCap) / words.length);
-            const cStart = unit.start + ratioStart * (unit.end - unit.start);
-            const cEnd = unit.start + ratioEnd * (unit.end - unit.start);
-            sentences.push({
-              id: sentences.length + 1,
-              text: chunkText,
-              start: cStart,
-              end: cEnd,
-              duration: Math.max(0.2, cEnd - cStart)
-            });
-          }
+
+          currentWords = [];
         }
       }
 
@@ -774,7 +734,7 @@
       if (!state.sentences || state.sentences.length === 0) return 0;
       const targetTime = Math.max(0, time);
 
-      // 1. Exact containment: is targetTime within [s.start, s.end]?
+      // 1. Direct containment: targetTime falls between sentence.start and sentence.end
       for (let i = 0; i < state.sentences.length; i++) {
         const s = state.sentences[i];
         if (targetTime >= s.start && targetTime <= s.end) {
@@ -782,22 +742,34 @@
         }
       }
 
-      // 2. Inter-sentence pause containment:
-      // If targetTime falls between s[i].end and s[i+1].start (pause/silence),
-      // the listener was absorbing sentence i, so it belongs to sentence i!
+      // 2. Active cue alignment: find sentence that matches the active on-screen cue
+      if (state.cues && state.cues.length > 0) {
+        const activeCue = state.cues.find(c => targetTime >= c.start && targetTime <= c.end);
+        if (activeCue) {
+          const cueMid = (activeCue.start + activeCue.end) / 2;
+          for (let i = 0; i < state.sentences.length; i++) {
+            const s = state.sentences[i];
+            if ((cueMid >= s.start && cueMid <= s.end) || (activeCue.start >= s.start && activeCue.start <= s.end)) {
+              return i;
+            }
+          }
+        }
+      }
+
+      // 3. Inter-sentence pause containment (silence immediately after a sentence)
       for (let i = 0; i < state.sentences.length - 1; i++) {
         if (targetTime > state.sentences[i].end && targetTime < state.sentences[i + 1].start) {
           return i;
         }
       }
 
-      // 3. Before first sentence or after last sentence bounds
+      // 4. Before first sentence or after last sentence bounds
       if (targetTime <= state.sentences[0].start) return 0;
       if (targetTime >= state.sentences[state.sentences.length - 1].end) {
         return state.sentences.length - 1;
       }
 
-      // 4. Boundary distance fallback: measure distance to the nearest boundary of each sentence
+      // 5. Boundary distance fallback
       let closestIdx = 0;
       let minDiff = Infinity;
       for (let i = 0; i < state.sentences.length; i++) {
