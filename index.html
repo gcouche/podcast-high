@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>DriveCast v6.9 • Local MP4 Player &amp; Bookmarks</title>
+  <title>DriveCast v7.0 • Local MP4 Player &amp; Bookmarks</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,7 +25,7 @@
       overflow-x: hidden;
       max-width: 100vw;
     }
-    /* iOS Safari 1pt typography increase for readability */
+    /* iOS Safari typography boost for comfortable reading */
     @supports (-webkit-touch-callout: none) {
       .sentence-preview-text,
       .sentence-highlight,
@@ -84,6 +84,7 @@
 </head>
 <body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased select-none">
 
+  <!-- Header Section -->
   <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 shrink-0 z-20">
     <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
       <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 text-white font-black text-sm shrink-0">
@@ -91,7 +92,7 @@
       </div>
       <div class="flex items-center gap-1.5 min-w-0">
         <h1 class="font-bold text-sm sm:text-base tracking-tight text-white truncate">DriveCast</h1>
-        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v6.9</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">v7.0</span>
       </div>
     </div>
 
@@ -116,6 +117,7 @@
     </div>
   </header>
 
+  <!-- Main Content Layout -->
   <main class="flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 md:p-5 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-4">
     
     <!-- Left Column: Video/Audio Player & Episode Controls -->
@@ -190,11 +192,13 @@
           <!-- Center Transport: -10s, -1s, Play/Pause, +1s, +10s -->
           <div class="flex items-center gap-1 sm:gap-2">
             
-            <!-- Podcast -10s Skip Button -->
-            <button id="skipBack10Btn" title="Rewind 10 seconds" class="w-8 h-8 rounded-full bg-slate-800/90 hover:bg-slate-700 active:scale-90 text-slate-200 flex items-center justify-center transition border border-slate-700/60">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path>
+            <!-- Podcast -10s Skip Button with Centered "10" Marker -->
+            <button id="skipBack10Btn" title="Rewind 10 seconds" class="w-8 h-8 rounded-full bg-slate-800/90 hover:bg-slate-700 active:scale-90 text-slate-200 flex flex-col items-center justify-center transition border border-slate-700/60 relative">
+              <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12.5 4.5A7.5 7.5 0 1020 12h-2.5"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12.5 1.5l-3 3 3 3"></path>
               </svg>
+              <span class="absolute text-[8px] font-extrabold font-mono text-indigo-300 select-none pointer-events-none mt-0.5">10</span>
             </button>
 
             <!-- Micro -1s Step Button -->
@@ -217,11 +221,13 @@
               +1s
             </button>
 
-            <!-- Podcast +10s Skip Button -->
-            <button id="skipForward10Btn" title="Forward 10 seconds" class="w-8 h-8 rounded-full bg-slate-800/90 hover:bg-slate-700 active:scale-90 text-slate-200 flex items-center justify-center transition border border-slate-700/60">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"></path>
+            <!-- Podcast +10s Skip Button with Centered "10" Marker -->
+            <button id="skipForward10Btn" title="Forward 10 seconds" class="w-8 h-8 rounded-full bg-slate-800/90 hover:bg-slate-700 active:scale-90 text-slate-200 flex flex-col items-center justify-center transition border border-slate-700/60 relative">
+              <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.5 4.5A7.5 7.5 0 114 12h2.5"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.5 1.5l3 3-3 3"></path>
               </svg>
+              <span class="absolute text-[8px] font-extrabold font-mono text-indigo-300 select-none pointer-events-none mt-0.5">10</span>
             </button>
           </div>
 
@@ -303,7 +309,7 @@
           </div>
         </div>
 
-        <!-- Search SRT Tab Content Area (Hidden by default) -->
+        <!-- Search SRT Tab Content Area -->
         <div id="searchPanel" class="flex-1 min-h-0 flex flex-col pt-2 hidden">
           <div class="relative shrink-0 mb-2">
             <input type="text" id="searchInput" placeholder="Search spoken transcript..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
@@ -324,7 +330,7 @@
 
   <!-- Settings Drawer Modal Dialog -->
   <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-4 shadow-2xl flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-150">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-4 shadow-2xl flex flex-col gap-3.5">
       
       <!-- Modal Header -->
       <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
@@ -341,16 +347,16 @@
       <div class="flex items-center justify-between py-1">
         <div>
           <span class="text-xs font-semibold text-slate-200 block">Linear Interpolation</span>
-          <span class="text-[10px] text-slate-400">Character-weighted sentence timing for long SRT cues</span>
+          <span class="text-[10px] text-slate-400">Proportional word timing within multi-sentence cues</span>
         </div>
         <input type="checkbox" id="interpCheckbox" checked class="w-4 h-4 accent-indigo-600 rounded cursor-pointer">
       </div>
 
-      <!-- Sentence Word Cap Stepper (Max Upper Bound) -->
+      <!-- Sentence Word Cap Stepper (Upper Bound Max) -->
       <div class="flex items-center justify-between py-1 border-t border-slate-800/80">
         <div>
           <span class="text-xs font-semibold text-slate-200 block">Sentence Word Cap (Max)</span>
-          <span class="text-[10px] text-slate-400">Limits run-on or unpunctuated chunks</span>
+          <span class="text-[10px] text-slate-400">Limits unpunctuated chunks / run-on speech</span>
         </div>
         <div class="flex items-center gap-1.5">
           <button id="wordCapMinusBtn" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">-</button>
@@ -359,7 +365,7 @@
         </div>
       </div>
 
-      <!-- Interpolation Target Min Words Stepper (Lower Bound) -->
+      <!-- Interpolation Target Min Words Stepper (Lower Bound Target) -->
       <div class="flex items-center justify-between py-1 border-t border-slate-800/80">
         <div>
           <span class="text-xs font-semibold text-slate-200 block">Interp. Target (Min Words)</span>
@@ -398,7 +404,7 @@
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
       <span id="airpodsStatus">AirPods Double-Tap Ready</span>
     </div>
-    <span class="text-slate-500">DriveCast v6.9 &bull; Lock Screen &amp; Audio Fix</span>
+    <span class="text-slate-500">DriveCast v7.0 &bull; Continuous Sentence Engine</span>
   </footer>
 
   <!-- Toast Notification Box -->
@@ -406,8 +412,8 @@
     Notification
   </div>
 
+  <!-- Application Script -->
   <script>
-    // State Store
     const state = {
       videoUrl: null,
       currentFileName: '',
@@ -435,12 +441,10 @@
       if (savedInterp !== null) state.interpolationEnabled = (savedInterp === 'true');
     } catch (e) {}
 
-    // Web Audio API Synthesized Two-Note Feedback Chime (No External Audio Files)
+    // Web Audio Synthesized Chime (Muted when locked to prevent iOS CoreAudio pipeline interruption)
     let audioCtx = null;
     function playChime(success = true) {
-      // CRITICAL iOS FIX: Never initialize or resume AudioContext while the screen is locked
-      // Doing so causes iOS CoreAudio to interrupt and silence the media element's audio output!
-      if (document.hidden) return;
+      if (document.hidden) return; // Never run while screen is locked
 
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -472,7 +476,6 @@
       } catch (e) {}
     }
 
-    // DOM Element Selections
     const media = document.getElementById('mediaPlayer');
     const emptyVideoState = document.getElementById('emptyVideoState');
     const subtitleBox = document.getElementById('subtitleBox');
@@ -564,7 +567,6 @@
       }, 2400);
     }
 
-    // Robust SRT subtitle parser
     function parseSRT(data) {
       if (!data) return [];
       // Strip UTF-8 Byte Order Mark (BOM) if present from iOS file exports
@@ -604,117 +606,129 @@
       return cues;
     }
 
-    // Abbreviation-aware sentence boundary tokenizer
-    function splitTextIntoSentences(text, wordCap = 70) {
-      if (!text || !text.trim()) return [];
-
-      const abbrevs = /\b(Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec|M|Mme|Mlle|cf|vol|dept|univ)\.$/i;
-      
-      // Tokenize by sentence end punctuation followed by whitespace or bracketed audio annotations
-      // Example: '...jamais. [souffle coupé] précisément...' -> splits after 'jamais.'
-      const rawSentences = [];
-      const regex = /([^.!?…]+[.!?…]+(?:\s*\[[^\]]+\])*)(?:\s+|$)|([^.!?…]+$)/g;
-      let match;
-      let buffer = '';
-
-      while ((match = regex.exec(text)) !== null) {
-        const part = (match[1] || match[2] || '').trim();
-        if (!part) continue;
-
-        if (buffer) {
-          buffer += ' ' + part;
-        } else {
-          buffer = part;
-        }
-
-        // If ends with abbreviation like "Dr." or "M.", keep buffering
-        const words = buffer.split(/\s+/);
-        const lastWord = words[words.length - 1];
-        if (abbrevs.test(lastWord)) {
-          continue;
-        }
-
-        rawSentences.push(buffer);
-        buffer = '';
-      }
-
-      if (buffer.trim()) {
-        rawSentences.push(buffer.trim());
-      }
-
-      // Enforce the sentence word cap for run-on or unpunctuated subtitle tracks
-      const finalSentences = [];
-      for (const s of rawSentences) {
-        const words = s.split(/\s+/).filter(Boolean);
-        if (words.length <= wordCap) {
-          finalSentences.push(s);
-        } else {
-          for (let i = 0; i < words.length; i += wordCap) {
-            const chunk = words.slice(i, i + wordCap).join(' ');
-            if (chunk) finalSentences.push(chunk);
-          }
-        }
-      }
-
-      return finalSentences;
-    }
-
-    // Stitch subtitle cues into a continuous transcript stream with millisecond timecode anchors
     function buildEpisodeSentencesStream() {
       if (!state.cues || state.cues.length === 0) {
         state.sentences = [];
         return;
       }
 
-      const sentences = [];
-      let globalIndex = 0;
+      // Step 1: Flatten all cues into a continuous word token stream with precise millisecond time anchors
+      const wordTokens = [];
+      const abbrevRegex = /\b(Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec|M|Mme|Mlle|cf|vol|dept|univ|st)\.$/i;
 
       for (let cueIdx = 0; cueIdx < state.cues.length; cueIdx++) {
         const cue = state.cues[cueIdx];
-        const cueDuration = Math.max(0.2, cue.end - cue.start);
-        const rawSplit = splitTextIntoSentences(cue.text, state.sentenceWordCap);
+        const duration = Math.max(0.1, cue.end - cue.start);
+        const text = (cue.text || '').trim();
+        if (!text) continue;
 
-        if (rawSplit.length === 0) continue;
+        const words = text.split(/\s+/).filter(Boolean);
+        if (words.length === 0) continue;
 
-        if (!state.interpolationEnabled || rawSplit.length === 1) {
-          // No interpolation or single sentence: allocate cue timeframe
-          for (const sText of rawSplit) {
-            sentences.push({
-              index: globalIndex++,
-              cueIndex: cueIdx,
-              start: cue.start,
-              end: cue.end,
-              text: sText,
-              wordsCount: sText.split(/\s+/).filter(Boolean).length,
-              isInterpolated: false
-            });
+        const totalChars = words.reduce((acc, w) => acc + w.length, 0);
+        let charOffset = 0;
+
+        for (let wIdx = 0; wIdx < words.length; wIdx++) {
+          const word = words[wIdx];
+          let wordStart, wordEnd;
+
+          if (state.interpolationEnabled) {
+            const ratioStart = totalChars > 0 ? charOffset / totalChars : (wIdx / words.length);
+            charOffset += word.length;
+            const ratioEnd = totalChars > 0 ? charOffset / totalChars : ((wIdx + 1) / words.length);
+
+            wordStart = cue.start + (ratioStart * duration);
+            wordEnd = cue.start + (ratioEnd * duration);
+          } else {
+            wordStart = cue.start;
+            wordEnd = cue.end;
+            charOffset += word.length;
           }
-        } else {
-          // Linear interpolation: distribute timestamps proportionally based on character length
-          const totalChars = rawSplit.reduce((acc, s) => acc + s.length, 0);
-          let currentCharOffset = 0;
 
-          for (const sText of rawSplit) {
-            const charRatioStart = currentCharOffset / totalChars;
-            const charRatioEnd = (currentCharOffset + sText.length) / totalChars;
-
-            const sStart = cue.start + (charRatioStart * cueDuration);
-            const sEnd = cue.start + (charRatioEnd * cueDuration);
-
-            sentences.push({
-              index: globalIndex++,
-              cueIndex: cueIdx,
-              start: sStart,
-              end: sEnd,
-              text: sText,
-              wordsCount: sText.split(/\s+/).filter(Boolean).length,
-              isInterpolated: true
-            });
-
-            currentCharOffset += sText.length;
-          }
+          wordTokens.push({
+            word: word,
+            start: wordStart,
+            end: wordEnd,
+            cueIdx: cueIdx,
+            cueDuration: duration
+          });
         }
       }
+
+      if (wordTokens.length === 0) {
+        state.sentences = [];
+        return;
+      }
+
+      // Step 2: Assemble words into grammatical sentences across cue boundaries
+      const sentences = [];
+      let currentWords = [];
+      let sentenceIdx = 0;
+
+      function flushSentence() {
+        if (currentWords.length === 0) return;
+
+        const sStart = currentWords[0].start;
+        const sEnd = currentWords[currentWords.length - 1].end;
+        const sText = currentWords.map(w => w.word).join(' ');
+        
+        // Long multi-minute transcription cue or large multi-sentence block
+        const firstCue = currentWords[0].cueIdx;
+        const lastCue = currentWords[currentWords.length - 1].cueIdx;
+        const isInterp = state.interpolationEnabled && (
+          currentWords[0].cueDuration > 15 || 
+          (firstCue === lastCue && currentWords.length < 50 && (state.cues[firstCue].end - state.cues[firstCue].start) > 12)
+        );
+
+        sentences.push({
+          index: sentenceIdx++,
+          start: sStart,
+          end: sEnd,
+          text: sText,
+          wordsCount: currentWords.length,
+          isInterpolated: isInterp
+        });
+
+        currentWords = [];
+      }
+
+      for (let i = 0; i < wordTokens.length; i++) {
+        const token = wordTokens[i];
+        currentWords.push(token);
+
+        const wText = token.word;
+        const wordCount = currentWords.length;
+
+        // Check sentence-ending punctuation: '.', '!', '?', '…', or closing quotes/brackets/parens
+        const hasPunctuationEnd = /[.!?…]["'»”’\]\)]*$/.test(wText);
+        const isAbbreviation = abbrevRegex.test(wText);
+        const isNumber = /^\d+\.\d+$/.test(wText);
+        const isInitial = /^[A-Z]\.$/i.test(wText);
+
+        // Also check standalone punctuation tokens (common in French formatting like ' ?' or ' !')
+        const isPunctuationToken = /^[.!?…]+$/.test(wText);
+
+        const isTrueSentenceEnd = (hasPunctuationEnd || isPunctuationToken) && !isAbbreviation && !isNumber && !isInitial;
+
+        // Word Cap reached for unpunctuated or run-on subtitles
+        const isCapReached = wordCount >= state.sentenceWordCap;
+
+        // Large pause gap check between cues (> 4.5 seconds of silence with reasonable sentence length)
+        let isLargeGap = false;
+        if (i < wordTokens.length - 1) {
+          const nextToken = wordTokens[i + 1];
+          if (nextToken.cueIdx !== token.cueIdx && (nextToken.start - token.end) > 4.5 && wordCount >= 5) {
+            isLargeGap = true;
+          }
+        }
+
+        if (isTrueSentenceEnd || isCapReached || isLargeGap) {
+          flushSentence();
+        }
+      }
+
+      // Flush trailing words
+      flushSentence();
 
       state.sentences = sentences;
     }
@@ -725,7 +739,7 @@
       const exactIndex = state.sentences.findIndex(s => targetTime >= s.start && targetTime <= s.end);
       if (exactIndex !== -1) return exactIndex;
 
-      // Nearest fallback
+      // Nearest boundary fallback
       let closestIdx = 0;
       let minDiff = Infinity;
       for (let i = 0; i < state.sentences.length; i++) {
@@ -762,7 +776,7 @@
           }
           expandLeft = true;
         }
-        if (!expanded) break; // Reached boundaries of transcript
+        if (!expanded) break;
       }
 
       return {
@@ -916,14 +930,14 @@
       updateMediaSessionPosition();
     });
 
-    // Time Scrubber Update: Update UI only; DO NOT call setPositionState here (prevents iOS audio stutter/freeze)
+    // Time Scrubber Update: Updates UI smoothly without calling setPositionState in high-frequency loop
     media.addEventListener('timeupdate', () => {
       if (!media.duration) return;
       const cur = media.currentTime;
       timeSlider.value = (cur / media.duration) * 100;
       currentTimeDisplay.textContent = formatTime(cur);
 
-      // On-Screen Subtitle Rendering
+      // Dynamic On-Screen Subtitle Rendering
       if (state.ccVisible && state.cues.length > 0) {
         const activeCue = state.cues.find(c => cur >= c.start && cur <= c.end);
         if (activeCue) {
@@ -1040,7 +1054,7 @@
       }
     }
 
-    // Re-synchronize bookmark indices when word cap changes without drifting
+    // Re-synchronize bookmark indices when word cap or settings change
     function resyncBookmarkIndices() {
       if (!state.sentences || state.sentences.length === 0) return;
       for (const bm of state.bookmarks) {
@@ -1087,7 +1101,7 @@
         };
         leftMeta.appendChild(timeBadge);
 
-        // Interactive Two-Step Timecode Retarget Button
+        // Independent Two-Step Timecode Retarget Button (Does not alter text/sentence selection)
         const retargetBtn = document.createElement('button');
         retargetBtn.title = 'Retarget timestamp to current audio playhead position';
         retargetBtn.dataset.bookmarkId = bm.id;
@@ -1103,7 +1117,7 @@
         retargetBtn.onclick = (e) => {
           e.stopPropagation();
           if (state.activeRetargetId === bm.id) {
-            // STEP 2: Confirm retarget. Sets audio timestamp directly WITHOUT altering text/sentence selection!
+            // STEP 2: Confirm retarget: Sets audio timestamp directly WITHOUT altering text/sentence selection!
             bm.time = media.currentTime;
             state.activeRetargetId = null;
             saveBookmarksToStorage();
@@ -1251,7 +1265,6 @@
         textWrapper.className = 'text-xs text-slate-300 leading-relaxed break-words';
 
         if (bm.userCustomNote !== null) {
-          // Display custom edited note
           textWrapper.textContent = bm.userCustomNote;
         } else if (state.sentences.length > 0 && bm.targetSentenceIndex !== -1) {
           const preSentences = [];
@@ -1294,7 +1307,7 @@
           textWrapper.textContent = 'Bookmark recorded (No transcript loaded).';
         }
 
-        // Inline Text Note Editor Container (Hidden by default)
+        // Inline Text Note Editor Container
         const editorContainer = document.createElement('div');
         editorContainer.className = 'flex flex-col gap-1.5 hidden pt-1';
         const editorArea = document.createElement('textarea');
@@ -1340,7 +1353,7 @@
       });
     }
 
-    // Cancel any armed retarget trigger when clicking anywhere outside
+    // Cancel any armed retarget trigger when clicking outside
     document.addEventListener('click', (e) => {
       if (state.activeRetargetId && !e.target.closest('[data-bookmark-id]')) {
         state.activeRetargetId = null;
@@ -1398,11 +1411,9 @@
         };
         reader.readAsText(txtFile);
       }
-      // Reset input value so re-selecting files triggers change reliably on iOS
       mediaFileInput.value = '';
     });
 
-    // Handle dedicated SRT subtitle file loading
     function loadSrtFile(file) {
       if (!file) return;
       const reader = new FileReader();
@@ -1522,7 +1533,7 @@
       showToast(`Linear Interpolation: ${state.interpolationEnabled ? 'ON' : 'OFF'}`);
     });
 
-    // Sentence Word Cap Steppers (±5w)
+    // Sentence Word Cap Steppers (Upper Bound Max ±5w)
     wordCapMinusBtn.addEventListener('click', () => {
       state.sentenceWordCap = Math.max(20, state.sentenceWordCap - 5);
       wordCapValDisplay.textContent = `${state.sentenceWordCap}w`;
@@ -1539,7 +1550,7 @@
       resyncBookmarkIndices();
     });
 
-    // Interpolation Min Words Steppers (±5w)
+    // Interpolation Min Words Steppers (Lower Bound Target ±5w)
     minWordsMinusBtn.addEventListener('click', () => {
       state.interpMinWords = Math.max(10, state.interpMinWords - 5);
       minWordsValDisplay.textContent = `${state.interpMinWords}w`;
@@ -1565,7 +1576,6 @@
       try { localStorage.setItem('dc_reaction_offset', state.reactionOffsetSeconds.toString()); } catch (e) {}
     });
 
-    // Clear all bookmarks confirmation
     clearAllBtn.addEventListener('click', () => {
       if (state.bookmarks.length === 0) return;
       state.bookmarks = [];
@@ -1629,7 +1639,6 @@
       showToast('Exported TXT');
     });
 
-    // Import Bookmarks from TXT with smart de-duplication
     importTxtInput.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -1678,7 +1687,6 @@
           }
           const importedNote = noteLines.join(' ');
 
-          // De-duplication test: match within 1.0 second
           const isDuplicate = state.bookmarks.some(existing => Math.abs(existing.time - timestampSec) < 1.0);
 
           if (!isDuplicate) {
